@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Mathematics.Geometry

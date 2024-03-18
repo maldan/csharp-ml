@@ -1,3 +1,5 @@
+using System;
+
 namespace MegaLib.Mathematics
 {
   public static class MathEx
@@ -23,6 +25,14 @@ namespace MegaLib.Mathematics
     public static float Sin(this float number)
     {
       return (float)(Math.Sin(number));
+    }
+    
+    public static float Clamp(this float value, float min, float max) {
+      return Math.Min(Math.Max(value, min), max);
+    }
+
+    public static float Clamp01(this float value) {
+      return Math.Min(Math.Max(value, 0), 1);
     }
   }
 }

@@ -1,3 +1,5 @@
+using System;
+
 namespace MegaLib.Mathematics.LinearAlgebra
 {
   public struct Quaternion
