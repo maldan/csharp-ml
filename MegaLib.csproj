@@ -6,7 +6,9 @@
 
     <ItemGroup>
       <Folder Include="src\DataBase" />
+      <Folder Include="src\Render" />
       <Folder Include="src\Server" />
+        <Folder Include="src\Mathematics" />
     </ItemGroup>
 
 </Project>
