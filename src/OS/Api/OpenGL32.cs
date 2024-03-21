@@ -1887,6 +1887,10 @@ namespace MegaLib.OS.Api
     [DllImport("opengl32.dll", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
     public static extern IntPtr wglGetProcAddress(string functionName);
 
+    // Импорт функции glReadPixels из библиотеки OpenGL
+    [DllImport("opengl32.dll")]
+    public static extern void glReadPixels(int x, int y, int width, int height, uint format, uint type, IntPtr pixels);
+
     public static void PrintGlError()
     {
       var error = glGetError();
@@ -1988,6 +1992,12 @@ namespace MegaLib.OS.Api
     {
       var ptr = wglGetProcAddress("glUniform1i");
       Marshal.GetDelegateForFunctionPointer<glTwoIntInt>(ptr)(location, v0);
+    }
+
+    public static void glUniform3f(GLint location, float x, float y, float z)
+    {
+      var ptr = wglGetProcAddress("glUniform3f");
+      Marshal.GetDelegateForFunctionPointer<glUniform3fDelegate>(ptr)(location, x, y, z);
     }
 
     public static void glEnableVertexAttribArray(uint index)
@@ -2193,6 +2203,8 @@ namespace MegaLib.OS.Api
     private delegate IntPtr glMapBufferDelegate(GLenum target, GLenum access);
 
     private delegate GLboolean glUnmapBufferDelegate(GLenum target);
+
+    private delegate void glUniform3fDelegate(int location, float x, float y, float z);
 
     private delegate void glUniformMatrix4fvDelegate(int location, int count, byte transpose, IntPtr data);
 

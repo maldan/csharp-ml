@@ -34,7 +34,7 @@ namespace MegaLib.Render.Texture
   {
     public int Id;
     public TextureOptions Options;
-    public byte[] GPU_RAW { get; private set; }
+    public byte[] GPU_RAW { get; set; }
 
     public Texture_Base()
     {

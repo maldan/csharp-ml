@@ -11,10 +11,16 @@ namespace MegaLib.Render.Renderer.OpenGL
   public class ObjectInfo_OpenGL
   {
     public string VertexBufferName;
+    public string NormalBufferName;
     public string UV0BufferName;
+
+    public string TangentBufferName;
+    public string BiTangentBufferName;
+
     public string IndexBufferName;
     public string ShaderName;
     public string TextureName;
+    public string NormalTextureName;
     public int IndexAmount;
     public List<string> VertexAttributeList = new();
     private readonly Context_OpenGL _context;
@@ -24,21 +30,9 @@ namespace MegaLib.Render.Renderer.OpenGL
       _context = context;
     }
 
-    /*public void BindBuffer()
-    {
-      _context.BindBuffer(VertexBufferName);
-    }
-
-    public void BindElementBuffer()
-    {
-      _context.BindElementBuffer(IndexBufferName);
-    }*/
 
     public void DrawElements()
     {
-      // Bind
-      _context.BindBuffer(VertexBufferName);
-
       // Enable attributes
       foreach (var tuple in VertexAttributeList.Select(attribute => attribute.Split(" -> ")))
       {
@@ -49,9 +43,15 @@ namespace MegaLib.Render.Renderer.OpenGL
       _context.BindElementBuffer(IndexBufferName);
 
       // Has texture
+      uint slotId = 0;
       if (!string.IsNullOrEmpty(TextureName))
       {
-        _context.ActivateTexture(ShaderName, "uTextureColor", TextureName, 0);
+        _context.ActivateTexture(ShaderName, "uTextureColor", TextureName, slotId++);
+      }
+
+      if (!string.IsNullOrEmpty(NormalTextureName))
+      {
+        _context.ActivateTexture(ShaderName, "uNormalColor", NormalTextureName, slotId++);
       }
 
       // Draw
@@ -358,6 +358,15 @@ namespace MegaLib.Render.Renderer.OpenGL
 
       // Unbind
       OpenGL32.glBindBuffer(OpenGL32.GL_ARRAY_BUFFER, 0);
+    }
+
+    public void BindVector(string shaderProgram, string varName, Vector3 vector)
+    {
+      var programId = _shaderList[shaderProgram];
+      var uniformLocation = OpenGL32.glGetUniformLocation(programId, varName);
+      if (uniformLocation == -1) throw new Exception($"Uniform {varName} not found");
+
+      OpenGL32.glUniform3f(uniformLocation, vector.X, vector.Y, vector.Z);
     }
 
     public void BindMatrix(string shaderProgram, string varName, Matrix4x4 matrix)

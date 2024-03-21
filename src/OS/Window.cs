@@ -57,6 +57,11 @@ namespace MegaLib.OS
       }
     }
 
+    public byte[] GetSex()
+    {
+      return GDI32.GetImageBytesFromHDC(_hdc);
+    }
+
     public void InitOpenGL()
     {
       _hdc = User32.GetDC(_handleWindow);
