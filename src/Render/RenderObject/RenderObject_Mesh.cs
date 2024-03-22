@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using MegaLib.Mathematics.LinearAlgebra;
@@ -92,6 +93,7 @@ namespace MegaLib.Render.RenderObject
 
     public Texture_Base Texture;
     public Texture_Base NormalTexture;
+    public Texture_Base RoughnessTexture;
 
     public RenderObject_Mesh()
     {
@@ -163,6 +165,90 @@ namespace MegaLib.Render.RenderObject
       }
 
       GpuBiTangentList = v.ToArray();
+    }
+
+    public void CalculateNormals()
+    {
+      List<Vector3> normals = new List<Vector3>();
+
+      for (int i = 0; i < VertexList.Count; i++)
+      {
+        normals.Add(Vector3.Zero);
+      }
+
+      for (int i = 0; i < IndexList.Count; i += 3)
+      {
+        uint i0 = IndexList[i];
+        uint i1 = IndexList[i + 1];
+        uint i2 = IndexList[i + 2];
+
+        Vector3 v1 = VertexList[(int)i1] - VertexList[(int)i0];
+        Vector3 v2 = VertexList[(int)i2] - VertexList[(int)i0];
+        Vector3 normal = Vector3.Cross(v1, v2);
+
+        normals[(int)i0] += normal;
+        normals[(int)i1] += normal;
+        normals[(int)i2] += normal;
+      }
+
+      for (int i = 0; i < normals.Count; i++)
+      {
+        normals[i] = normals[i].Normalized;
+      }
+
+      NormalList = normals;
+    }
+
+    public static RenderObject_Mesh GenerateUVSphere(float radius, int longitudeSegments, int latitudeSegments)
+    {
+      List<Vector3> vertices = new List<Vector3>();
+      List<Vector2> uvs = new List<Vector2>();
+      List<uint> indices = new List<uint>();
+
+      for (int lat = 0; lat <= latitudeSegments; lat++)
+      {
+        float theta = lat * MathF.PI / latitudeSegments;
+        float sinTheta = MathF.Sin(theta);
+        float cosTheta = MathF.Cos(theta);
+
+        for (int lon = 0; lon <= longitudeSegments; lon++)
+        {
+          float phi = lon * 2 * MathF.PI / longitudeSegments;
+          float sinPhi = MathF.Sin(phi);
+          float cosPhi = MathF.Cos(phi);
+
+          float x = cosPhi * sinTheta;
+          float y = cosTheta;
+          float z = sinPhi * sinTheta;
+
+          vertices.Add(new Vector3(x, y, z) * radius);
+          uvs.Add(new Vector2((float)lon / longitudeSegments, (float)lat / latitudeSegments));
+        }
+      }
+
+      for (int lat = 0; lat < latitudeSegments; lat++)
+      {
+        for (int lon = 0; lon < longitudeSegments; lon++)
+        {
+          int current = lat * (longitudeSegments + 1) + lon;
+          int next = current + longitudeSegments + 1;
+
+          indices.Add((uint)current);
+          indices.Add((uint)next);
+          indices.Add((uint)current + 1);
+
+          indices.Add((uint)next);
+          indices.Add((uint)next + 1);
+          indices.Add((uint)current + 1);
+        }
+      }
+
+      var mesh = new RenderObject_Mesh();
+      mesh.UVList = uvs;
+      mesh.VertexList = vertices;
+      mesh.IndexList = indices;
+
+      return mesh;
     }
   }
 }

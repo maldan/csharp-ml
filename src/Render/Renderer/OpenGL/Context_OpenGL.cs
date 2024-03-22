@@ -17,10 +17,13 @@ namespace MegaLib.Render.Renderer.OpenGL
     public string TangentBufferName;
     public string BiTangentBufferName;
 
+    public Transform Transform;
+
     public string IndexBufferName;
     public string ShaderName;
     public string TextureName;
     public string NormalTextureName;
+    public string RoughnessTextureName;
     public int IndexAmount;
     public List<string> VertexAttributeList = new();
     private readonly Context_OpenGL _context;
@@ -29,7 +32,6 @@ namespace MegaLib.Render.Renderer.OpenGL
     {
       _context = context;
     }
-
 
     public void DrawElements()
     {
@@ -53,6 +55,14 @@ namespace MegaLib.Render.Renderer.OpenGL
       {
         _context.ActivateTexture(ShaderName, "uNormalColor", NormalTextureName, slotId++);
       }
+
+      if (!string.IsNullOrEmpty(RoughnessTextureName))
+      {
+        _context.ActivateTexture(ShaderName, "uRoughnessColor", RoughnessTextureName, slotId++);
+      }
+
+      _context.BindMatrix(ShaderName, "uModelMatrix", Transform.Matrix);
+
 
       // Draw
       OpenGL32.glDrawElements(OpenGL32.GL_TRIANGLES, IndexAmount, OpenGL32.GL_UNSIGNED_INT, IntPtr.Zero);
