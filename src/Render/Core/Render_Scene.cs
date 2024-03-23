@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using MegaLib.Render.Camera;
 using MegaLib.Render.RenderObject;
+using MegaLib.Render.Texture;
 
 namespace MegaLib.Render.Core
 {
@@ -9,6 +10,7 @@ namespace MegaLib.Render.Core
   {
     public Camera_Base Camera = new Camera_Perspective();
     public readonly List<Render_Layer> Pipeline = new();
+    public Texture_Cube Skybox;
 
     public void AddLayer(string name, Render_LayerType type)
     {

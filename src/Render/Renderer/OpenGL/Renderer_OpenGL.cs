@@ -28,10 +28,29 @@ namespace MegaLib.Render.Renderer.OpenGL
           case Render_LayerType.StaticMesh:
             InitStaticMeshLayer(layer);
             break;
+          case Render_LayerType.Skybox:
+            InitSkyboxLayer(layer);
+            var skybox = RenderObject_Mesh.GenerateCube(32);
+            skybox.Transform = new Transform();
+            layer.Add(skybox);
+            break;
           default:
             throw new Exception("Unsupported layer type");
         }
       }
+
+      // Init cube map
+      _context.CreateCubeTexture("main", _scene.Skybox.Width, _scene.Skybox.Height, new[]
+      {
+        _scene.Skybox.GPU_RIGHT,
+        _scene.Skybox.GPU_LEFT,
+
+        _scene.Skybox.GPU_TOP,
+        _scene.Skybox.GPU_BOTTOM,
+
+        _scene.Skybox.GPU_BACK,
+        _scene.Skybox.GPU_FRONT,
+      });
     }
 
     private void InitLineLayer(Render_Layer renderLayer)
@@ -177,6 +196,7 @@ namespace MegaLib.Render.Renderer.OpenGL
 
       // language=glsl
       var shaderPBR = @"#version 300 es
+        #pragma optimize(off)
         precision highp float;
         precision highp int;
         precision highp usampler2D;
@@ -229,6 +249,7 @@ namespace MegaLib.Render.Renderer.OpenGL
         }
         // Fragment
         #version 300 es
+        #pragma optimize(off)
         precision highp float;
         precision highp int;
         precision highp sampler2D;
@@ -246,24 +267,46 @@ namespace MegaLib.Render.Renderer.OpenGL
         uniform sampler2D uTextureColor;
         uniform sampler2D uNormalColor;
         uniform sampler2D uRoughnessColor;
+        uniform sampler2D uMetallicColor;
         
-        const float PI = 3.1415;
-        //const float PI = 3.141592653589793;
+        uniform samplerCube uSkybox;
+
+        //const float PI = 3.1415;
+        const float PI = 3.141592653589793;
         
         float ggxDistribution(float roughness, float nDotH) {
             float alpha2 = roughness * roughness * roughness * roughness;
             float d = nDotH * nDotH * (alpha2 - 1.0) + 1.0;
-            return alpha2 / (PI * d * d);
+            return alpha2 / max((PI * d * d), 0.000001);
         }
 
         float geomSmith(float roughness, float dp) {
             float k = (roughness + 1.0) * (roughness + 1.0) / 8.0;
-            float denom = dp * (1.0 - k) + k;
+            float denom = max(dp * (1.0 - k) + k, 0.000001);
             return dp / denom;
         }
         
         vec3 schlickFresnel(vec3 F0, float vDotH) {
             return F0 + (1.0 - F0) * pow(clamp(1.0 - vDotH, 0.0, 1.0), 5.0);
+        }
+
+        vec3 blurReflection(vec3 viewDirection, vec3 normal, float power) {
+            vec3 finalColor = vec3(0.0);
+            for (int i = -1; i < 2; i++) {
+              for (int j = -1; j < 2; j++) {
+                vec3 reflectedDir = reflect(viewDirection, normal + vec3(float(i) * power, float(j) * power, 0.0));
+                reflectedDir.y *= -1.0;
+                reflectedDir.x *= -1.0;
+                finalColor += textureLod(uSkybox, reflectedDir, power * 128.0).rgb;
+              }
+            }
+            
+            return finalColor / 9.0;
+        }
+
+        float remap(float value, float fromMin, float fromMax, float toMin, float toMax) {
+            float normalizedValue = (value - fromMin) / (fromMax - fromMin);
+            return mix(toMin, toMax, normalizedValue);
         }
         
         void main()
@@ -276,10 +319,13 @@ namespace MegaLib.Render.Renderer.OpenGL
             vec3 normal = texture(uNormalColor, vUV).xyz * 2.0 - 1.0;
             normal = normalize(vTBN * normal);
             
+            // Metallic
+            bool metallic = texture(uMetallicColor, vUV).r >= 0.5;
+            
             // Light
-           // vec3 vLightDirection = normalize(vec3(0.0, 1.0, 1.0));
+            // vec3 vLightDirection = normalize(vec3(0.0, 1.0, 1.0));
             // float nDotL = dot(normalize(normal.xyz), normalize(vLightDirection));
-            vec3 lightIntensity = vec3(1.0);
+            vec3 lightIntensity = vec3(2.0);
 
             // Vectors
             vec3 viewDirection = normalize(vCameraPosition - vPosition);
@@ -287,25 +333,67 @@ namespace MegaLib.Render.Renderer.OpenGL
             vec3 halfDir = normalize(lightDirection + viewDirection);
             
             // Dots
-            float nDotH = max(dot(normal, halfDir), 0.0);
-            float vDotH = max(dot(viewDirection, halfDir), 0.0);
-            float nDotL = max(dot(normal, lightDirection), 0.0);
-            float nDotV = max(dot(normal, viewDirection), 0.0);
+            float nDotH = max(dot(normal, halfDir), 0.001);
+            float vDotH = max(dot(viewDirection, halfDir), 0.001);
+            float nDotL = max(dot(normal, lightDirection), 0.02);
+            float nDotV = max(dot(normal, viewDirection), 0.001);
+            
+            // Roughness
+            float roughness = texture(uRoughnessColor, vUV).r;
+            if (roughness < 0.06) roughness = 0.06;
+            
+            // Reflection
+            /*vec3 reflectedDir = reflect(viewDirection, normal);
+            reflectedDir.y *= -1.0;
+            reflectedDir.x *= -1.0;
+            vec3 reflectedColor = textureLod(uSkybox, reflectedDir, roughness * 32.0).rgb;*/
+            
+            float sex = remap(roughness, 0.0, 1.0, 0.0, 4.0);
+            vec3 reflectedColor = blurReflection(viewDirection, normal, sex * 0.02);
 
             // PBR
-            float roughness = texture(uRoughnessColor, vUV).r;
-            vec3 F = schlickFresnel(vec3(0.04), vDotH);
+            vec3 FO = vec3(0.04);
+            
+            if (metallic) {
+                FO = texelColor.rgb;
+            }
+            
+            vec3 F = schlickFresnel(FO, vDotH);
             vec3 kS = F;
-            vec3 kD = 1.0 - kS;
+            vec3 kD = vec3(1.0) - kS;
             
-            vec3 specBRDF_nom = ggxDistribution(roughness, nDotH) * F * geomSmith(roughness, nDotL) * geomSmith(roughness, nDotV);
-            float specBRDF_denom = 4.0 * dot(normal, viewDirection) * dot(normal, lightDirection) + 0.0001;
-            vec3 specBRDF = specBRDF_nom / specBRDF_denom;
+            vec3 specBRDF_nom = ggxDistribution(roughness, nDotH) * 
+                F * 
+                geomSmith(roughness, nDotL) * 
+                geomSmith(roughness, nDotV);
+            float specBRDF_denom = 4.0 * nDotV * nDotL;
+            vec3 specBRDF = (specBRDF_nom / max(specBRDF_denom, 0.00001));
             
-            vec3 lambert = texelColor.rgb;
-            vec3 diffuseBRDF = kD * lambert / PI;
+            vec3 fLambert = vec3(0.0);
+            if (!metallic) {
+                fLambert = texelColor.rgb;
+            }
+            vec3 diffuseBRDF = kD * fLambert / PI;
             
-            vec3 finalColor = (diffuseBRDF + specBRDF) * lightIntensity * nDotL;
+            // Reflection
+            if (!metallic) {
+              reflectedColor *= pow(1.0 - roughness, 3.0) * 0.65;
+              float cosTheta = dot(normal, viewDirection);
+              float fresnelFactor = pow(1.0 - abs(cosTheta), 5.0);
+              if (fresnelFactor < 0.2) fresnelFactor = 0.2;
+              reflectedColor *= fresnelFactor;
+            } else {
+              float cosTheta = dot(normal, viewDirection);
+              float fresnelFactor = pow(1.0 - abs(cosTheta), (roughness) * 4.0 + 1.0);
+              if (fresnelFactor < 0.05) fresnelFactor = 0.05;
+              reflectedColor *= fresnelFactor;
+            }
+
+            float xxx = remap(roughness, 0.0, 1.0, 0.0, 2.0);
+            if (xxx > 1.0) xxx = 1.0;
+            // specBRDF = mix(reflectedColor, specBRDF, xxx);
+            // specBRDF *= 0.000001;
+            vec3 finalColor = (diffuseBRDF + specBRDF + reflectedColor) * lightIntensity * nDotL;
             
             // HDR
             finalColor = finalColor / (finalColor + vec3(1.0));
@@ -314,6 +402,49 @@ namespace MegaLib.Render.Renderer.OpenGL
             finalColor = pow(finalColor, vec3(1.0/2.2));
             
             color = vec4(finalColor, texelColor.a);
+            // color = vec4(schlickFresnel(vec3(1.0), vDotH), 1.0);
+        }".Replace("\r", "");
+
+      var tuple = shaderPBR.Split("// Fragment\n");
+      _context.CreateShader(renderLayer.Name, tuple[0], tuple[1]);
+    }
+
+    private void InitSkyboxLayer(Render_Layer renderLayer)
+    {
+      // language=glsl
+      var shaderPBR = @"#version 300 es
+        precision highp float;
+        precision highp int;
+        precision highp usampler2D;
+        precision highp sampler2D;
+
+        layout (location = 0) in vec3 aPosition;
+        
+        uniform mat4 uProjectionMatrix;
+        uniform mat4 uViewMatrix;
+        uniform mat4 uModelMatrix;
+
+        out vec3 vUV;
+        
+        void main() {
+            gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPosition.xyz, 1.0);
+            vUV = aPosition;
+        }
+        // Fragment
+        #version 300 es
+        
+        precision highp float;
+        precision highp int;
+        precision highp sampler2D;
+
+        in vec3 vUV;
+        out vec4 color;
+        
+        uniform samplerCube uSkybox;
+
+        void main()
+        {
+            color = texture(uSkybox, vUV);
         }".Replace("\r", "");
 
       var tuple = shaderPBR.Split("// Fragment\n");
@@ -390,6 +521,8 @@ namespace MegaLib.Render.Renderer.OpenGL
       _context.BindMatrix(layer.Name, "uProjectionMatrix", _scene.Camera.ProjectionMatrix);
       _context.BindMatrix(layer.Name, "uViewMatrix", _scene.Camera.ViewMatrix);
 
+      _context.ActivateCubeTexture(layer.Name, "uSkybox", "main", 10);
+
       // gl enable depth test
       OpenGL32.glEnable(OpenGL32.GL_DEPTH_TEST);
       OpenGL32.glDepthFunc(OpenGL32.GL_LEQUAL);
@@ -465,9 +598,83 @@ namespace MegaLib.Render.Renderer.OpenGL
             objectInfo.RoughnessTextureName = $"{layer.Name}_{mesh.Id}.roughnessTexture";
           }
 
+          if (mesh.MetallicTexture != null)
+          {
+            _context.CreateTexture($"{layer.Name}_{mesh.Id}.metallicTexture", mesh.MetallicTexture.GPU_RAW,
+              mesh.MetallicTexture.Options);
+            objectInfo.MetallicTextureName = $"{layer.Name}_{mesh.Id}.metallicTexture";
+          }
+
           // Set object
           _context.SetObjectInfo(mesh.Id, objectInfo);
         }
+
+        // gl draw arrays
+        objectInfo.DrawElements();
+      });
+
+      // Unbind
+      OpenGL32.glBindBuffer(OpenGL32.GL_ARRAY_BUFFER, 0);
+      OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
+
+    private void DrawSkyboxLayer(Render_Layer layer)
+    {
+      // User shader line
+      _context.UseProgram(layer.Name);
+
+      // gl blend fn
+      OpenGL32.glEnable(OpenGL32.GL_BLEND);
+      OpenGL32.glBlendFunc(OpenGL32.GL_SRC_ALPHA, OpenGL32.GL_ONE_MINUS_SRC_ALPHA);
+
+      // bind camera
+      var cp = _scene.Camera.Position.Inverted;
+
+      _context.BindMatrix(layer.Name, "uProjectionMatrix", _scene.Camera.ProjectionMatrix);
+      _context.BindMatrix(layer.Name, "uViewMatrix", _scene.Camera.ViewMatrix);
+      _context.ActivateCubeTexture(layer.Name, "uSkybox", "main", 10);
+
+      // gl enable depth test
+      OpenGL32.glEnable(OpenGL32.GL_DEPTH_TEST);
+      OpenGL32.glDepthFunc(OpenGL32.GL_LEQUAL);
+
+      // Draw each mesh
+      layer.ForEach<RenderObject_Mesh>(mesh =>
+      {
+        var objectInfo = _context.GetObjectInfo(mesh.Id);
+        if (objectInfo == null)
+        {
+          // Define object
+          objectInfo = new ObjectInfo_OpenGL(_context)
+          {
+            VertexBufferName = $"{layer.Name}_{mesh.Id}.vertex",
+            IndexBufferName = $"{layer.Name}_{mesh.Id}.index",
+            IndexAmount = mesh.GpuIndexList.Length,
+            ShaderName = layer.Name,
+
+            Transform = mesh.Transform,
+          };
+          objectInfo.VertexAttributeList = new List<string>
+          {
+            $"{objectInfo.VertexBufferName} -> aPosition:vec3",
+          };
+
+          // Create buffers
+          _context.CreateBuffer(objectInfo.VertexBufferName);
+          _context.CreateBuffer(objectInfo.IndexBufferName);
+
+          // gl upload buffers
+          _context.UploadBuffer(objectInfo.VertexBufferName, mesh.GpuVertexList);
+          _context.UploadElementBuffer(objectInfo.IndexBufferName, mesh.GpuIndexList);
+
+          // Set object
+          _context.SetObjectInfo(mesh.Id, objectInfo);
+        }
+
+        var p = _scene.Camera.Position;
+        p.Z *= -1;
+        mesh.Transform.Position = p;
+        mesh.Transform.Scale = new Vector3(1.0f, 1.0f, -1.0f);
 
         // gl draw arrays
         objectInfo.DrawElements();
@@ -496,6 +703,9 @@ namespace MegaLib.Render.Renderer.OpenGL
             break;
           case Render_LayerType.StaticMesh:
             DrawStaticMeshLayer(layer);
+            break;
+          case Render_LayerType.Skybox:
+            DrawSkyboxLayer(layer);
             break;
           default:
             throw new Exception("Unsupported layer");

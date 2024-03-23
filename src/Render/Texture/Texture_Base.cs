@@ -41,6 +41,7 @@ namespace MegaLib.Render.Texture
       Options.Format = TextureFormat.RGBA8;
       Options.FiltrationMode = TextureFiltrationMode.Linear;
       Options.WrapMode = TextureWrapMode.Repeat;
+      Options.UseMipMaps = true;
 
       GPU_RAW = new byte[] { 255, 0, 0, 255 };
       Options.Width = 1;

@@ -24,6 +24,8 @@ namespace MegaLib.Render.Renderer.OpenGL
     public string TextureName;
     public string NormalTextureName;
     public string RoughnessTextureName;
+    public string MetallicTextureName;
+
     public int IndexAmount;
     public List<string> VertexAttributeList = new();
     private readonly Context_OpenGL _context;
@@ -61,8 +63,15 @@ namespace MegaLib.Render.Renderer.OpenGL
         _context.ActivateTexture(ShaderName, "uRoughnessColor", RoughnessTextureName, slotId++);
       }
 
-      _context.BindMatrix(ShaderName, "uModelMatrix", Transform.Matrix);
+      if (!string.IsNullOrEmpty(MetallicTextureName))
+      {
+        _context.ActivateTexture(ShaderName, "uMetallicColor", MetallicTextureName, slotId++);
+      }
 
+      if (_context.HasUniform(ShaderName, "uModelMatrix"))
+      {
+        _context.BindMatrix(ShaderName, "uModelMatrix", Transform.Matrix);
+      }
 
       // Draw
       OpenGL32.glDrawElements(OpenGL32.GL_TRIANGLES, IndexAmount, OpenGL32.GL_UNSIGNED_INT, IntPtr.Zero);
@@ -74,6 +83,7 @@ namespace MegaLib.Render.Renderer.OpenGL
     private readonly Dictionary<string, uint> _bufferList = new();
     private readonly Dictionary<string, uint> _shaderList = new();
     private readonly Dictionary<string, uint> _textureList = new();
+    private readonly Dictionary<string, uint> _cubeTextureList = new();
     private readonly Dictionary<string, TextureOptions> _textureOptionsList = new();
     private readonly Dictionary<ulong, ObjectInfo_OpenGL> _objectInfo = new();
 
@@ -145,6 +155,60 @@ namespace MegaLib.Render.Renderer.OpenGL
       OpenGL32.glDeleteShader(fragmentShaderId);
 
       _shaderList.Add(name, shaderProgram);
+    }
+
+    public void CreateCubeTexture(string name, int width, int height, byte[][] pixels)
+    {
+      uint textureId = 0;
+      OpenGL32.glCreateTextures(OpenGL32.GL_TEXTURE_CUBE_MAP, 1, ref textureId);
+      if (textureId == 0) throw new Exception("Can't create cube texture");
+      _cubeTextureList.Add(name, textureId);
+
+      // Internal opengl params
+
+      // At least 1 pixel size
+      var internalFormat = (int)OpenGL32.GL_RGBA;
+      var srcFormat = OpenGL32.GL_RGBA;
+      var srcType = OpenGL32.GL_UNSIGNED_BYTE;
+
+      // Bind
+      OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_CUBE_MAP, textureId);
+
+      // Fill texture
+      for (var i = 0; i < 6; i++)
+      {
+        var pixelPtr = Marshal.UnsafeAddrOfPinnedArrayElement(pixels[i], 0);
+        OpenGL32.glTexImage2D(
+          OpenGL32.GL_TEXTURE_CUBE_MAP_POSITIVE_X + (uint)i,
+          0,
+          internalFormat,
+          width,
+          height,
+          0,
+          srcFormat,
+          srcType,
+          pixelPtr
+        );
+      }
+
+
+      // Filtration and wrap
+      OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_CUBE_MAP, OpenGL32.GL_TEXTURE_MIN_FILTER,
+        (int)OpenGL32.GL_LINEAR_MIPMAP_LINEAR);
+      OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_CUBE_MAP, OpenGL32.GL_TEXTURE_MAG_FILTER,
+        (int)OpenGL32.GL_LINEAR_MIPMAP_LINEAR);
+      OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_CUBE_MAP, OpenGL32.GL_TEXTURE_WRAP_S,
+        (int)OpenGL32.GL_CLAMP_TO_EDGE);
+      OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_CUBE_MAP, OpenGL32.GL_TEXTURE_WRAP_T,
+        (int)OpenGL32.GL_CLAMP_TO_EDGE);
+      OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_CUBE_MAP, OpenGL32.GL_TEXTURE_WRAP_R,
+        (int)OpenGL32.GL_CLAMP_TO_EDGE);
+
+      // Генерация мипмапов для остальных уровней
+      OpenGL32.glGenerateMipmap(OpenGL32.GL_TEXTURE_CUBE_MAP);
+
+      // Unbind
+      OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_CUBE_MAP, 0);
     }
 
     public void CreateTexture(string name, byte[] pixels, TextureOptions options)
@@ -235,6 +299,7 @@ namespace MegaLib.Render.Renderer.OpenGL
           OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_MIN_FILTER,
             (int)OpenGL32.GL_LINEAR_MIPMAP_LINEAR);
           OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_MAG_FILTER, (int)OpenGL32.GL_LINEAR);
+          OpenGL32.glGenerateMipmap(OpenGL32.GL_TEXTURE_2D);
           break;
         case TextureFiltrationMode.Linear:
           OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_MIN_FILTER, (int)OpenGL32.GL_LINEAR);
@@ -379,6 +444,13 @@ namespace MegaLib.Render.Renderer.OpenGL
       OpenGL32.glUniform3f(uniformLocation, vector.X, vector.Y, vector.Z);
     }
 
+    public bool HasUniform(string shaderProgram, string varName)
+    {
+      var programId = _shaderList[shaderProgram];
+      var uniformLocation = OpenGL32.glGetUniformLocation(programId, varName);
+      return uniformLocation != -1;
+    }
+
     public void BindMatrix(string shaderProgram, string varName, Matrix4x4 matrix)
     {
       var programId = _shaderList[shaderProgram];
@@ -396,6 +468,24 @@ namespace MegaLib.Render.Renderer.OpenGL
       // Bind texture
       var textureId = _textureList[textureName];
       OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, textureId);
+
+      // Get shader.varName location
+      var programId = _shaderList[shaderName];
+      var uniformLocation = OpenGL32.glGetUniformLocation(programId, varName);
+      if (uniformLocation == -1) throw new Exception($"Uniform {varName} not found");
+
+      // Set shader.varName = slot;
+      OpenGL32.glUniform1i(uniformLocation, (int)slot);
+    }
+
+    public void ActivateCubeTexture(string shaderName, string varName, string textureName, uint slot)
+    {
+      // Activate slot texture
+      OpenGL32.glActiveTexture(OpenGL32.GL_TEXTURE0 + slot);
+
+      // Bind texture
+      var textureId = _cubeTextureList[textureName];
+      OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_CUBE_MAP, textureId);
 
       // Get shader.varName location
       var programId = _shaderList[shaderName];

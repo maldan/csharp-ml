@@ -2160,6 +2160,12 @@ namespace MegaLib.OS.Api
       return Marshal.GetDelegateForFunctionPointer<glUnmapBufferDelegate>(ptr)(target);
     }
 
+    public static void glGenerateMipmap(GLuint target)
+    {
+      var ptr = wglGetProcAddress("glGenerateMipmap");
+      Marshal.GetDelegateForFunctionPointer<glOneUint>(ptr)(target);
+    }
+
     /*public static void glDrawElements(GLenum mode, GLsizei count, GLenum type, IntPtr indices)
     {
       var ptr = wglGetProcAddress("glDrawElements");

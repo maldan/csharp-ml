@@ -10,6 +10,7 @@ namespace MegaLib.Render.Core
     DynamicLine,
     StaticMesh,
     SkinnedMesh,
+    Skybox,
   }
 
   public class Render_Layer
