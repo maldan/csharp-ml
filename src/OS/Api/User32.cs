@@ -64,5 +64,9 @@ namespace MegaLib.OS.Api
     // Подключаем библиотеку user32.dll для использования функции GetAsyncKeyState
     [DllImport("user32.dll")]
     public static extern short GetAsyncKeyState(int vKey);
+
+    // Импортируем функцию GetForegroundWindow из user32.dll
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetForegroundWindow();
   }
 }

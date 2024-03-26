@@ -11,13 +11,15 @@ namespace MegaLib.Render.Texture
     public byte[] GPU_LEFT { get; set; }
     public byte[] GPU_RIGHT { get; set; }
 
-    public ushort Width;
-    public ushort Height;
+    public TextureOptions Options;
 
     public Texture_Cube()
     {
-      Width = 4;
-      Height = 4;
+      Options = new TextureOptions();
+      Options.Width = 4;
+      Options.Height = 4;
+      Options.FiltrationMode = TextureFiltrationMode.Linear;
+      Options.UseMipMaps = true;
 
       GPU_TOP = new byte[]
       {

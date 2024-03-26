@@ -32,7 +32,9 @@ namespace MegaLib.Render.Texture
 
   public class Texture_Base
   {
-    public int Id;
+    private static ulong _nextId = 1;
+
+    public ulong Id;
     public TextureOptions Options;
     public byte[] GPU_RAW { get; set; }
 
@@ -46,6 +48,8 @@ namespace MegaLib.Render.Texture
       GPU_RAW = new byte[] { 255, 0, 0, 255 };
       Options.Width = 1;
       Options.Height = 1;
+
+      Id = _nextId++;
     }
 
     /*public Texture_Base(byte[] data)

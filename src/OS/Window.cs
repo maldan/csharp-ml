@@ -16,6 +16,16 @@ namespace MegaLib.OS
     public Action OnClose;
     public Action OnCreated;
     public Action OnPaint;
+    public Action<int, int> OnResize;
+
+    public bool IsFocused
+    {
+      get
+      {
+        var foregroundWindow = User32.GetForegroundWindow();
+        return foregroundWindow == _handleWindow;
+      }
+    }
 
     public void Run()
     {
@@ -51,6 +61,11 @@ namespace MegaLib.OS
           User32.DestroyWindow(hWnd);
           User32.UnregisterClass(_className, _hInstance);
           User32.PostQuitMessage(0);
+          return IntPtr.Zero;
+        case WinApi.WM_SIZE:
+          var width = (int)(lParam.ToInt64() & 0xFFFF);
+          var height = (int)((lParam.ToInt64() >> 16) & 0xFFFF);
+          OnResize?.Invoke(width, height);
           return IntPtr.Zero;
         default:
           return User32.DefWindowProc(hWnd, msg, wParam, lParam);

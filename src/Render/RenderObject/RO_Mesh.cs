@@ -6,7 +6,7 @@ using MegaLib.Render.Texture;
 
 namespace MegaLib.Render.RenderObject
 {
-  public class RenderObject_Mesh : RenderObject_Base
+  public class RO_Mesh : RO_Base
   {
     public string Name = "";
 
@@ -96,7 +96,7 @@ namespace MegaLib.Render.RenderObject
     public Texture_Base RoughnessTexture;
     public Texture_Base MetallicTexture;
 
-    public RenderObject_Mesh()
+    public RO_Mesh()
     {
       Transform = new Transform();
     }
@@ -200,7 +200,7 @@ namespace MegaLib.Render.RenderObject
       NormalList = normals;
     }
 
-    public static RenderObject_Mesh GenerateUVSphere(float radius, int longitudeSegments, int latitudeSegments)
+    public static RO_Mesh GenerateUVSphere(float radius, int longitudeSegments, int latitudeSegments)
     {
       List<Vector3> vertices = new List<Vector3>();
       List<Vector2> uvs = new List<Vector2>();
@@ -244,7 +244,7 @@ namespace MegaLib.Render.RenderObject
         }
       }
 
-      var mesh = new RenderObject_Mesh();
+      var mesh = new RO_Mesh();
       mesh.UVList = uvs;
       mesh.VertexList = vertices;
       mesh.IndexList = indices;
@@ -252,9 +252,9 @@ namespace MegaLib.Render.RenderObject
       return mesh;
     }
 
-    public static RenderObject_Mesh GenerateCube(float size)
+    public static RO_Mesh GenerateCube(float size)
     {
-      var m = new RenderObject_Mesh();
+      var m = new RO_Mesh();
       var vertices = new List<Vector3>();
       var normals = new List<Vector3>();
       var uv = new List<Vector2>();

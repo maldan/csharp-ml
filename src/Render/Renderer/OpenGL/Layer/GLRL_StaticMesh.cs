@@ -1,62 +1,19 @@
-using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Runtime.InteropServices;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Core;
 using MegaLib.Render.Core.Layer;
-using MegaLib.Render.Renderer.OpenGL.Layer;
 using MegaLib.Render.RenderObject;
 
-namespace MegaLib.Render.Renderer.OpenGL
+namespace MegaLib.Render.Renderer.OpenGL.Layer
 {
-  public class Renderer_OpenGL : IRenderer
+  public class GLRL_StaticMesh : GLRL_Base
   {
-    private readonly Context_OpenGL _context = new();
-    private Render_Scene _scene;
-    private readonly Dictionary<string, GLRL_Base> _glLayer = new();
-
-    public void SetScene(Render_Scene scene)
+    public GLRL_StaticMesh(Context_OpenGL context, RL_Base layer, Render_Scene scene) : base(context, layer, scene)
     {
-      _scene = scene;
-
-      foreach (var layer in scene.Pipeline)
-      {
-        switch (layer)
-        {
-          case RL_StaticLine:
-            _glLayer[layer.Name] = new GLRL_Line(_context, layer, _scene);
-            _glLayer[layer.Name].Init();
-            break;
-          case RL_StaticMesh mesh:
-            _glLayer[layer.Name] = new GLRL_StaticMesh(_context, layer, _scene);
-            _glLayer[layer.Name].Init();
-            break;
-          case RL_Skybox:
-            _glLayer[layer.Name] = new GLRL_Skybox(_context, layer, _scene);
-            _glLayer[layer.Name].Init();
-            break;
-          default:
-            throw new Exception("Unsupported layer type");
-        }
-      }
-
-      // Init cube map
-      _context.CreateCubeTexture("main", new[]
-      {
-        _scene.Skybox.GPU_RIGHT,
-        _scene.Skybox.GPU_LEFT,
-
-        _scene.Skybox.GPU_TOP,
-        _scene.Skybox.GPU_BOTTOM,
-
-        _scene.Skybox.GPU_BACK,
-        _scene.Skybox.GPU_FRONT,
-      }, _scene.Skybox.Options);
     }
 
-    private void InitStaticMeshLayer(RL_StaticMesh renderLayer)
+    public override void Init()
     {
       var shader = @"#version 300 es
         precision highp float;
@@ -400,60 +357,192 @@ namespace MegaLib.Render.Renderer.OpenGL
         }".Replace("\r", "");
 
       var tuple = shaderPBR.Split("// Fragment\n");
-      _context.CreateShader(renderLayer.Name, tuple[0], tuple[1]);
+      Context.CreateShader(Layer.Name, tuple[0], tuple[1]);
     }
 
-    private void InitSkyboxLayer(RL_Skybox renderLayer)
+    public override void Render()
     {
-    }
+      var layer = (RL_StaticMesh)Layer;
 
-    private void DrawStaticMeshLayer(RL_StaticMesh layer)
-    {
-    }
+      // User shader line
+      Context.UseProgram(layer.Name);
 
-    private void DrawSkyboxLayer(RL_Skybox layer)
-    {
-    }
+      // gl blend fn
+      OpenGL32.glEnable(OpenGL32.GL_BLEND);
+      OpenGL32.glBlendFunc(OpenGL32.GL_SRC_ALPHA, OpenGL32.GL_ONE_MINUS_SRC_ALPHA);
 
-    public void Clear()
-    {
-      OpenGL32.glClear(OpenGL32.GL_COLOR_BUFFER_BIT | OpenGL32.GL_DEPTH_BUFFER_BIT);
-      OpenGL32.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    }
+      // bind camera
+      // var cp = _scene.Camera.Position.Inverted;
+      // _context.BindVector(layer.Name, "uCameraPosition", cp);
+      // _context.BindVector(layer.Name, "uLightPosition", new Vector3(0, 0, -2));
+      Context.BindMatrix(layer.Name, "uProjectionMatrix", Scene.Camera.ProjectionMatrix);
+      Context.BindMatrix(layer.Name, "uViewMatrix", Scene.Camera.ViewMatrix);
 
-    public void Render()
-    {
-      foreach (var layer in _scene.Pipeline)
+      Context.ActivateCubeTexture(layer.Name, "uSkybox", "main", 10);
+
+      // gl enable depth test
+      OpenGL32.glEnable(OpenGL32.GL_DEPTH_TEST);
+      OpenGL32.glDepthFunc(OpenGL32.GL_LEQUAL);
+
+      // Draw each mesh
+      layer.ForEach<RO_Mesh>(mesh =>
       {
-        if (_glLayer.ContainsKey(layer.Name)) _glLayer[layer.Name].Render();
-
-        /*switch (layer)
+        var objectInfo = Context.GetObjectInfo(mesh.Id);
+        if (objectInfo == null)
         {
-          case RL_StaticLine:
-            _glLayer[layer.Name].Render();
-            // DrawLineLayer(line);
-            break;
-          case RL_StaticMesh mesh:
-            DrawStaticMeshLayer(mesh);
-            break;
-          case RL_Skybox:
-            // DrawSkyboxLayer(skybox);
-            break;
-          default:
-            throw new Exception("Unsupported layer");
-        }*/
-      }
-    }
+          // Define object
+          objectInfo = new ObjectInfo_OpenGL(Context)
+          {
+            // Id
+            MeshId = mesh.Id,
 
-    public byte[] GetScreen()
-    {
-      var width = 800;
-      var height = 600;
-      var pixels = new byte[width * height * 4];
-      var pixelsPtr = Marshal.UnsafeAddrOfPinnedArrayElement(pixels, 0);
-      OpenGL32.glReadPixels(0, 0, width, height, OpenGL32.GL_RGBA, OpenGL32.GL_UNSIGNED_BYTE, pixelsPtr);
+            VertexBufferName = $"{layer.Name}_{mesh.Id}.vertex",
+            UV0BufferName = $"{layer.Name}_{mesh.Id}.uv0",
+            NormalBufferName = $"{layer.Name}_{mesh.Id}.normal",
 
-      return pixels;
+            TangentBufferName = $"{layer.Name}_{mesh.Id}.tangent",
+            BiTangentBufferName = $"{layer.Name}_{mesh.Id}.biTangent",
+
+            IndexBufferName = $"{layer.Name}_{mesh.Id}.index",
+            IndexAmount = mesh.GpuIndexList.Length,
+            ShaderName = layer.Name,
+
+            Transform = mesh.Transform,
+          };
+
+          objectInfo.VertexAttributeList = new List<string>
+          {
+            $"{objectInfo.VertexBufferName} -> aPosition:vec3",
+            $"{objectInfo.UV0BufferName} -> aUV:vec2",
+            $"{objectInfo.NormalBufferName} -> aNormal:vec3",
+
+            $"{objectInfo.TangentBufferName} -> aTangent:vec3",
+            $"{objectInfo.BiTangentBufferName} -> aBiTangent:vec3",
+          };
+
+          // Create buffers
+          Context.CreateBuffer(objectInfo.VertexBufferName);
+          Context.CreateBuffer(objectInfo.UV0BufferName);
+          Context.CreateBuffer(objectInfo.NormalBufferName);
+          Context.CreateBuffer(objectInfo.TangentBufferName);
+          Context.CreateBuffer(objectInfo.BiTangentBufferName);
+          Context.CreateBuffer(objectInfo.IndexBufferName);
+
+          // gl upload buffers
+          Context.UploadBuffer(objectInfo.VertexBufferName, mesh.GpuVertexList);
+          Context.UploadBuffer(objectInfo.UV0BufferName, mesh.GpuUVList);
+          Context.UploadBuffer(objectInfo.NormalBufferName, mesh.GpuNormalList);
+          Context.UploadBuffer(objectInfo.TangentBufferName, mesh.GpuTangentList);
+          Context.UploadBuffer(objectInfo.BiTangentBufferName, mesh.GpuBiTangentList);
+          Context.UploadElementBuffer(objectInfo.IndexBufferName, mesh.GpuIndexList);
+
+          // _context.BindMatrix(layer.Name, "uModelMatrix", mesh.Transform.Matrix);
+
+          // Mesh has texture
+          /*if (mesh.Texture != null)
+          {
+            objectInfo.TextureId = mesh.Texture.Id;
+            objectInfo.TextureName = $"{layer.Name}_{mesh.Texture.Id}.texture";
+            _context.CreateTexture(objectInfo.TextureName, mesh.Texture.GPU_RAW, mesh.Texture.Options);
+          }
+
+          if (mesh.NormalTexture != null)
+          {
+            objectInfo.NormalTextureId = mesh.NormalTexture.Id;
+            objectInfo.NormalTextureName = $"{layer.Name}_{mesh.NormalTexture.Id}.normalTexture";
+            _context.CreateTexture(objectInfo.NormalTextureName, mesh.NormalTexture.GPU_RAW,
+              mesh.NormalTexture.Options);
+          }
+
+          if (mesh.RoughnessTexture != null)
+          {
+            _context.CreateTexture($"{layer.Name}_{mesh.Texture.Id}.roughnessTexture", mesh.RoughnessTexture.GPU_RAW,
+              mesh.RoughnessTexture.Options);
+            objectInfo.RoughnessTextureName = $"{layer.Name}_{mesh.Texture.Id}.roughnessTexture";
+          }
+
+          if (mesh.MetallicTexture != null)
+          {
+            _context.CreateTexture($"{layer.Name}_{mesh.Texture.Id}.metallicTexture", mesh.MetallicTexture.GPU_RAW,
+              mesh.MetallicTexture.Options);
+            objectInfo.MetallicTextureName = $"{layer.Name}_{mesh.Texture.Id}.metallicTexture";
+          }*/
+
+          // Set object
+          Context.SetObjectInfo(mesh.Id, objectInfo);
+        }
+
+        if (mesh.Texture != null)
+        {
+          if (objectInfo.TextureId != mesh.Texture.Id)
+          {
+            // Remove old
+            if (!string.IsNullOrEmpty(objectInfo.TextureName)) Context.DeleteTexture(objectInfo.TextureName);
+
+            // Create new
+            objectInfo.TextureId = mesh.Texture.Id;
+            objectInfo.TextureName = $"{layer.Name}_{mesh.Texture.Id}.texture";
+            Context.CreateTexture(objectInfo.TextureName, mesh.Texture.GPU_RAW, mesh.Texture.Options);
+          }
+        }
+
+        if (mesh.NormalTexture != null)
+        {
+          if (objectInfo.NormalTextureId != mesh.NormalTexture.Id)
+          {
+            // Remove old
+            if (!string.IsNullOrEmpty(objectInfo.NormalTextureName))
+              Context.DeleteTexture(objectInfo.NormalTextureName);
+
+            // Create new
+            objectInfo.NormalTextureId = mesh.NormalTexture.Id;
+            objectInfo.NormalTextureName = $"{layer.Name}_{mesh.NormalTexture.Id}.normalTexture";
+            Context.CreateTexture(objectInfo.NormalTextureName, mesh.NormalTexture.GPU_RAW,
+              mesh.NormalTexture.Options);
+          }
+        }
+
+        if (mesh.RoughnessTexture != null)
+        {
+          if (objectInfo.RoughnessTextureId != mesh.RoughnessTexture.Id)
+          {
+            // Remove old
+            if (!string.IsNullOrEmpty(objectInfo.RoughnessTextureName))
+              Context.DeleteTexture(objectInfo.RoughnessTextureName);
+
+            // Create new
+            objectInfo.RoughnessTextureId = mesh.RoughnessTexture.Id;
+            objectInfo.RoughnessTextureName = $"{layer.Name}_{mesh.RoughnessTexture.Id}.roughnessTexture";
+            Context.CreateTexture(objectInfo.RoughnessTextureName, mesh.RoughnessTexture.GPU_RAW,
+              mesh.RoughnessTexture.Options);
+          }
+        }
+
+        if (mesh.MetallicTexture != null)
+        {
+          if (objectInfo.MetallicTextureId != mesh.MetallicTexture.Id)
+          {
+            // Remove old
+            if (!string.IsNullOrEmpty(objectInfo.MetallicTextureName))
+              Context.DeleteTexture(objectInfo.MetallicTextureName);
+
+            // Create new
+            objectInfo.MetallicTextureId = mesh.MetallicTexture.Id;
+            objectInfo.MetallicTextureName = $"{layer.Name}_{mesh.MetallicTexture.Id}.metallicTexture";
+            Context.CreateTexture(
+              objectInfo.MetallicTextureName,
+              mesh.MetallicTexture.GPU_RAW,
+              mesh.MetallicTexture.Options);
+          }
+        }
+
+        // gl draw arrays
+        objectInfo.DrawElements();
+      });
+
+      // Unbind
+      OpenGL32.glBindBuffer(OpenGL32.GL_ARRAY_BUFFER, 0);
+      OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, 0);
     }
   }
 }

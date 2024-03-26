@@ -1891,6 +1891,10 @@ namespace MegaLib.OS.Api
     [DllImport("opengl32.dll")]
     public static extern void glReadPixels(int x, int y, int width, int height, uint format, uint type, IntPtr pixels);
 
+    // Импорт функции glViewport из библиотеки OpenGL
+    [DllImport("opengl32.dll", CallingConvention = CallingConvention.Winapi)]
+    public static extern void glViewport(int x, int y, int width, int height);
+
     public static void PrintGlError()
     {
       var error = glGetError();
@@ -1929,6 +1933,12 @@ namespace MegaLib.OS.Api
     {
       var ptr = wglGetProcAddress("glCreateTextures");
       Marshal.GetDelegateForFunctionPointer<glCreateTexturesDelegate>(ptr)(target, n, ref textures);
+    }
+
+    public static void glDeleteTextures(GLsizei n, GLuint[] textures)
+    {
+      var ptr = wglGetProcAddress("glDeleteTextures");
+      Marshal.GetDelegateForFunctionPointer<glDeleteTexturesDelegate>(ptr)(n, textures);
     }
 
     public static void glBindBuffer(uint type, uint bufferId)
@@ -2179,6 +2189,8 @@ namespace MegaLib.OS.Api
     private delegate void glGenBuffersDelegate(int n, ref uint buffers);
 
     private delegate void glCreateTexturesDelegate(GLenum target, GLsizei n, ref GLuint buffers);
+
+    private delegate void glDeleteTexturesDelegate(GLsizei n, GLuint[] buffers);
 
     private delegate void glBindBufferDelegate(uint type, uint bufferId);
 

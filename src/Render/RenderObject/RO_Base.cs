@@ -2,7 +2,7 @@ using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Render.RenderObject
 {
-  public class RenderObject_Base
+  public class RO_Base
   {
     private static ulong _nextId = 1;
 
@@ -10,7 +10,7 @@ namespace MegaLib.Render.RenderObject
     public int RenderOrderPriority;
     public Transform Transform;
 
-    protected RenderObject_Base()
+    protected RO_Base()
     {
       Id = _nextId++;
     }
