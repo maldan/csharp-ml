@@ -18,6 +18,8 @@ namespace MegaLib.Render.Texture
     BGR8,
     RGB8,
     RGBA8,
+    BGRA8,
+    R32F,
   }
 
   public struct TextureOptions
@@ -37,6 +39,7 @@ namespace MegaLib.Render.Texture
     public ulong Id;
     public TextureOptions Options;
     public byte[] GPU_RAW { get; set; }
+    public bool IsChanged;
 
     public Texture_Base()
     {

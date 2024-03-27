@@ -2128,6 +2128,12 @@ namespace MegaLib.OS.Api
         pointer);
     }
 
+    public static void glVertexAttribIPointer(uint index, int size, uint type, int stride, IntPtr pointer)
+    {
+      var ptr = wglGetProcAddress("glVertexAttribIPointer");
+      Marshal.GetDelegateForFunctionPointer<glVertexAttribIPointerDelegate>(ptr)(index, size, type, stride, pointer);
+    }
+
     /*public static void glDrawArrays(uint mode, int first, int count)
     {
       var ptr = wglGetProcAddress("glDrawArrays");
@@ -2229,6 +2235,9 @@ namespace MegaLib.OS.Api
     private delegate void glDrawElementsDelegate(GLenum mode, GLsizei count, GLenum type, IntPtr indices);
 
     private delegate void glVertexAttribPointerDelegate(uint index, int size, uint type, bool normalized, int stride,
+      IntPtr pointer);
+
+    private delegate void glVertexAttribIPointerDelegate(uint index, int size, uint type, int stride,
       IntPtr pointer);
   }
 }

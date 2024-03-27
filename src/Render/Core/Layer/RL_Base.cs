@@ -4,15 +4,6 @@ using MegaLib.Render.RenderObject;
 
 namespace MegaLib.Render.Core.Layer
 {
-  /*public enum Render_LayerType
-  {
-    StaticLine,
-    DynamicLine,
-    StaticMesh,
-    SkinnedMesh,
-    Skybox,
-  }*/
-
   public class RL_StaticLine : RL_Base
   {
     public float LineWidth = 1.0f;
@@ -20,6 +11,10 @@ namespace MegaLib.Render.Core.Layer
   }
 
   public class RL_StaticMesh : RL_Base
+  {
+  }
+
+  public class RL_SkinnedMesh : RL_Base
   {
   }
 

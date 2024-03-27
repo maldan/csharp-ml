@@ -84,11 +84,65 @@ namespace MegaLib.Render.RenderObject
       }
     }
 
+    private List<Vector4> _boneWeightList = new();
+
+    public List<Vector4> BoneWeightList
+    {
+      get => _boneWeightList;
+      set
+      {
+        _boneWeightList = value;
+
+        var v = new List<float>();
+        for (var i = 0; i < value.Count; i++)
+        {
+          v.Add(value[i].X);
+          v.Add(value[i].Y);
+          v.Add(value[i].Z);
+          v.Add(value[i].W);
+        }
+
+        GpuBoneWeightList = v.ToArray();
+      }
+    }
+
+    private List<Vector4Int> _boneIndexList = new();
+
+    public List<Vector4Int> BoneIndexList
+    {
+      get => _boneIndexList;
+      set
+      {
+        _boneIndexList = value;
+
+        var v = new List<byte>();
+        for (var i = 0; i < value.Count; i++)
+        {
+          v.Add((byte)value[i].X);
+          v.Add((byte)value[i].Y);
+          v.Add((byte)value[i].Z);
+          v.Add((byte)value[i].W);
+        }
+
+        var uintArray = new uint[v.Count / 4];
+        for (var i = 0; i < uintArray.Length; i++)
+        {
+          uintArray[i] = BitConverter.ToUInt32(v.ToArray(), i * 4);
+        }
+
+        GpuBoneIndexList = uintArray;
+      }
+    }
+
     public float[] GpuVertexList { get; private set; }
     public float[] GpuNormalList { get; private set; }
     public float[] GpuTangentList { get; private set; }
     public float[] GpuBiTangentList { get; private set; }
     public float[] GpuUVList { get; private set; }
+
+    public float[] GpuBoneWeightList { get; private set; }
+    public uint[] GpuBoneIndexList { get; private set; }
+
     public uint[] GpuIndexList { get; private set; }
 
     public Texture_Base Texture;

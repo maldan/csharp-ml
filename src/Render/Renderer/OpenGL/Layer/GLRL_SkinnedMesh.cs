@@ -7,9 +7,9 @@ using MegaLib.Render.RenderObject;
 
 namespace MegaLib.Render.Renderer.OpenGL.Layer
 {
-  public class GLRL_StaticMesh : GLRL_Base
+  public class GLRL_SkinnedMesh : GLRL_Base
   {
-    public GLRL_StaticMesh(Context_OpenGL context, RL_Base layer, Render_Scene scene) : base(context, layer, scene)
+    public GLRL_SkinnedMesh(Context_OpenGL context, RL_Base layer, Render_Scene scene) : base(context, layer, scene)
     {
     }
 
@@ -28,18 +28,60 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
         layout (location = 2) in vec3 aBiTangent;
         layout (location = 3) in vec2 aUV;
         layout (location = 4) in vec3 aNormal;
+        layout (location = 5) in vec4 aBoneWeight;
+        layout (location = 6) in uint aBoneIndex;
         
         uniform mat4 uProjectionMatrix;
         uniform mat4 uViewMatrix;
-        uniform mat4 uModelMatrix;
-
-        uniform vec3 uLightPosition;
-        uniform vec3 uCameraPosition;
+        uniform sampler2D uBone;
         
         out vec3 vPosition;
         out vec3 vCameraPosition;
         out vec2 vUV;
         out mat3 vTBN;
+        
+        ivec2 getObjectTexelById(uint id, int ch) {
+            int pixel = (int(id) * 10 + ch);
+            return ivec2(pixel % 512, pixel / 512);
+        }
+
+        ivec2 getBoneTexelById(uint id, int ch) {
+            int pixel = (int(id) * 16 + ch);
+            return ivec2(pixel % 64, pixel / 64);
+        }
+
+        uvec4 unpackIndex(uint id) {
+            uint r = uint((id >> 24u) & 0xFFu);
+            uint g = uint((id >> 16u) & 0xFFu);
+            uint b = uint((id >> 8u) & 0xFFu);
+            uint a = uint(id & 0xFFu);
+            return uvec4(r, g, b, a);
+        }
+
+        mat4 getInverseBindMatrix(uint id) {
+            vec4 m1 = texelFetch(uBone, getBoneTexelById(id, 0), 0);
+            vec4 m2 = texelFetch(uBone, getBoneTexelById(id, 1), 0);
+            vec4 m3 = texelFetch(uBone, getBoneTexelById(id, 2), 0);
+          
+            vec4 m5 = texelFetch(uBone, getBoneTexelById(id, 4), 0);
+            vec4 m6 = texelFetch(uBone, getBoneTexelById(id, 5), 0);
+            vec4 m7 = texelFetch(uBone, getBoneTexelById(id, 6), 0);
+          
+            vec4 m9 = texelFetch(uBone, getBoneTexelById(id, 8), 0);
+            vec4 m10 = texelFetch(uBone, getBoneTexelById(id, 9), 0);
+            vec4 m11 = texelFetch(uBone, getBoneTexelById(id, 10), 0);
+          
+            vec4 m13 = texelFetch(uBone, getBoneTexelById(id, 12), 0);
+            vec4 m14 = texelFetch(uBone, getBoneTexelById(id, 13), 0);
+            vec4 m15 = texelFetch(uBone, getBoneTexelById(id, 14), 0);
+          
+            return mat4(
+                m1.r, m2.r, m3.r, 0.0,
+                m5.r, m6.r, m7.r, 0.0,
+                m9.r, m10.r, m11.r, 0.0,
+                m13.r, m14.r, m15.r, 1.0
+            );
+        }
         
         mat4 identity() {
            return mat4(
@@ -51,19 +93,31 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
         }
         
         void main() {
-            gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPosition.xyz, 1.0);
-            vPosition = (uModelMatrix * vec4(aPosition.xyz, 1.0)).xyz;
-            //vPosition = aPosition;
+            // Apply bone matrix
+            uvec4 boneIndex = unpackIndex(aBoneIndex);
+            mat4 bone1Matrix = getInverseBindMatrix(boneIndex.r);
+            mat4 bone2Matrix = getInverseBindMatrix(boneIndex.g);
+            mat4 bone3Matrix = getInverseBindMatrix(boneIndex.b);
+            mat4 bone4Matrix = getInverseBindMatrix(boneIndex.a);
             
+            // Make skin matrix
+            mat4 skinMatrix = aBoneWeight.r * bone1Matrix +
+            aBoneWeight.g * bone2Matrix +
+            aBoneWeight.b * bone3Matrix +
+            aBoneWeight.a * bone4Matrix;
+            
+            // Output
+            gl_Position = uProjectionMatrix * uViewMatrix * skinMatrix * vec4(aPosition.xyz, 1.0);
+            vPosition = (skinMatrix * vec4(aPosition.xyz, 1.0)).xyz;
             vUV = aUV;
             
             // TBN Matrix
-            mat4 modelMatrix = identity(); //uModelMatrix;
-            vec3 T = normalize(vec3(modelMatrix * vec4(aTangent,   1.0)));
-            vec3 B = normalize(vec3(modelMatrix * vec4(aBiTangent, 1.0)));
-            vec3 N = normalize(vec3(modelMatrix * vec4(aNormal,    1.0)));
+            mat4 modelMatrix = skinMatrix;
+            vec3 T = normalize(vec3(modelMatrix * vec4(aTangent,   0.0)));
+            vec3 B = normalize(vec3(modelMatrix * vec4(aBiTangent, 0.0)));
+            vec3 N = normalize(vec3(modelMatrix * vec4(aNormal,    0.0)));
             vTBN = mat3(T, B, N);
-            
+
             // Camera position
             vec4 cameraPosition = vec4(0.0, 0.0, 0.0, 1.0);
             vCameraPosition = (inverse(uViewMatrix) * cameraPosition).xyz;
@@ -339,9 +393,6 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
       OpenGL32.glBlendFunc(OpenGL32.GL_SRC_ALPHA, OpenGL32.GL_ONE_MINUS_SRC_ALPHA);
 
       // bind camera
-      // var cp = _scene.Camera.Position.Inverted;
-      // _context.BindVector(layer.Name, "uCameraPosition", cp);
-      // _context.BindVector(layer.Name, "uLightPosition", new Vector3(0, 0, -2));
       Context.BindMatrix(layer.Name, "uProjectionMatrix", Scene.Camera.ProjectionMatrix);
       Context.BindMatrix(layer.Name, "uViewMatrix", Scene.Camera.ViewMatrix);
 
@@ -352,159 +403,142 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
       OpenGL32.glDepthFunc(OpenGL32.GL_LEQUAL);
 
       // Draw each mesh
-      layer.ForEach<RO_Mesh>(mesh =>
+      layer.ForEach<RO_Skin>(skin =>
       {
-        var objectInfo = Context.GetObjectInfo(mesh.Id);
-        if (objectInfo == null)
+        skin.MeshList.ForEach(mesh =>
         {
-          // Define object
-          objectInfo = new ObjectInfo_OpenGL(Context)
+          var objectInfo = Context.GetObjectInfo(mesh.Id);
+          if (objectInfo == null)
           {
-            // Id
-            MeshId = mesh.Id,
+            // Define object
+            objectInfo = new ObjectInfo_OpenGL(Context)
+            {
+              // Id
+              MeshId = mesh.Id,
 
-            VertexBufferName = $"{layer.Name}_{mesh.Id}.vertex",
-            UV0BufferName = $"{layer.Name}_{mesh.Id}.uv0",
-            NormalBufferName = $"{layer.Name}_{mesh.Id}.normal",
+              VertexBufferName = $"{layer.Name}_{mesh.Id}.vertex",
+              UV0BufferName = $"{layer.Name}_{mesh.Id}.uv0",
+              NormalBufferName = $"{layer.Name}_{mesh.Id}.normal",
 
-            TangentBufferName = $"{layer.Name}_{mesh.Id}.tangent",
-            BiTangentBufferName = $"{layer.Name}_{mesh.Id}.biTangent",
+              TangentBufferName = $"{layer.Name}_{mesh.Id}.tangent",
+              BiTangentBufferName = $"{layer.Name}_{mesh.Id}.biTangent",
 
-            IndexBufferName = $"{layer.Name}_{mesh.Id}.index",
-            IndexAmount = mesh.GpuIndexList.Length,
-            ShaderName = layer.Name,
+              BoneWeightBufferName = $"{layer.Name}_{mesh.Id}.boneWeight",
+              BoneIndexBufferName = $"{layer.Name}_{mesh.Id}.boneIndex",
 
-            Transform = mesh.Transform,
-          };
+              IndexBufferName = $"{layer.Name}_{mesh.Id}.index",
+              IndexAmount = mesh.GpuIndexList.Length,
+              ShaderName = layer.Name,
 
-          objectInfo.VertexAttributeList = new List<string>
+              Transform = mesh.Transform,
+            };
+
+            objectInfo.VertexAttributeList = new List<string>
+            {
+              $"{objectInfo.VertexBufferName} -> aPosition:vec3",
+              $"{objectInfo.UV0BufferName} -> aUV:vec2",
+              $"{objectInfo.NormalBufferName} -> aNormal:vec3",
+
+              $"{objectInfo.TangentBufferName} -> aTangent:vec3",
+              $"{objectInfo.BiTangentBufferName} -> aBiTangent:vec3",
+
+              $"{objectInfo.BoneWeightBufferName} -> aBoneWeight:vec4",
+              $"{objectInfo.BoneIndexBufferName} -> aBoneIndex:uint",
+            };
+
+            // Create buffers
+            Context.CreateBuffer(objectInfo.VertexBufferName);
+            Context.CreateBuffer(objectInfo.UV0BufferName);
+            Context.CreateBuffer(objectInfo.NormalBufferName);
+            Context.CreateBuffer(objectInfo.TangentBufferName);
+            Context.CreateBuffer(objectInfo.BiTangentBufferName);
+            Context.CreateBuffer(objectInfo.BoneWeightBufferName);
+            Context.CreateBuffer(objectInfo.BoneIndexBufferName);
+            Context.CreateBuffer(objectInfo.IndexBufferName);
+
+            // gl upload buffers
+            Context.UploadBuffer(objectInfo.VertexBufferName, mesh.GpuVertexList);
+            Context.UploadBuffer(objectInfo.UV0BufferName, mesh.GpuUVList);
+            Context.UploadBuffer(objectInfo.NormalBufferName, mesh.GpuNormalList);
+            Context.UploadBuffer(objectInfo.TangentBufferName, mesh.GpuTangentList);
+            Context.UploadBuffer(objectInfo.BiTangentBufferName, mesh.GpuBiTangentList);
+
+            Context.UploadBuffer(objectInfo.BoneWeightBufferName, mesh.GpuBoneWeightList);
+            Context.UploadBuffer(objectInfo.BoneIndexBufferName, mesh.GpuBoneIndexList);
+
+            Context.UploadElementBuffer(objectInfo.IndexBufferName, mesh.GpuIndexList);
+
+            // Set object
+            Context.SetObjectInfo(mesh.Id, objectInfo);
+          }
+
+          if (mesh.Texture != null)
           {
-            $"{objectInfo.VertexBufferName} -> aPosition:vec3",
-            $"{objectInfo.UV0BufferName} -> aUV:vec2",
-            $"{objectInfo.NormalBufferName} -> aNormal:vec3",
+            if (objectInfo.TextureId != mesh.Texture.Id)
+            {
+              // Remove old
+              if (!string.IsNullOrEmpty(objectInfo.TextureName)) Context.DeleteTexture(objectInfo.TextureName);
 
-            $"{objectInfo.TangentBufferName} -> aTangent:vec3",
-            $"{objectInfo.BiTangentBufferName} -> aBiTangent:vec3",
-          };
-
-          // Create buffers
-          Context.CreateBuffer(objectInfo.VertexBufferName);
-          Context.CreateBuffer(objectInfo.UV0BufferName);
-          Context.CreateBuffer(objectInfo.NormalBufferName);
-          Context.CreateBuffer(objectInfo.TangentBufferName);
-          Context.CreateBuffer(objectInfo.BiTangentBufferName);
-          Context.CreateBuffer(objectInfo.IndexBufferName);
-
-          // gl upload buffers
-          Context.UploadBuffer(objectInfo.VertexBufferName, mesh.GpuVertexList);
-          Context.UploadBuffer(objectInfo.UV0BufferName, mesh.GpuUVList);
-          Context.UploadBuffer(objectInfo.NormalBufferName, mesh.GpuNormalList);
-          Context.UploadBuffer(objectInfo.TangentBufferName, mesh.GpuTangentList);
-          Context.UploadBuffer(objectInfo.BiTangentBufferName, mesh.GpuBiTangentList);
-          Context.UploadElementBuffer(objectInfo.IndexBufferName, mesh.GpuIndexList);
-
-          // _context.BindMatrix(layer.Name, "uModelMatrix", mesh.Transform.Matrix);
-
-          // Mesh has texture
-          /*if (mesh.Texture != null)
-          {
-            objectInfo.TextureId = mesh.Texture.Id;
-            objectInfo.TextureName = $"{layer.Name}_{mesh.Texture.Id}.texture";
-            _context.CreateTexture(objectInfo.TextureName, mesh.Texture.GPU_RAW, mesh.Texture.Options);
+              // Create new
+              objectInfo.TextureId = mesh.Texture.Id;
+              objectInfo.TextureName = $"{layer.Name}_{mesh.Texture.Id}.texture";
+              Context.CreateTexture(objectInfo.TextureName, mesh.Texture.GPU_RAW, mesh.Texture.Options);
+            }
           }
 
           if (mesh.NormalTexture != null)
           {
-            objectInfo.NormalTextureId = mesh.NormalTexture.Id;
-            objectInfo.NormalTextureName = $"{layer.Name}_{mesh.NormalTexture.Id}.normalTexture";
-            _context.CreateTexture(objectInfo.NormalTextureName, mesh.NormalTexture.GPU_RAW,
-              mesh.NormalTexture.Options);
+            if (objectInfo.NormalTextureId != mesh.NormalTexture.Id)
+            {
+              // Remove old
+              if (!string.IsNullOrEmpty(objectInfo.NormalTextureName))
+                Context.DeleteTexture(objectInfo.NormalTextureName);
+
+              // Create new
+              objectInfo.NormalTextureId = mesh.NormalTexture.Id;
+              objectInfo.NormalTextureName = $"{layer.Name}_{mesh.NormalTexture.Id}.normalTexture";
+              Context.CreateTexture(objectInfo.NormalTextureName, mesh.NormalTexture.GPU_RAW,
+                mesh.NormalTexture.Options);
+            }
           }
 
           if (mesh.RoughnessTexture != null)
           {
-            _context.CreateTexture($"{layer.Name}_{mesh.Texture.Id}.roughnessTexture", mesh.RoughnessTexture.GPU_RAW,
-              mesh.RoughnessTexture.Options);
-            objectInfo.RoughnessTextureName = $"{layer.Name}_{mesh.Texture.Id}.roughnessTexture";
+            if (objectInfo.RoughnessTextureId != mesh.RoughnessTexture.Id)
+            {
+              // Remove old
+              if (!string.IsNullOrEmpty(objectInfo.RoughnessTextureName))
+                Context.DeleteTexture(objectInfo.RoughnessTextureName);
+
+              // Create new
+              objectInfo.RoughnessTextureId = mesh.RoughnessTexture.Id;
+              objectInfo.RoughnessTextureName = $"{layer.Name}_{mesh.RoughnessTexture.Id}.roughnessTexture";
+              Context.CreateTexture(objectInfo.RoughnessTextureName, mesh.RoughnessTexture.GPU_RAW,
+                mesh.RoughnessTexture.Options);
+            }
           }
 
           if (mesh.MetallicTexture != null)
           {
-            _context.CreateTexture($"{layer.Name}_{mesh.Texture.Id}.metallicTexture", mesh.MetallicTexture.GPU_RAW,
-              mesh.MetallicTexture.Options);
-            objectInfo.MetallicTextureName = $"{layer.Name}_{mesh.Texture.Id}.metallicTexture";
-          }*/
+            if (objectInfo.MetallicTextureId != mesh.MetallicTexture.Id)
+            {
+              // Remove old
+              if (!string.IsNullOrEmpty(objectInfo.MetallicTextureName))
+                Context.DeleteTexture(objectInfo.MetallicTextureName);
 
-          // Set object
-          Context.SetObjectInfo(mesh.Id, objectInfo);
-        }
-
-        if (mesh.Texture != null)
-        {
-          if (objectInfo.TextureId != mesh.Texture.Id)
-          {
-            // Remove old
-            if (!string.IsNullOrEmpty(objectInfo.TextureName)) Context.DeleteTexture(objectInfo.TextureName);
-
-            // Create new
-            objectInfo.TextureId = mesh.Texture.Id;
-            objectInfo.TextureName = $"{layer.Name}_{mesh.Texture.Id}.texture";
-            Context.CreateTexture(objectInfo.TextureName, mesh.Texture.GPU_RAW, mesh.Texture.Options);
+              // Create new
+              objectInfo.MetallicTextureId = mesh.MetallicTexture.Id;
+              objectInfo.MetallicTextureName = $"{layer.Name}_{mesh.MetallicTexture.Id}.metallicTexture";
+              Context.CreateTexture(
+                objectInfo.MetallicTextureName,
+                mesh.MetallicTexture.GPU_RAW,
+                mesh.MetallicTexture.Options);
+            }
           }
-        }
 
-        if (mesh.NormalTexture != null)
-        {
-          if (objectInfo.NormalTextureId != mesh.NormalTexture.Id)
-          {
-            // Remove old
-            if (!string.IsNullOrEmpty(objectInfo.NormalTextureName))
-              Context.DeleteTexture(objectInfo.NormalTextureName);
-
-            // Create new
-            objectInfo.NormalTextureId = mesh.NormalTexture.Id;
-            objectInfo.NormalTextureName = $"{layer.Name}_{mesh.NormalTexture.Id}.normalTexture";
-            Context.CreateTexture(objectInfo.NormalTextureName, mesh.NormalTexture.GPU_RAW,
-              mesh.NormalTexture.Options);
-          }
-        }
-
-        if (mesh.RoughnessTexture != null)
-        {
-          if (objectInfo.RoughnessTextureId != mesh.RoughnessTexture.Id)
-          {
-            // Remove old
-            if (!string.IsNullOrEmpty(objectInfo.RoughnessTextureName))
-              Context.DeleteTexture(objectInfo.RoughnessTextureName);
-
-            // Create new
-            objectInfo.RoughnessTextureId = mesh.RoughnessTexture.Id;
-            objectInfo.RoughnessTextureName = $"{layer.Name}_{mesh.RoughnessTexture.Id}.roughnessTexture";
-            Context.CreateTexture(objectInfo.RoughnessTextureName, mesh.RoughnessTexture.GPU_RAW,
-              mesh.RoughnessTexture.Options);
-          }
-        }
-
-        if (mesh.MetallicTexture != null)
-        {
-          if (objectInfo.MetallicTextureId != mesh.MetallicTexture.Id)
-          {
-            // Remove old
-            if (!string.IsNullOrEmpty(objectInfo.MetallicTextureName))
-              Context.DeleteTexture(objectInfo.MetallicTextureName);
-
-            // Create new
-            objectInfo.MetallicTextureId = mesh.MetallicTexture.Id;
-            objectInfo.MetallicTextureName = $"{layer.Name}_{mesh.MetallicTexture.Id}.metallicTexture";
-            Context.CreateTexture(
-              objectInfo.MetallicTextureName,
-              mesh.MetallicTexture.GPU_RAW,
-              mesh.MetallicTexture.Options);
-          }
-        }
-
-        // gl draw arrays
-        objectInfo.DrawElements();
+          // gl draw arrays
+          objectInfo.DrawElements();
+        });
       });
 
       // Unbind

@@ -23,6 +23,9 @@ namespace MegaLib.Render.Renderer.OpenGL
     public string TangentBufferName;
     public string BiTangentBufferName;
 
+    public string BoneWeightBufferName;
+    public string BoneIndexBufferName;
+
     public Transform Transform;
 
     public string IndexBufferName;
@@ -284,6 +287,13 @@ namespace MegaLib.Render.Renderer.OpenGL
           // Fill pixels if null
           pixels ??= new byte[options.Width * options.Height * 4];
           break;
+        case TextureFormat.BGRA8:
+          internalFormat = (int)OpenGL32.GL_RGBA;
+          srcFormat = OpenGL32.GL_BGRA;
+          srcType = OpenGL32.GL_UNSIGNED_BYTE;
+          // Fill pixels if null
+          pixels ??= new byte[options.Width * options.Height * 4];
+          break;
         default:
           throw new Exception("Unsupported texture format");
       }
@@ -433,15 +443,23 @@ namespace MegaLib.Render.Renderer.OpenGL
 
       switch (type)
       {
+        case "int":
+        case "uint":
         case "float":
           size = 1;
           break;
+        case "ivec2":
+        case "uvec2":
         case "vec2":
           size = 2;
           break;
+        case "ivec3":
+        case "uvec3":
         case "vec3":
           size = 3;
           break;
+        case "ivec4":
+        case "uvec4":
         case "vec4":
           size = 4;
           break;
@@ -459,6 +477,20 @@ namespace MegaLib.Render.Renderer.OpenGL
         case "vec3":
         case "vec4":
           OpenGL32.glVertexAttribPointer((uint)attributeLocation, size, OpenGL32.GL_FLOAT, false, 0, IntPtr.Zero);
+          OpenGL32.glEnableVertexAttribArray((uint)attributeLocation);
+          break;
+        case "int":
+        case "ivec2":
+        case "ivec3":
+        case "ivec4":
+          OpenGL32.glVertexAttribIPointer((uint)attributeLocation, size, OpenGL32.GL_INT, 0, IntPtr.Zero);
+          OpenGL32.glEnableVertexAttribArray((uint)attributeLocation);
+          break;
+        case "uint":
+        case "uvec2":
+        case "uvec3":
+        case "uvec4":
+          OpenGL32.glVertexAttribIPointer((uint)attributeLocation, size, OpenGL32.GL_UNSIGNED_INT, 0, IntPtr.Zero);
           OpenGL32.glEnableVertexAttribArray((uint)attributeLocation);
           break;
         default:

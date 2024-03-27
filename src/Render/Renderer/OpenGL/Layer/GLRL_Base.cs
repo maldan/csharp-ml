@@ -23,5 +23,9 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
     public virtual void Render()
     {
     }
+
+    public virtual void Destroy()
+    {
+    }
   }
 }

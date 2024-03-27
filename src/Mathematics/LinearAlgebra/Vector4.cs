@@ -1,5 +1,21 @@
 namespace MegaLib.Mathematics.LinearAlgebra
 {
+  public struct Vector4Int
+  {
+    public int X;
+    public int Y;
+    public int Z;
+    public int W;
+
+    public Vector4Int(int x, int y, int z, int w)
+    {
+      X = x;
+      Y = y;
+      Z = z;
+      W = w;
+    }
+  }
+
   public struct Vector4
   {
     public float X;
