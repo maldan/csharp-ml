@@ -118,10 +118,10 @@ namespace MegaLib.Render.RenderObject
         var v = new List<byte>();
         for (var i = 0; i < value.Count; i++)
         {
-          v.Add((byte)value[i].X);
-          v.Add((byte)value[i].Y);
-          v.Add((byte)value[i].Z);
           v.Add((byte)value[i].W);
+          v.Add((byte)value[i].Z);
+          v.Add((byte)value[i].Y);
+          v.Add((byte)value[i].X);
         }
 
         var uintArray = new uint[v.Count / 4];

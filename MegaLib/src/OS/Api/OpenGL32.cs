@@ -1822,7 +1822,33 @@ namespace MegaLib.OS.Api
     public const uint GL_ZOOM_X = 0xd16;
     public const uint GL_ZOOM_Y = 0xd17;
 
+    public const uint WGL_CONTEXT_MAJOR_VERSION_ARB = 0x2091;
+    public const uint WGL_CONTEXT_MINOR_VERSION_ARB = 0x2092;
+    public const uint WGL_CONTEXT_FLAGS_ARB = 0x2094;
+    public const uint WGL_CONTEXT_CORE_PROFILE_BIT_ARB = 0x00000001;
+    public const uint WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB = 0x00000001;
+    public const uint WGL_CONTEXT_PROFILE_MASK_ARB = 0x9126;
+    public const uint WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB = 0x0002;
+
+    public const uint WGL_SUPPORT_OPENGL_ARB = 0x2010;
+    public const uint WGL_DOUBLE_BUFFER_ARB = 0x2011;
+    public const uint WGL_DRAW_TO_WINDOW_ARB = 0x2001;
+
+    public const uint WGL_PIXEL_TYPE_ARB = 0x2013;
+    public const uint WGL_TYPE_RGBA_ARB = 0x202B;
+    public const uint WGL_STENCIL_BITS_ARB = 0x2023;
+    public const uint WGL_DEPTH_BITS_ARB = 0x2022;
+    public const uint WGL_COLOR_BITS_ARB = 0x2014;
+
     #endregion
+
+    public delegate void DebugMessageDelegate(uint source, uint type, uint id, uint severity, int length,
+      IntPtr message, IntPtr userParam);
+
+    public delegate void Gavno(DebugMessageDelegate gav);
+
+    //[DllImport("opengl32.dll", CallingConvention = CallingConvention.StdCall)]
+    //public static extern void glDebugMessageCallback(DebugProc callback, IntPtr userParam);
 
     // Описание функции glEnable
     [DllImport("opengl32.dll", CallingConvention = CallingConvention.Cdecl)]
@@ -1852,6 +1878,10 @@ namespace MegaLib.OS.Api
 
     [DllImport("opengl32.dll", CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
     public static extern IntPtr wglCreateContext(IntPtr hdc);
+
+    // Определение сигнатуры функции wglCreateContextAttribsARB
+    //[DllImport("opengl32.dll", CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
+    //public static extern IntPtr wglCreateContextAttribs(IntPtr hDC, IntPtr hShareContext, int[] attribList);
 
     [DllImport("opengl32.dll", CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
     public static extern bool wglMakeCurrent(IntPtr hdc, IntPtr hglrc);
@@ -1898,6 +1928,7 @@ namespace MegaLib.OS.Api
     public static void PrintGlError()
     {
       var error = glGetError();
+      Console.WriteLine(error);
 
       // Проверка наличия ошибки
       if (error != GL_NO_ERROR)
@@ -1922,11 +1953,55 @@ namespace MegaLib.OS.Api
         }
     }
 
+    public static void InitDebugCallback(DebugMessageDelegate debugCallback)
+    {
+      var ptr = wglGetProcAddress("glDebugMessageCallback");
+      if (ptr == IntPtr.Zero) throw new Exception("Method not found");
+      Marshal.GetDelegateForFunctionPointer<Gavno>(ptr)(debugCallback);
+    }
+
+    public static IntPtr wglCreateContextAttribsARB(IntPtr hDC, IntPtr hShareContext, int[] attribList)
+    {
+      var ptr = wglGetProcAddress("wglCreateContextAttribsARB");
+      if (ptr == IntPtr.Zero) throw new Exception("Method not found");
+      var dataPointer = Marshal.UnsafeAddrOfPinnedArrayElement(attribList, 0);
+      return Marshal.GetDelegateForFunctionPointer<wglCreateContextAttribsARBDelegate>(ptr)(hDC, hShareContext,
+        dataPointer);
+    }
+
+    public static bool wglChoosePixelFormatARB(IntPtr hDC, int[] piAttribIList, IntPtr pfAttribFList,
+      uint nMaxFormats, IntPtr piFormats, IntPtr nNumFormats)
+    {
+      var ptr = wglGetProcAddress("wglChoosePixelFormatARB");
+      if (ptr == IntPtr.Zero) throw new Exception("Method not found");
+      var attrPtr = Marshal.UnsafeAddrOfPinnedArrayElement(piAttribIList, 0);
+
+      int pixelCount = 0;
+      int format = 0;
+
+      return Marshal.GetDelegateForFunctionPointer<wglChoosePixelFormatARBDelegate>(ptr)(hDC, attrPtr, IntPtr.Zero, 1,
+        ref format, ref pixelCount);
+    }
+
     public static void glGenBuffers(int n, ref uint buffers)
     {
       var ptr = wglGetProcAddress("glGenBuffers");
       var glGenBuffersFunc = Marshal.GetDelegateForFunctionPointer<glGenBuffersDelegate>(ptr);
       glGenBuffersFunc(n, ref buffers);
+    }
+
+    public static void glGenVertexArrays(int n, ref uint buffers)
+    {
+      var ptr = wglGetProcAddress("glGenVertexArrays");
+      var glGenBuffersFunc = Marshal.GetDelegateForFunctionPointer<glGenBuffersDelegate>(ptr);
+      glGenBuffersFunc(n, ref buffers);
+    }
+
+    public static void glBindVertexArray(GLuint array)
+    {
+      var ptr = wglGetProcAddress("glBindVertexArray");
+      var glGenBuffersFunc = Marshal.GetDelegateForFunctionPointer<glOneUint>(ptr);
+      glGenBuffersFunc(array);
     }
 
     public static void glCreateTextures(GLenum target, GLsizei n, ref GLuint textures)
@@ -2251,5 +2326,10 @@ namespace MegaLib.OS.Api
 
     private delegate void glVertexAttribIPointerDelegate(uint index, int size, uint type, int stride,
       IntPtr pointer);
+
+    private delegate IntPtr wglCreateContextAttribsARBDelegate(IntPtr a, IntPtr b, IntPtr c);
+
+    private delegate bool wglChoosePixelFormatARBDelegate(IntPtr hDC, IntPtr piAttribIList, IntPtr pfAttribFList,
+      uint nMaxFormats, ref int piFormats, ref int nNumFormats);
   }
 }

@@ -48,6 +48,9 @@ namespace MegaLib.OS.Api
     [DllImport("gdi32.dll")]
     public static extern bool DeleteObject(IntPtr hObject);
 
+    [DllImport("gdi32.dll")]
+    public static extern bool SwapBuffers(IntPtr hdc);
+
     public static byte[] GetImageBytesFromHDC(IntPtr hDC)
     {
       var bmi = new BITMAPINFO

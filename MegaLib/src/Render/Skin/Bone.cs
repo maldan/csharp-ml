@@ -23,7 +23,8 @@ namespace MegaLib.Render.Skin
       Matrix = Matrix4x4.Identity;
       Matrix = Matrix.Translate(Position);
       Matrix = Matrix.Rotate(Rotation);
-      Matrix = parent * Matrix;
+      Matrix *= parent;
+
       ParentMatrix = parent;
 
       foreach (var bone in Children)

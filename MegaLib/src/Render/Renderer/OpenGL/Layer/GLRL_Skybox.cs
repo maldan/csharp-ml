@@ -16,7 +16,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
     public override void Init()
     {
       // language=glsl
-      var shaderPBR = @"#version 300 es
+      var shaderPBR = @"#version 330 core
         precision highp float;
         precision highp int;
         precision highp usampler2D;
@@ -35,7 +35,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             vUV = aPosition;
         }
         // Fragment
-        #version 300 es
+        #version 330 core
         
         precision highp float;
         precision highp int;
@@ -91,6 +91,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
           // Define object
           objectInfo = new ObjectInfo_OpenGL(Context)
           {
+            VaoName = $"{layer.Name}_{mesh.Id}",
             VertexBufferName = $"{layer.Name}_{mesh.Id}.vertex",
             IndexBufferName = $"{layer.Name}_{mesh.Id}.index",
             IndexAmount = mesh.GpuIndexList.Length,
@@ -106,6 +107,9 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
           // Create buffers
           Context.CreateBuffer(objectInfo.VertexBufferName);
           Context.CreateBuffer(objectInfo.IndexBufferName);
+
+          // Create vao
+          Context.CreateVAO(objectInfo.VaoName);
 
           // gl upload buffers
           Context.UploadBuffer(objectInfo.VertexBufferName, mesh.GpuVertexList);

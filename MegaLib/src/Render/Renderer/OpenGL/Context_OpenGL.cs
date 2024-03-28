@@ -28,6 +28,8 @@ namespace MegaLib.Render.Renderer.OpenGL
 
     public Transform Transform;
 
+    public string VaoName;
+
     public string IndexBufferName;
     public string ShaderName;
     public string TextureName;
@@ -48,6 +50,7 @@ namespace MegaLib.Render.Renderer.OpenGL
     public void DrawElements()
     {
       // Enable attributes
+      _context.BindVAO(VaoName);
       foreach (var tuple in VertexAttributeList.Select(attribute => attribute.Split(" -> ")))
       {
         _context.EnableAttribute(ShaderName, tuple[0], tuple[1]);
@@ -90,12 +93,14 @@ namespace MegaLib.Render.Renderer.OpenGL
 
       // Draw
       OpenGL32.glDrawElements(OpenGL32.GL_TRIANGLES, IndexAmount, OpenGL32.GL_UNSIGNED_INT, IntPtr.Zero);
+      OpenGL32.glBindVertexArray(0);
     }
   }
 
   public class Context_OpenGL
   {
     private readonly Dictionary<string, uint> _bufferList = new();
+    private readonly Dictionary<string, uint> _vaoList = new();
     private readonly Dictionary<string, uint> _shaderList = new();
     private readonly Dictionary<string, uint> _textureList = new();
     private readonly Dictionary<string, uint> _cubeTextureList = new();
@@ -121,6 +126,14 @@ namespace MegaLib.Render.Renderer.OpenGL
       _bufferList.Add(name, bufferId);
     }
 
+    public void CreateVAO(string name)
+    {
+      uint vaoId = 0;
+      OpenGL32.glGenVertexArrays(1, ref vaoId);
+      if (vaoId == 0) throw new Exception("Can't create VAO");
+      _vaoList.Add(name, vaoId);
+    }
+
     public void CreateShader(string name, string vertex, string fragment)
     {
       // Vertex shader 
@@ -136,7 +149,7 @@ namespace MegaLib.Render.Renderer.OpenGL
       OpenGL32.glShaderSource(vertexShaderId, vertex);
       OpenGL32.glCompileShader(vertexShaderId);
       Console.WriteLine(OpenGL32.glGetShaderInfoLog(vertexShaderId, 512));
-      Console.WriteLine("Everything ok maybe??");
+      // Console.WriteLine("Everything ok maybe??");
 
       // Fragment shader 
       var fragmentShaderId = OpenGL32.glCreateShader(OpenGL32.GL_FRAGMENT_SHADER);
@@ -146,11 +159,11 @@ namespace MegaLib.Render.Renderer.OpenGL
         return;
       }
 
-      Console.WriteLine("fragmentShaderId = " + fragmentShaderId);
+      //Console.WriteLine("fragmentShaderId = " + fragmentShaderId);
       OpenGL32.glShaderSource(fragmentShaderId, fragment);
       OpenGL32.glCompileShader(fragmentShaderId);
       Console.WriteLine(OpenGL32.glGetShaderInfoLog(fragmentShaderId, 512));
-      Console.WriteLine("Everything ok maybe??");
+      //Console.WriteLine("Everything ok maybe??");
 
       // Использование функции glCreateProgram()
       var shaderProgram = OpenGL32.glCreateProgram();
@@ -163,7 +176,7 @@ namespace MegaLib.Render.Renderer.OpenGL
       OpenGL32.glLinkProgram(shaderProgram);
 
       OpenGL32.glGetProgramiv(shaderProgram, OpenGL32.GL_LINK_STATUS, out var success);
-      Console.WriteLine(success == 0 ? OpenGL32.glGetProgramInfoLog(shaderProgram, 512) : "Everything ok maybe??");
+      if (success == 0) Console.WriteLine(OpenGL32.glGetProgramInfoLog(shaderProgram, 512));
 
       // Don't need anymore
       OpenGL32.glDeleteShader(vertexShaderId);
@@ -501,7 +514,6 @@ namespace MegaLib.Render.Renderer.OpenGL
     public void UploadBuffer(string name, float[] data)
     {
       var bufferId = _bufferList[name];
-
       OpenGL32.glBindBuffer(OpenGL32.GL_ARRAY_BUFFER, bufferId);
       OpenGL32.glBufferData(OpenGL32.GL_ARRAY_BUFFER, data, OpenGL32.GL_STATIC_DRAW);
       OpenGL32.glBindBuffer(OpenGL32.GL_ARRAY_BUFFER, 0);
@@ -510,7 +522,6 @@ namespace MegaLib.Render.Renderer.OpenGL
     public void UploadBuffer(string name, uint[] data)
     {
       var bufferId = _bufferList[name];
-
       OpenGL32.glBindBuffer(OpenGL32.GL_ARRAY_BUFFER, bufferId);
       OpenGL32.glBufferData(OpenGL32.GL_ARRAY_BUFFER, data, OpenGL32.GL_STATIC_DRAW);
       OpenGL32.glBindBuffer(OpenGL32.GL_ARRAY_BUFFER, 0);
@@ -529,6 +540,12 @@ namespace MegaLib.Render.Renderer.OpenGL
     {
       var bufferId = _bufferList[name];
       OpenGL32.glBindBuffer(OpenGL32.GL_ARRAY_BUFFER, bufferId);
+    }
+
+    public void BindVAO(string name)
+    {
+      var vaoId = _vaoList[name];
+      OpenGL32.glBindVertexArray(vaoId);
     }
 
     public void BindElementBuffer(string name)

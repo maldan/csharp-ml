@@ -30,11 +30,13 @@ namespace MegaLib.Render.RenderObject
 
       // Update bone texture
       var pixel = new float[64 * 64];
+      var id = 0;
+
       foreach (var bone in Skeleton.BoneList)
       {
-        var mx = Matrix4x4.Identity; // bone.Matrix * bone.InverseBindMatrix;
+        var mx = bone.InverseBindMatrix * bone.Matrix;
         var raw = mx.Raw;
-        var id = 0;
+
         foreach (var v in raw)
         {
           pixel[id] = v;

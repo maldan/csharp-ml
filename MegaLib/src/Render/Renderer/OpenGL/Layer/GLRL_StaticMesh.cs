@@ -16,8 +16,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
     public override void Init()
     {
       // language=glsl
-      var shaderPBR = @"#version 300 es
-        #pragma optimize(off)
+      var shaderPBR = @"#version 330 core
         precision highp float;
         precision highp int;
         precision highp usampler2D;
@@ -69,8 +68,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             vCameraPosition = (inverse(uViewMatrix) * cameraPosition).xyz;
         }
         // Fragment
-        #version 300 es
-        #pragma optimize(off)
+        #version 330 core
         precision highp float;
         precision highp int;
         precision highp sampler2D;

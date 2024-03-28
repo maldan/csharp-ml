@@ -202,7 +202,7 @@ namespace MegaLib.Mathematics.LinearAlgebra
 
     public Matrix4x4 Rotate(Quaternion angles)
     {
-      return this * angles.Matrix4x4;
+      return angles.Matrix4x4 * this;
     }
 
     public Matrix4x4 Scale(Vector3 scale)
@@ -241,6 +241,64 @@ namespace MegaLib.Mathematics.LinearAlgebra
         M32 = a.M30 * b.M02 + a.M31 * b.M12 + a.M32 * b.M22 + a.M33 * b.M32,
         M33 = a.M30 * b.M03 + a.M31 * b.M13 + a.M32 * b.M23 + a.M33 * b.M33
       };
+
+      /*var m = Matrix4x4.Identity;
+
+      var a00 = a.Raw[0];
+      var a01 = a.Raw[1];
+      var a02 = a.Raw[2];
+      var a03 = a.Raw[3];
+      var a10 = a.Raw[4];
+      var a11 = a.Raw[5];
+      var a12 = a.Raw[6];
+      var a13 = a.Raw[7];
+      var a20 = a.Raw[8];
+      var a21 = a.Raw[9];
+      var a22 = a.Raw[10];
+      var a23 = a.Raw[11];
+      var a30 = a.Raw[12];
+      var a31 = a.Raw[13];
+      var a32 = a.Raw[14];
+      var a33 = a.Raw[15];
+
+      // Cache only the current line of the second matrix
+      var b0 = b.Raw[0];
+      var b1 = b.Raw[1];
+      var b2 = b.Raw[2];
+      var b3 = b.Raw[3];
+      m.Raw[0] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+      m.Raw[1] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+      m.Raw[2] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+      m.Raw[3] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+      b0 = b.Raw[4];
+      b1 = b.Raw[5];
+      b2 = b.Raw[6];
+      b3 = b.Raw[7];
+      m.Raw[4] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+      m.Raw[5] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+      m.Raw[6] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+      m.Raw[7] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+      b0 = b.Raw[8];
+      b1 = b.Raw[9];
+      b2 = b.Raw[10];
+      b3 = b.Raw[11];
+      m.Raw[8] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+      m.Raw[9] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+      m.Raw[10] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+      m.Raw[11] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+      b0 = b.Raw[12];
+      b1 = b.Raw[13];
+      b2 = b.Raw[14];
+      b3 = b.Raw[15];
+      m.Raw[12] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+      m.Raw[13] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+      m.Raw[14] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+      m.Raw[15] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+      return m;*/
     }
 
     public override string ToString()

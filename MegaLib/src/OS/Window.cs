@@ -18,6 +18,8 @@ namespace MegaLib.OS
     public Action OnPaint;
     public Action<int, int> OnResize;
 
+    public IntPtr CurrentDC => _hdc;
+
     public bool IsFocused
     {
       get
@@ -97,16 +99,54 @@ namespace MegaLib.OS
       if (pixelFormat == 0) throw new Exception("Failed to choose pixel format.");
       if (!GDI32.SetPixelFormat(_hdc, pixelFormat, ref pfd)) throw new Exception("Failed to set pixel format.");
 
-      _hglrc = OpenGL32.wglCreateContext(_hdc);
+      //_hglrc = OpenGL32.wglCreateContext(_hdc);
+
+      // Create olf contenxt
+      var oldContextPtr = OpenGL32.wglCreateContext(_hdc);
+      if (oldContextPtr == IntPtr.Zero) throw new Exception("Failed to create OpenGL context.");
+      if (!OpenGL32.wglMakeCurrent(_hdc, oldContextPtr)) throw new Exception("Failed to make OpenGL context current.");
+
+      // Create new context
+      var attribs = new[]
+      {
+        (int)OpenGL32.WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
+        (int)OpenGL32.WGL_CONTEXT_MINOR_VERSION_ARB, 5,
+        (int)OpenGL32.WGL_CONTEXT_FLAGS_ARB, 0,
+        (int)OpenGL32.WGL_CONTEXT_PROFILE_MASK_ARB,
+        (int)OpenGL32.WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+        0
+      };
+      _hglrc = OpenGL32.wglCreateContextAttribsARB(_hdc, IntPtr.Zero, attribs);
       if (_hglrc == IntPtr.Zero) throw new Exception("Failed to create OpenGL context.");
 
+      OpenGL32.wglMakeCurrent(IntPtr.Zero, IntPtr.Zero);
+      OpenGL32.wglDeleteContext(oldContextPtr);
+
       if (!OpenGL32.wglMakeCurrent(_hdc, _hglrc)) throw new Exception("Failed to make OpenGL context current.");
+
+      /*var pixAttribs = new[]
+      {
+        (int)OpenGL32.WGL_DRAW_TO_WINDOW_ARB, (int)OpenGL32.GL_TRUE,
+        (int)OpenGL32.WGL_SUPPORT_OPENGL_ARB, (int)OpenGL32.GL_TRUE,
+        (int)OpenGL32.WGL_DOUBLE_BUFFER_ARB, (int)OpenGL32.GL_TRUE,
+        (int)OpenGL32.WGL_PIXEL_TYPE_ARB, (int)OpenGL32.WGL_TYPE_RGBA_ARB,
+        (int)OpenGL32.WGL_COLOR_BITS_ARB, 32,
+        (int)OpenGL32.WGL_DEPTH_BITS_ARB, 24,
+        (int)OpenGL32.WGL_STENCIL_BITS_ARB, 8,
+        0, // End
+      };
+      var ss = OpenGL32.wglChoosePixelFormatARB(_hdc, pixAttribs, IntPtr.Zero, 1, IntPtr.Zero, IntPtr.Zero);
+      if (ss == false) throw new Exception("SS");*/
 
       var versionPtr = OpenGL32.glGetString(OpenGL32.GL_VERSION);
       if (versionPtr == IntPtr.Zero) throw new Exception("Failed to get OpenGL version.");
 
       var version = Marshal.PtrToStringAnsi(versionPtr);
       Console.WriteLine($"OpenGL Version: {version}");
+
+      /*var extensionsPtr = OpenGL32.glGetString(OpenGL32.GL_EXTENSIONS);
+      var extensions = Marshal.PtrToStringAnsi(extensionsPtr);
+      Console.WriteLine($"OpenGL Extensions: {extensions}");*/
     }
 
     public static Window Create(string className, string title)

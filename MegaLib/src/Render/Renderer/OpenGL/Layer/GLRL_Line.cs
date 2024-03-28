@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using MegaLib.OS.Api;
 using MegaLib.Render.Core;
@@ -15,7 +16,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
     public override void Init()
     {
       // language=glsl
-      var lineShaderVertex = @"#version 300 es
+      var lineShaderVertex = @"#version 330 core
         precision highp float;
         precision highp int;
         precision highp usampler2D;
@@ -31,7 +32,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
         }".Replace("\r", "");
 
       // language=glsl
-      var lineShaderFragment = @"#version 300 es
+      var lineShaderFragment = @"#version 330 core
           precision highp float;
           precision highp int;
           precision highp sampler2D;
@@ -48,6 +49,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
 
       // Create buffer vertex
       Context.CreateBuffer($"{Layer.Name}.vertex");
+      Context.CreateVAO($"{Layer.Name}");
 
       // Create buffer color
     }
@@ -99,6 +101,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
       Context.UploadBuffer($"{layer.Name}.vertex", vertexList.ToArray());
 
       // gl enable attributes
+      Context.BindVAO(layer.Name);
       Context.EnableAttribute(layer.Name, $"{layer.Name}.vertex", "aVertex:vec3");
 
       // gl draw arrays
@@ -106,6 +109,8 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
 
       // Clear list
       layer.Clear();
+
+      OpenGL32.glBindVertexArray(0);
     }
   }
 }

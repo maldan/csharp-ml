@@ -16,8 +16,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
     public override void Init()
     {
       // language=glsl
-      var vertex = @"#version 300 es
-        #pragma optimize(off)
+      var vertex = @"#version 330 core
         precision highp float;
         precision highp int;
         precision highp usampler2D;
@@ -119,8 +118,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
         }";
 
       // language=glsl
-      var fragment = @"#version 300 es
-        #pragma optimize(off)
+      var fragment = @"#version 330 core
         precision highp float;
         precision highp int;
         precision highp sampler2D;
@@ -357,13 +355,13 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             Material mat = getMaterial();
 
             Light light1 = createLight(vec3(0.0, 1.0, 1.0), vec3(1.0), 0.5, true);
-            //Light light2 = createLight(vec3(-1.0, 1.0, 1.0), vec3(1.0), 0.5, true);
-            //Light light3 = createLight(vec3(0.0, 1.0, 1.0), vec3(1.0), 1.5, true);
+            Light light2 = createLight(vec3(-1.0, 1.0, 1.0), vec3(1.0), 0.5, true);
+            Light light3 = createLight(vec3(0.0, 1.0, 1.0), vec3(1.0), 1.5, true);
             
             vec3 finalColor = vec3(0.0);
             finalColor += calcPbr(mat, light1);
-            //finalColor += calcPbr(mat, light2);
-            //finalColor += calcPbr(mat, light3);
+            finalColor += calcPbr(mat, light2);
+            finalColor += calcPbr(mat, light3);
             
             // HDR
             finalColor = finalColor / (finalColor + vec3(1.0));
@@ -443,6 +441,8 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
               // Id
               MeshId = mesh.Id,
 
+              VaoName = $"{layer.Name}_{mesh.Id}",
+
               VertexBufferName = $"{layer.Name}_{mesh.Id}.vertex",
               UV0BufferName = $"{layer.Name}_{mesh.Id}.uv0",
               NormalBufferName = $"{layer.Name}_{mesh.Id}.normal",
@@ -472,6 +472,9 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
               $"{objectInfo.BoneWeightBufferName} -> aBoneWeight:vec4",
               $"{objectInfo.BoneIndexBufferName} -> aBoneIndex:uint",
             };
+
+            // Create vao
+            Context.CreateVAO(objectInfo.VaoName);
 
             // Create buffers
             Context.CreateBuffer(objectInfo.VertexBufferName);
