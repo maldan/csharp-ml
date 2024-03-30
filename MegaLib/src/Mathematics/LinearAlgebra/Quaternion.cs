@@ -116,6 +116,11 @@ namespace MegaLib.Mathematics.LinearAlgebra
 
     #endregion
 
+    public Vector4 ToVector4()
+    {
+      return new Vector4(X, Y, Z, W);
+    }
+
     public Quaternion RotateEuler(Vector3 v, string unit)
     {
       return this * FromEuler(v, unit);
@@ -163,6 +168,31 @@ namespace MegaLib.Mathematics.LinearAlgebra
       {
         X = (float)qx, Y = (float)qy, Z = (float)qz, W = (float)qw
       };
+    }
+
+    public static Quaternion Lerp(Quaternion a, Quaternion b, float t)
+    {
+      if (t < 0) t = 0;
+      if (t > 1) t = 1;
+      var result = new Quaternion(0, 0, 0, 0);
+      var tInv = (float)1.0 - t;
+
+      // Linear interpolation for the quaternion components
+      result.W = a.W * tInv + b.W * t;
+      result.X = a.X * tInv + b.X * t;
+      result.Y = a.Y * tInv + b.Y * t;
+      result.Z = a.Z * tInv + b.Z * t;
+
+      // Normalize the resulting quaternion
+      var norm = (float)Math.Sqrt(
+        result.W * result.W + result.X * result.X + result.Y * result.Y + result.Z * result.Z
+      );
+      result.W /= norm;
+      result.X /= norm;
+      result.Y /= norm;
+      result.Z /= norm;
+
+      return result;
     }
 
     #endregion

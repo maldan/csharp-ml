@@ -41,6 +41,11 @@ namespace MegaLib.Mathematics.LinearAlgebra
       return new Vector3(X, Y, Z);
     }
 
+    public Quaternion ToQuaternion()
+    {
+      return new Quaternion(X, Y, Z, W);
+    }
+
     public static Vector4 operator *(Vector4 vector, Matrix4x4 matrix)
     {
       Vector4 result;
@@ -50,6 +55,13 @@ namespace MegaLib.Mathematics.LinearAlgebra
       result.W = matrix.M03 * vector.X + matrix.M13 * vector.Y + matrix.M23 * vector.Z + matrix.M33 * vector.W;
       return result;
     }
+
+    #region Set
+
+    public static Vector4 One => new(1, 1, 1, 1);
+    public static Vector4 Zero => new(0, 0, 0, 0);
+
+    #endregion
 
     public override string ToString()
     {

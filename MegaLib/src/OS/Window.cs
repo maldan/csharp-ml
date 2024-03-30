@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using MegaLib.OS.Api;
 
@@ -15,10 +16,13 @@ namespace MegaLib.OS
 
     public Action OnClose;
     public Action OnCreated;
-    public Action OnPaint;
+    public Action<float> OnPaint;
     public Action<int, int> OnResize;
 
     public IntPtr CurrentDC => _hdc;
+
+    private Stopwatch _timer = new();
+    private float _delta = 0.016f;
 
     public bool IsFocused
     {
@@ -54,7 +58,12 @@ namespace MegaLib.OS
           OnCreated?.Invoke();
           return IntPtr.Zero;
         case WinApi.WM_PAINT:
-          OnPaint?.Invoke();
+          _timer.Start();
+          OnPaint?.Invoke(_delta);
+          var deltaTime = _timer.Elapsed;
+          _timer.Restart();
+          _delta = (float)deltaTime.TotalMilliseconds / 1000f;
+          if (_delta > 0.05) _delta = 0.05f;
           return IntPtr.Zero;
         case WinApi.WM_CLOSE:
           OnClose?.Invoke();

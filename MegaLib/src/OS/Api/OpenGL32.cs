@@ -1852,6 +1852,14 @@ namespace MegaLib.OS.Api
 
     // Описание функции glEnable
     [DllImport("opengl32.dll", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void glPolygonMode(GLenum face, GLenum mode);
+
+    // Описание функции glEnable
+    [DllImport("opengl32.dll", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void glCullFace(GLenum mode);
+
+    // Описание функции glEnable
+    [DllImport("opengl32.dll", CallingConvention = CallingConvention.Cdecl)]
     public static extern void glEnable(uint cap);
 
     // Описание функции glDisable
@@ -1960,6 +1968,12 @@ namespace MegaLib.OS.Api
       Marshal.GetDelegateForFunctionPointer<Gavno>(ptr)(debugCallback);
     }
 
+    /*public static void glPolygonMode(GLenum face, GLenum mode)
+    {
+      var ptr = wglGetProcAddress("glPolygonMode");
+      Marshal.GetDelegateForFunctionPointer<glTwoIntInt>(ptr)((int)face, (int)mode);
+    }*/
+
     public static IntPtr wglCreateContextAttribsARB(IntPtr hDC, IntPtr hShareContext, int[] attribList)
     {
       var ptr = wglGetProcAddress("wglCreateContextAttribsARB");
@@ -1988,6 +2002,12 @@ namespace MegaLib.OS.Api
       var ptr = wglGetProcAddress("glGenBuffers");
       var glGenBuffersFunc = Marshal.GetDelegateForFunctionPointer<glGenBuffersDelegate>(ptr);
       glGenBuffersFunc(n, ref buffers);
+    }
+
+    public static void glPatchParameteri(GLenum pname, GLint value)
+    {
+      var ptr = wglGetProcAddress("glPatchParameteri");
+      Marshal.GetDelegateForFunctionPointer<glTwoIntInt>(ptr)((int)pname, value);
     }
 
     public static void glGenVertexArrays(int n, ref uint buffers)

@@ -15,6 +15,7 @@ namespace MegaLib.Render.Renderer.OpenGL
     public ulong NormalTextureId;
     public ulong RoughnessTextureId;
     public ulong MetallicTextureId;
+    public ulong PositionTextureId;
 
     public string VertexBufferName;
     public string NormalBufferName;
@@ -37,6 +38,9 @@ namespace MegaLib.Render.Renderer.OpenGL
     public string RoughnessTextureName;
     public string MetallicTextureName;
     public string BoneMatrixTextureName;
+    public string PositionTextureName;
+
+    public bool UseTesselation;
 
     public int IndexAmount;
     public List<string> VertexAttributeList = new();
@@ -86,13 +90,29 @@ namespace MegaLib.Render.Renderer.OpenGL
         _context.ActivateTexture(ShaderName, "uBoneMatrix", BoneMatrixTextureName, slotId++);
       }
 
+      if (!string.IsNullOrEmpty(PositionTextureName))
+      {
+        _context.ActivateTexture(ShaderName, "uPositionTexture", PositionTextureName, slotId++);
+      }
+
       if (_context.HasUniform(ShaderName, "uModelMatrix"))
       {
         _context.BindMatrix(ShaderName, "uModelMatrix", Transform.Matrix);
       }
 
+
+      if (UseTesselation)
+      {
+        OpenGL32.glPatchParameteri(OpenGL32.GL_PATCH_VERTICES, 3);
+        OpenGL32.glDrawElements(OpenGL32.GL_PATCHES, IndexAmount, OpenGL32.GL_UNSIGNED_INT, IntPtr.Zero);
+      }
+      else
+      {
+        OpenGL32.glDrawElements(OpenGL32.GL_TRIANGLES, IndexAmount, OpenGL32.GL_UNSIGNED_INT, IntPtr.Zero);
+      }
+
       // Draw
-      OpenGL32.glDrawElements(OpenGL32.GL_TRIANGLES, IndexAmount, OpenGL32.GL_UNSIGNED_INT, IntPtr.Zero);
+
       OpenGL32.glBindVertexArray(0);
     }
   }
@@ -132,6 +152,66 @@ namespace MegaLib.Render.Renderer.OpenGL
       OpenGL32.glGenVertexArrays(1, ref vaoId);
       if (vaoId == 0) throw new Exception("Can't create VAO");
       _vaoList.Add(name, vaoId);
+    }
+
+    public void CreateShader(string name, Dictionary<string, string> shaders)
+    {
+      // Create program
+      var shaderProgram = OpenGL32.glCreateProgram();
+      if (shaderProgram == 0)
+      {
+        OpenGL32.PrintGlError();
+        throw new Exception("Can't create shader program");
+      }
+
+      // Create shaders
+      var typeMap = new Dictionary<string, uint>
+      {
+        { "vertex", OpenGL32.GL_VERTEX_SHADER },
+        { "fragment", OpenGL32.GL_FRAGMENT_SHADER },
+        { "geometry", OpenGL32.GL_GEOMETRY_SHADER },
+        { "tesselationControl", OpenGL32.GL_TESS_CONTROL_SHADER },
+        { "tesselationEvaluation", OpenGL32.GL_TESS_EVALUATION_SHADER },
+      };
+      var oldShaderList = new List<uint>();
+      foreach (var (type, code) in shaders)
+      {
+        var shaderId = OpenGL32.glCreateShader(typeMap[type]);
+        if (shaderId == 0)
+        {
+          OpenGL32.PrintGlError();
+          throw new Exception($"Can't create {type} shader");
+        }
+        else
+        {
+          Console.WriteLine($"{type} shader created");
+        }
+
+        OpenGL32.glShaderSource(shaderId, code);
+        OpenGL32.glCompileShader(shaderId);
+
+        var log = OpenGL32.glGetShaderInfoLog(shaderId, 512).Trim();
+        if (log.Length > 0) Console.WriteLine($"{type} shader log: {log}");
+
+        // Attach to program
+        OpenGL32.glAttachShader(shaderProgram, shaderId);
+
+        // Save for remove later
+        oldShaderList.Add(shaderId);
+      }
+
+      // Link program
+      OpenGL32.glLinkProgram(shaderProgram);
+
+      // Check status
+      OpenGL32.glGetProgramiv(shaderProgram, OpenGL32.GL_LINK_STATUS, out var success);
+      if (success == 0) Console.WriteLine(OpenGL32.glGetProgramInfoLog(shaderProgram, 512));
+
+      // Remove old shaders, we don't need them anymore
+      oldShaderList.ForEach(OpenGL32.glDeleteShader);
+
+      // Store program
+      _shaderList.Add(name, shaderProgram);
     }
 
     public void CreateShader(string name, string vertex, string fragment)

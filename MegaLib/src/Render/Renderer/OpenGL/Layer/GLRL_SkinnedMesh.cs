@@ -34,10 +34,10 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
         uniform mat4 uViewMatrix;
         uniform sampler2D uBoneMatrix;
         
-        out vec3 vPosition;
-        out vec3 vCameraPosition;
-        out vec2 vUV;
-        out mat3 vTBN;
+        out vec3 f_vPosition;
+        out vec3 f_vCameraPosition;
+        out vec2 f_vUV;
+        out mat3 f_vTBN;
         
         ivec2 getBoneTexelById(uint id, int ch) {
             int pixel = (int(id) * 16 + ch);
@@ -102,20 +102,79 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             
             // Output
             gl_Position = uProjectionMatrix * uViewMatrix * skinMatrix * vec4(aPosition.xyz, 1.0);
-            vPosition = (skinMatrix * vec4(aPosition.xyz, 1.0)).xyz;
-            vUV = aUV;
+            f_vPosition = (skinMatrix * vec4(aPosition.xyz, 1.0)).xyz;
+            f_vUV = aUV;
             
             // TBN Matrix
             mat4 modelMatrix = skinMatrix;
             vec3 T = normalize(vec3(modelMatrix * vec4(aTangent,   0.0)));
             vec3 B = normalize(vec3(modelMatrix * vec4(aBiTangent, 0.0)));
             vec3 N = normalize(vec3(modelMatrix * vec4(aNormal,    0.0)));
-            vTBN = mat3(T, B, N);
+            f_vTBN = mat3(T, B, N);
 
             // Camera position
             vec4 cameraPosition = vec4(0.0, 0.0, 0.0, 1.0);
-            vCameraPosition = (inverse(uViewMatrix) * cameraPosition).xyz;
+            f_vCameraPosition = (inverse(uViewMatrix) * cameraPosition).xyz;
         }";
+
+      // language=glsl
+      var tesselationControl = @"#version 450 core
+      layout (vertices = 3) out;
+      
+      in vec3 f_vPosition[];
+      in vec3 f_vCameraPosition[];
+      in vec2 f_vUV[];
+      in mat3 f_vTBN[];
+
+      out vec3 tc_vPosition[];
+      out vec3 tc_vCameraPosition[];
+      out vec2 tc_vUV[];
+      out mat3 tc_vTBN[];
+      
+      void main() {
+          // Передаем входные данные из вершинного шейдера в тесселяционный
+          tc_vPosition[gl_InvocationID] = f_vPosition[gl_InvocationID];
+          tc_vCameraPosition[gl_InvocationID] = f_vCameraPosition[gl_InvocationID];
+          tc_vUV[gl_InvocationID] = f_vUV[gl_InvocationID];
+          tc_vTBN[gl_InvocationID] = f_vTBN[gl_InvocationID];
+    
+          gl_TessLevelOuter[0] = 2.0;
+          gl_TessLevelOuter[1] = 2.0;
+          gl_TessLevelOuter[2] = 2.0;
+          gl_TessLevelInner[0] = 2.0;
+
+          // Корректно вычисляем позиции вершин для тесселяции
+          gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
+      }
+      ".Replace("\r", "");
+
+      // language=glsl
+      var tesselationEvaluation = @"#version 450 core
+      layout(triangles, equal_spacing, ccw) in;
+
+      in vec3 tc_vPosition[];
+      in vec3 tc_vCameraPosition[];
+      in vec2 tc_vUV[];
+      in mat3 tc_vTBN[];
+
+      out vec3 vPosition;
+      out vec3 vCameraPosition;
+      out vec2 vUV;
+      out mat3 vTBN;
+
+      void main() {
+          float u = gl_TessCoord.x;
+          float v = gl_TessCoord.y;
+          float w = gl_TessCoord.z;
+          
+          vPosition = tc_vPosition[0] * u + tc_vPosition[1] * v + tc_vPosition[2] * w;
+          vCameraPosition = tc_vCameraPosition[0] * u + tc_vCameraPosition[1] * v + tc_vCameraPosition[2] * w;
+          vUV = tc_vUV[0] * u + tc_vUV[1] * v + tc_vUV[2] * w;
+          vTBN = tc_vTBN[0] * u + tc_vTBN[1] * v + tc_vTBN[2] * w;
+          
+          gl_Position = gl_in[0].gl_Position * gl_TessCoord.x + gl_in[1].gl_Position * gl_TessCoord.y + gl_in[2].gl_Position * gl_TessCoord.z;
+      }
+      ".Replace("\r", "");
 
       // language=glsl
       var fragment = @"#version 330 core
@@ -375,7 +434,13 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             // color = vec4(texture(uBoneMatrix, vUV).r, 0.0, 0.0, 1.0);
         }".Replace("\r", "");
 
-      Context.CreateShader(Layer.Name, vertex, fragment);
+      Context.CreateShader(Layer.Name, new Dictionary<string, string>
+      {
+        { "vertex", vertex },
+        { "tesselationControl", tesselationControl },
+        { "tesselationEvaluation", tesselationEvaluation },
+        { "fragment", fragment },
+      });
     }
 
     public override void Render()
@@ -384,6 +449,10 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
 
       // User shader line
       Context.UseProgram(layer.Name);
+
+      // Preparations
+      OpenGL32.glEnable(OpenGL32.GL_CULL_FACE);
+      OpenGL32.glCullFace(OpenGL32.GL_BACK);
 
       // gl blend fn
       OpenGL32.glEnable(OpenGL32.GL_BLEND);
@@ -458,6 +527,8 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
               ShaderName = layer.Name,
 
               Transform = mesh.Transform,
+
+              UseTesselation = true,
             };
 
             objectInfo.VertexAttributeList = new List<string>

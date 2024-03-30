@@ -18,6 +18,59 @@ namespace MegaLib.AssetLoader.GLTF
     public string Type;
     public List<float> TimeList = new();
     public List<Vector4> ValueList = new();
+
+    public int PrevFrame;
+    public int NextFrame;
+
+    public void CalculateFrames(float time)
+    {
+      PrevFrame = TimeList.Count - 1;
+      NextFrame = 0;
+
+      for (var i = 0; i < TimeList.Count - 1; i++)
+      {
+        if (time >= TimeList[i] && time <= TimeList[i + 1])
+        {
+          PrevFrame = i;
+          NextFrame = i + 1;
+        }
+      }
+    }
+
+    public Vector4 CalculateFrameValue(float time)
+    {
+      if (ValueList.Count == 0) return Vector4.Zero;
+
+      var t =
+        (time - TimeList[PrevFrame]) /
+        (TimeList[NextFrame] - TimeList[PrevFrame]);
+
+      if (PrevFrame < 0)
+        return ValueList[0];
+
+      if (NextFrame > ValueList.Count - 1)
+        return ValueList.Last();
+
+      return Type switch
+      {
+        "translation" or "scale" => Vector3.Lerp(
+          ValueList[PrevFrame].DropW(),
+          ValueList[NextFrame].DropW(),
+          t).AddW(0.0f),
+        "rotation" => Quaternion.Lerp(
+          ValueList[PrevFrame].ToQuaternion(),
+          ValueList[NextFrame].ToQuaternion(),
+          t).ToVector4(),
+        _ => Vector4.Zero
+      };
+    }
+  }
+
+  public struct GLTF_AnimationFrame
+  {
+    public string Key;
+    public string Type;
+    public Vector4 Value;
   }
 
   public class GLTF_Animation
@@ -25,6 +78,8 @@ namespace MegaLib.AssetLoader.GLTF
     public GLTF Gltf;
     public string Name;
     public float Duration;
+    public float CurrentTime;
+    public List<GLTF_AnimationFrame> CurrentFrame = new();
     public List<GLTF_AnimationSampler> SamplerList = new();
     public List<GLTF_AnimationSequence> SequenceList = new();
 
@@ -79,83 +134,47 @@ namespace MegaLib.AssetLoader.GLTF
         SequenceList.Add(sequence);
       }
     }
-  }
 
-  public class GLTF_Bone
-  {
-    public GLTF GLTF;
-
-    public int JointId;
-    public int SkinId;
-    public int NodeId;
-    public string Name;
-    public List<int> ChildrenId;
-    public List<GLTF_Bone> ChildrenBone = new();
-
-    public Vector3 Position;
-    public Quaternion Rotation;
-    public Vector3 Scale;
-    public Matrix4x4 InverseBindMatrix;
-
-    public GLTF_Bone(GLTF_Node node)
+    public void Tick(float delta)
     {
-      GLTF = node.GLTF;
-      NodeId = node.Id;
-      Name = node.Name;
-      ChildrenId = node.Children;
-      Position = node.Position;
-      Rotation = node.Rotation;
-      Scale = node.Scale;
-    }
-  }
-
-  public class GLTF_Skin
-  {
-    public GLTF GLTF;
-    public int Id;
-    public string Name;
-    public List<GLTF_Bone> BoneList = new();
-    public List<GLTF_Mesh> MeshList = new();
-    public Dictionary<string, GLTF_Bone> BoneMap = new();
-
-    public GLTF_Skin(GLTF gltf, JsonElement element, int id)
-    {
-      GLTF = gltf;
-      Id = id;
-      Name = element.GetProperty("name").GetString();
-
-      // Fill bones
-      var joint = element.GetProperty("joints").EnumerateArray().Select(e => e.GetInt32()).ToList();
-      var ii = 0;
-      foreach (var bone in joint.Select(i => new GLTF_Bone(GLTF.NodeList[i])))
+      CurrentTime += delta;
+      if (CurrentTime > Duration)
       {
-        bone.SkinId = id;
-        bone.JointId = ii;
-        BoneList.Add(bone);
-        BoneMap.Add(bone.Name, bone);
-        ii += 1;
+        CurrentTime %= Duration;
       }
 
-      // Fill children
-      foreach (var mainBone in BoneList)
+      CurrentFrame.Clear();
+      for (var i = 0; i < SequenceList.Count; i++)
       {
-        foreach (var childId in mainBone.ChildrenId)
+        SequenceList[i].CalculateFrames(CurrentTime);
+
+        var key = SequenceList[i].Key;
+        var value = SequenceList[i].CalculateFrameValue(CurrentTime);
+        var type = SequenceList[i].Type;
+
+        if (type == "translation")
         {
-          var childBone = BoneList.Find(x => x.NodeId == childId);
-          mainBone.ChildrenBone.Add(childBone);
+          /*const retarget = this.retargetTranslation[this.sequenceList[i].key];
+          if (retarget) {
+            (value as Vector3).add_(retarget);
+          }*/
         }
-      }
 
-      // Fill meshes
-      foreach (var node in GLTF.NodeList.Where(node => node.MeshId >= 0 && node.SkinId == Id))
-      {
-        if (node.MeshId != null) MeshList.Add(GLTF.MeshList[node.MeshId.Value]);
-      }
+        if (type == "rotation")
+        {
+          /*const retarget = this.retargetRotation[this.sequenceList[i].key];
+          if (retarget) {
+            (value as Quaternion).mul_(retarget);
+          }*/
+        }
 
-      // Inverse Bind Matrices
-      var ibm = element.GetProperty("inverseBindMatrices").GetInt32();
-      var matrixList = GLTF.AccessorList[ibm].Mat4x4();
-      for (var i = 0; i < matrixList.Count; i++) BoneList[i].InverseBindMatrix = matrixList[i];
+        CurrentFrame.Add(new GLTF_AnimationFrame
+        {
+          Key = key,
+          Type = type,
+          Value = value,
+        });
+      }
     }
   }
 }

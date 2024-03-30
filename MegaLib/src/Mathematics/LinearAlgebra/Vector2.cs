@@ -31,5 +31,10 @@ namespace MegaLib.Mathematics.LinearAlgebra
         Y = a.Y - b.Y,
       };
     }
+
+    public override string ToString()
+    {
+      return $"Vector2({X}, {Y})";
+    }
   }
 }

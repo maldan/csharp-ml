@@ -56,7 +56,7 @@ namespace MegaLib.Render.Camera
       var hh = Rotation;
       var head = Matrix4x4.Identity.Rotate(hh);
 
-      var dirNew = dir.ToVector4(1.0f) * head;
+      var dirNew = dir.AddW(1.0f) * head;
       // this.position.add_(dirNew.toVector3());
       Position += dirNew.DropW();
 

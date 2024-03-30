@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.Render.Texture;
@@ -151,9 +152,49 @@ namespace MegaLib.Render.RenderObject
     public Texture_Base RoughnessTexture;
     public Texture_Base MetallicTexture;
 
+    public Texture_Base PositionTexture;
+
     public RO_Mesh()
     {
       Transform = new Transform();
+    }
+
+    public void AlignUV(int width)
+    {
+      var newUv = new List<Vector2>();
+      var texelSize = 1.0f / width;
+      foreach (var t in _uvList)
+      {
+        var p = t;
+        p.X = (float)Math.Floor(p.X / texelSize) * texelSize + texelSize * 0.5f;
+        p.Y = (float)Math.Floor(p.Y / texelSize) * texelSize + texelSize * 0.5f;
+        newUv.Add(p);
+      }
+
+      UVList = newUv;
+    }
+
+    public void ExportToObj(string filePath)
+    {
+      using var writer = new StreamWriter(filePath);
+      // Записываем вертексы
+      foreach (var vertex in _vertexList)
+      {
+        writer.WriteLine("v " + vertex.X + " " + vertex.Y + " " + vertex.Z);
+      }
+
+      // Записываем UV-координаты
+      foreach (var uv in _uvList)
+      {
+        writer.WriteLine("vt " + uv.X + " " + (1.0 - uv.Y));
+      }
+
+      // Записываем индексы
+      for (var i = 0; i < _indexList.Count; i += 3)
+      {
+        writer.WriteLine("f " + (_indexList[i] + 1) + "/" + (_indexList[i] + 1) + " " + (_indexList[i + 1] + 1) + "/" +
+                         (_indexList[i + 1] + 1) + " " + (_indexList[i + 2] + 1) + "/" + (_indexList[i + 2] + 1));
+      }
     }
 
     public void CalculateTangent()

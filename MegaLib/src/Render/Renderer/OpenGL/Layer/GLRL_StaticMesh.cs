@@ -34,6 +34,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
 
         uniform vec3 uLightPosition;
         uniform vec3 uCameraPosition;
+        // uniform sampler2D uPositionTexture;
         
         out vec3 vPosition;
         out vec3 vCameraPosition;
@@ -50,9 +51,13 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
         }
         
         void main() {
+            //ivec2 xx = ivec2(floor(aUV.x * 128.0), floor(aUV.y * 128.0));
+            //vec3 pos = texelFetch(uPositionTexture, xx, 0).rgb * 3.0 - 1.5;
+            //vec3 pos = texture(uPositionTexture, aUV).rgb * 3.0 - 1.5;
+
             gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPosition.xyz, 1.0);
-            vPosition = (uModelMatrix * vec4(aPosition.xyz, 1.0)).xyz;
-            //vPosition = aPosition;
+            //vPosition = (uModelMatrix * vec4(pos.xyz, 1.0)).xyz;
+            vPosition = aPosition;
             
             vUV = aUV;
             
@@ -87,6 +92,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
         uniform sampler2D uNormalColor;
         uniform sampler2D uRoughnessColor;
         uniform sampler2D uMetallicColor;
+        uniform sampler2D uPositionTexture;
         
         uniform samplerCube uSkybox;
 
@@ -318,6 +324,11 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             // Gamma
             finalColor = pow(finalColor, vec3(1.0/2.2));
             
+            
+                
+            //finalColor.rgb *= 0.0001;
+            //finalColor.rgb += texture(uPositionTexture, vUV).rgb;
+            
             color = vec4(finalColor, mat.alpha);
         }".Replace("\r", "");
 
@@ -361,6 +372,8 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             // Id
             MeshId = mesh.Id,
 
+            VaoName = $"{layer.Name}_{mesh.Id}",
+
             VertexBufferName = $"{layer.Name}_{mesh.Id}.vertex",
             UV0BufferName = $"{layer.Name}_{mesh.Id}.uv0",
             NormalBufferName = $"{layer.Name}_{mesh.Id}.normal",
@@ -384,6 +397,9 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             $"{objectInfo.TangentBufferName} -> aTangent:vec3",
             $"{objectInfo.BiTangentBufferName} -> aBiTangent:vec3",
           };
+
+          // Create vao
+          Context.CreateVAO(objectInfo.VaoName);
 
           // Create buffers
           Context.CreateBuffer(objectInfo.VertexBufferName);
@@ -500,6 +516,22 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
               mesh.MetallicTexture.Options);
           }
         }
+
+        /*if (mesh.PositionTexture != null)
+        {
+          if (objectInfo.PositionTextureId != mesh.PositionTexture.Id)
+          {
+            // Remove old
+            if (!string.IsNullOrEmpty(objectInfo.PositionTextureName))
+              Context.DeleteTexture(objectInfo.PositionTextureName);
+
+            // Create new
+            objectInfo.PositionTextureId = mesh.PositionTexture.Id;
+            objectInfo.PositionTextureName = $"{layer.Name}_{mesh.PositionTexture.Id}.positionTexture";
+            Context.CreateTexture(objectInfo.PositionTextureName, mesh.PositionTexture.GPU_RAW,
+              mesh.PositionTexture.Options);
+          }
+        }*/
 
         // gl draw arrays
         objectInfo.DrawElements();

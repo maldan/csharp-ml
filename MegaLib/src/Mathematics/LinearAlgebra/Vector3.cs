@@ -143,7 +143,12 @@ namespace MegaLib.Mathematics.LinearAlgebra
       return new Vector3 { X = X, Y = Y, Z = Z };
     }
 
-    public Vector4 ToVector4(float w)
+    /*public Vector4 ToVector4(float w)
+    {
+      return new Vector4(X, Y, Z, w);
+    }*/
+
+    public Vector4 AddW(float w)
     {
       return new Vector4(X, Y, Z, w);
     }
