@@ -27,6 +27,8 @@ namespace MegaLib.Render.Renderer.OpenGL
     public string BoneWeightBufferName;
     public string BoneIndexBufferName;
 
+    public string TriangleIdBufferName;
+
     public Transform Transform;
 
     public string VaoName;
@@ -187,10 +189,10 @@ namespace MegaLib.Render.Renderer.OpenGL
           Console.WriteLine($"{type} shader created");
         }
 
-        OpenGL32.glShaderSource(shaderId, code);
+        OpenGL32.glShaderSource(shaderId, code.Replace("\r", ""));
         OpenGL32.glCompileShader(shaderId);
 
-        var log = OpenGL32.glGetShaderInfoLog(shaderId, 512).Trim();
+        var log = OpenGL32.glGetShaderInfoLog(shaderId, 1024).Trim();
         if (log.Length > 0) Console.WriteLine($"{type} shader log: {log}");
 
         // Attach to program
@@ -205,7 +207,7 @@ namespace MegaLib.Render.Renderer.OpenGL
 
       // Check status
       OpenGL32.glGetProgramiv(shaderProgram, OpenGL32.GL_LINK_STATUS, out var success);
-      if (success == 0) Console.WriteLine(OpenGL32.glGetProgramInfoLog(shaderProgram, 512));
+      if (success == 0) Console.WriteLine(OpenGL32.glGetProgramInfoLog(shaderProgram, 1024));
 
       // Remove old shaders, we don't need them anymore
       oldShaderList.ForEach(OpenGL32.glDeleteShader);

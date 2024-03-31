@@ -147,6 +147,8 @@ namespace MegaLib.Render.RenderObject
 
     public uint[] GpuIndexList { get; private set; }
 
+    public uint[] GpuTriangleId { get; set; }
+
     public Texture_Base Texture;
     public Texture_Base NormalTexture;
     public Texture_Base RoughnessTexture;

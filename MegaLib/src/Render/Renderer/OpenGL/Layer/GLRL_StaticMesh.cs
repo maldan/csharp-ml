@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
@@ -15,8 +16,10 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
 
     public override void Init()
     {
+      # region vertex
+
       // language=glsl
-      var shaderPBR = @"#version 330 core
+      var vertex = @"#version 330 core
         precision highp float;
         precision highp int;
         precision highp usampler2D;
@@ -27,6 +30,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
         layout (location = 2) in vec3 aBiTangent;
         layout (location = 3) in vec2 aUV;
         layout (location = 4) in vec3 aNormal;
+        // layout (location = 5) in uint aTriangleId;
         
         uniform mat4 uProjectionMatrix;
         uniform mat4 uViewMatrix;
@@ -34,54 +38,207 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
 
         uniform vec3 uLightPosition;
         uniform vec3 uCameraPosition;
-        // uniform sampler2D uPositionTexture;
+        // 
         
-        out vec3 vPosition;
-        out vec3 vCameraPosition;
-        out vec2 vUV;
-        out mat3 vTBN;
+        out vec3 vo_Position;
+        // out vec3 vo_CameraPosition;
+        out vec2 vo_UV;
+        out mat3 vo_TBN;
+        out mat4 vo_Matrix;
         
-        mat4 identity() {
-           return mat4(
-               1.0, 0.0, 0.0, 0.0,
-               0.0, 1.0, 0.0, 0.0,
-               0.0, 0.0, 1.0, 0.0,
-               0.0, 0.0, 0.0, 1.0
-           );
-        }
+        out vec3 vo_Normal;
+        out vec3 vo_Tangent;
+        out vec3 vo_BiTangent;
+        //flat out uint vo_TriangleId;
+        
+        
         
         void main() {
             //ivec2 xx = ivec2(floor(aUV.x * 128.0), floor(aUV.y * 128.0));
             //vec3 pos = texelFetch(uPositionTexture, xx, 0).rgb * 3.0 - 1.5;
             //vec3 pos = texture(uPositionTexture, aUV).rgb * 3.0 - 1.5;
 
-            gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPosition.xyz, 1.0);
+            //gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPosition.xyz, 1.0);
+
+            // gl_Position += vec4(aTriangleId) * 0.00000000001;
             //vPosition = (uModelMatrix * vec4(pos.xyz, 1.0)).xyz;
-            vPosition = aPosition;
             
-            vUV = aUV;
             
-            // TBN Matrix
-            mat4 modelMatrix = identity(); //uModelMatrix;
-            vec3 T = normalize(vec3(modelMatrix * vec4(aTangent,   1.0)));
-            vec3 B = normalize(vec3(modelMatrix * vec4(aBiTangent, 1.0)));
-            vec3 N = normalize(vec3(modelMatrix * vec4(aNormal,    1.0)));
-            vTBN = mat3(T, B, N);
             
             // Camera position
-            vec4 cameraPosition = vec4(0.0, 0.0, 0.0, 1.0);
-            vCameraPosition = (inverse(uViewMatrix) * cameraPosition).xyz;
+            //vec4 cameraPosition = vec4(0.0, 0.0, 0.0, 1.0);
+            
+            // Out
+            vo_Position = aPosition;
+            vo_UV = aUV;
+            //vo_TBN = mat3(T, B, N);
+            vo_Matrix = uProjectionMatrix * uViewMatrix * uModelMatrix;
+            
+            vo_Normal = aNormal;
+            vo_Tangent = aTangent;
+            vo_BiTangent = aBiTangent;
+            
+            //vo_CameraPosition = (inverse(uViewMatrix) * cameraPosition).xyz;
+            // vo_TriangleId = uint(gl_VertexID / 3);
+        }";
+
+      #endregion
+
+      #region geometry
+
+      // language=glsl
+      var geometry = @"#version 450 core
+        
+      layout (triangles) in;
+      layout (triangle_strip, max_vertices = 3 * 16) out;
+        
+      in vec3 vo_Position[];
+      in vec2 vo_UV[];
+      in mat3 vo_TBN[];
+      in mat4 vo_Matrix[];
+      
+      in vec3 vo_Normal[];
+      in vec3 vo_Tangent[];
+      in vec3 vo_BiTangent[];
+      
+      out vec3 go_Position;
+      out vec2 go_UV;
+      out mat3 go_TBN;
+      
+      uniform sampler2D uPositionTexture;
+      uniform vec3 uCameraPosition;
+      
+      mat4 identity() {
+         return mat4(
+             1.0, 0.0, 0.0, 0.0,
+             0.0, 1.0, 0.0, 0.0,
+             0.0, 0.0, 1.0, 0.0,
+             0.0, 0.0, 0.0, 1.0
+         );
+      }
+        
+      ivec2 getTexelPositionById(uint id, int ch) {
+        int pixel = (int(id) * 1 + ch);
+        return ivec2(pixel % 64, pixel / 64);
+      }
+      
+      float remap(float value, float fromMin, float fromMax, float toMin, float toMax) {
+        float normalizedValue = (value - fromMin) / (fromMax - fromMin);
+        return mix(toMin, toMax, normalizedValue);
+      }
+      
+      mat3 getTBN(vec3 a, vec3 b, vec3 c, vec3 tangent, vec3 biTangent) {
+        // Вычисление векторов сторон треугольника
+        vec3 side1 = b.xyz - a.xyz;
+        vec3 side2 = c.xyz - a.xyz;
+        
+        // Вычисление нормали как векторного произведения сторон треугольника
+        vec3 normal = normalize(cross(side1, side2));
+    
+        // TBN Matrix
+        mat4 modelMatrix = identity(); //uModelMatrix;
+        vec3 T = normalize(vec3(modelMatrix * vec4(tangent,   1.0)));
+        vec3 B = normalize(vec3(modelMatrix * vec4(biTangent, 1.0)));
+        vec3 N = normalize(vec3(modelMatrix * vec4(normal,    1.0)));
+        return mat3(T, B, N);
+      }
+
+      mat3 getTBN(vec3 tangent, vec3 biTangent, vec3 normal) {
+        // TBN Matrix
+        mat4 modelMatrix = identity(); //uModelMatrix;
+        vec3 T = normalize(vec3(modelMatrix * vec4(tangent,   1.0)));
+        vec3 B = normalize(vec3(modelMatrix * vec4(biTangent, 1.0)));
+        vec3 N = normalize(vec3(modelMatrix * vec4(normal,    1.0)));
+        return mat3(T, B, N);
+      }
+
+      void original() {
+        mat3 TBN = getTBN(vo_Tangent[0], vo_BiTangent[0], vo_Normal[0]);
+        
+        for (int i = 0; i < gl_in.length(); ++i) {
+          gl_Position = vo_Matrix[0] * vec4(vo_Position[i].xyz, 1.0);
+          go_Position = gl_Position.xyz;
+          go_UV = vo_UV[i];
+          go_TBN = TBN;
+          
+          EmitVertex();
         }
-        // Fragment
+        EndPrimitive();
+      }
+      
+      void subdiv() {
+        // Get offset
+        ivec2 offsetPos = getTexelPositionById(gl_PrimitiveIDIn, 0);
+        vec4 sasa = texelFetch(uPositionTexture, offsetPos, 0);
+        uvec4 sasax = uvec4(sasa.r * 255, sasa.g * 255, sasa.b * 255, sasa.a * 255);
+        sasax.r = (sasax.g << 8) | sasax.r;
+        
+        // Read amount of vertices
+        ivec2 dataPos = getTexelPositionById(sasax.r, 0);
+        uint amount = uint(texelFetch(uPositionTexture, dataPos, 0).r * 255);
+
+        // Read vertices
+        for (int i = 0; i < amount; i += 3) {
+            // Read triangle
+            dataPos = getTexelPositionById(sasax.r + 1 + i + 0, 0);
+            vec3 v = texelFetch(uPositionTexture, dataPos, 0).rgb;
+            vec3 a = vec3(remap(v.r, 0.0, 1.0, -1.5, 1.5), remap(v.g, 0.0, 1.0, -1.5, 1.5), remap(v.b, 0.0, 1.0, -1.5, 1.5));
+            
+            dataPos = getTexelPositionById(sasax.r + 1 + i + 1, 0);
+            v = texelFetch(uPositionTexture, dataPos, 0).rgb;
+            vec3 b = vec3(remap(v.r, 0.0, 1.0, -1.5, 1.5), remap(v.g, 0.0, 1.0, -1.5, 1.5), remap(v.b, 0.0, 1.0, -1.5, 1.5));
+            
+            dataPos = getTexelPositionById(sasax.r + 1 + i + 2, 0);
+            v = texelFetch(uPositionTexture, dataPos, 0).rgb;
+            vec3 c = vec3(remap(v.r, 0.0, 1.0, -1.5, 1.5), remap(v.g, 0.0, 1.0, -1.5, 1.5), remap(v.b, 0.0, 1.0, -1.5, 1.5));
+            
+            // A
+            gl_Position = vo_Matrix[0] * vec4(a, 1.0);
+            go_Position = gl_Position.xyz;
+            go_UV = vo_UV[0];
+            go_TBN = getTBN(a, b, c, vo_Tangent[0], vo_BiTangent[0]);
+            EmitVertex();
+            
+            // B
+            gl_Position = vo_Matrix[0] * vec4(b, 1.0);
+            go_Position = gl_Position.xyz;
+            go_UV = vo_UV[0];
+            go_TBN = getTBN(a, b, c, vo_Tangent[1], vo_BiTangent[1]);
+            EmitVertex();
+            
+            // C
+            gl_Position = vo_Matrix[0] * vec4(c, 1.0);
+            go_Position = gl_Position.xyz;
+            go_UV = vo_UV[0];
+            go_TBN = getTBN(a, b, c, vo_Tangent[2], vo_BiTangent[2]);
+            EmitVertex();
+            
+            EndPrimitive();
+        }
+      }
+        
+      void main() {
+        if (uCameraPosition.z < -3.0) original();
+        else subdiv();
+      }";
+
+      #endregion
+
+      #region fragment
+
+      // language=glsl
+      var fragment = @"
         #version 330 core
         precision highp float;
         precision highp int;
         precision highp sampler2D;
 
-        in vec3 vPosition;
-        in vec3 vCameraPosition;
-        in vec2 vUV;
-        in mat3 vTBN;
+        in vec3 go_Position;
+        //in vec3 go_CameraPosition;
+        in vec2 go_UV;
+        in mat3 go_TBN;
+        //flat in uint go_TriangleId;
+        //flat in uvec4 go_Sex;
         
         out vec4 color;
 
@@ -176,7 +333,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
         
         vec3 calcPbr(Material mat, Light light) {
             if (!light.isDirection) {
-                vec3 l = light.vector - vPosition;
+                vec3 l = light.vector - go_Position;
                 float dist = length(l);
                 l = normalize(l);
                 light.intensity /= (dist * dist);
@@ -184,7 +341,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             }
             
             // Vectors
-            vec3 viewDirection = normalize(vCameraPosition - vPosition);
+            vec3 viewDirection = normalize(uCameraPosition - go_Position);
             vec3 halfDir = normalize(light.vector + viewDirection);
             
             // lightDirection = reflect(-viewDirection, normal);
@@ -271,24 +428,24 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             Material mat;
             
             // Read albedo
-            vec4 texelColor = texture(uTextureColor, vUV);
+            vec4 texelColor = texture(uTextureColor, go_UV);
             if (texelColor.a <= 0.01) discard;
             mat.albedo = sRGBToLinear(texelColor.rgb);
             mat.alpha = texelColor.a;
             
             // Read normal
-            vec3 normal = texture(uNormalColor, vUV).xyz * 2.0 - 1.0;
-            mat.normal = normalize(vTBN * normal);
-            vec3 softNormal = textureLod(uNormalColor, vUV, 10.0).xyz * 2.0 - 1.0;
-            mat.softNormal = normalize(vTBN * softNormal);
+            vec3 normal = texture(uNormalColor, go_UV).xyz * 2.0 - 1.0;
+            mat.normal = normalize(go_TBN * normal);
+            vec3 softNormal = textureLod(uNormalColor, go_UV, 10.0).xyz * 2.0 - 1.0;
+            mat.softNormal = normalize(go_TBN * softNormal);
             
             // Roughness
-            float roughness = texture(uRoughnessColor, vUV).r;
+            float roughness = texture(uRoughnessColor, go_UV).r;
             if (roughness < 0.06) roughness = 0.06;
             mat.roughness = roughness;
             
             // Metallic
-            mat.isMetallic = texture(uMetallicColor, vUV).r >= 0.5;
+            mat.isMetallic = texture(uMetallicColor, go_UV).r >= 0.5;
             
             return mat;
         }
@@ -330,10 +487,16 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             //finalColor.rgb += texture(uPositionTexture, vUV).rgb;
             
             color = vec4(finalColor, mat.alpha);
-        }".Replace("\r", "");
+        }";
 
-      var tuple = shaderPBR.Split("// Fragment\n");
-      Context.CreateShader(Layer.Name, tuple[0], tuple[1]);
+      #endregion
+
+      Context.CreateShader(Layer.Name, new Dictionary<string, string>
+      {
+        { "vertex", vertex },
+        { "geometry", geometry },
+        { "fragment", fragment }
+      });
     }
 
     public override void Render()
@@ -349,7 +512,10 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
 
       // bind camera
       // var cp = _scene.Camera.Position.Inverted;
-      // _context.BindVector(layer.Name, "uCameraPosition", cp);
+      //var cp = new Vector4(0, 0, 0, 1);
+      //cp *= Scene.Camera.ViewMatrix;
+      // Console.WriteLine(Scene.Camera.Position);
+      Context.BindVector(layer.Name, "uCameraPosition", Scene.Camera.Position);
       // _context.BindVector(layer.Name, "uLightPosition", new Vector3(0, 0, -2));
       Context.BindMatrix(layer.Name, "uProjectionMatrix", Scene.Camera.ProjectionMatrix);
       Context.BindMatrix(layer.Name, "uViewMatrix", Scene.Camera.ViewMatrix);
@@ -381,6 +547,8 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             TangentBufferName = $"{layer.Name}_{mesh.Id}.tangent",
             BiTangentBufferName = $"{layer.Name}_{mesh.Id}.biTangent",
 
+            // TriangleIdBufferName = $"{layer.Name}_{mesh.Id}.triangleId",
+
             IndexBufferName = $"{layer.Name}_{mesh.Id}.index",
             IndexAmount = mesh.GpuIndexList.Length,
             ShaderName = layer.Name,
@@ -396,6 +564,8 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
 
             $"{objectInfo.TangentBufferName} -> aTangent:vec3",
             $"{objectInfo.BiTangentBufferName} -> aBiTangent:vec3",
+
+            //$"{objectInfo.TriangleIdBufferName} -> aTriangleId:uint",
           };
 
           // Create vao
@@ -407,6 +577,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
           Context.CreateBuffer(objectInfo.NormalBufferName);
           Context.CreateBuffer(objectInfo.TangentBufferName);
           Context.CreateBuffer(objectInfo.BiTangentBufferName);
+          // Context.CreateBuffer(objectInfo.TriangleIdBufferName);
           Context.CreateBuffer(objectInfo.IndexBufferName);
 
           // gl upload buffers
@@ -415,8 +586,9 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
           Context.UploadBuffer(objectInfo.NormalBufferName, mesh.GpuNormalList);
           Context.UploadBuffer(objectInfo.TangentBufferName, mesh.GpuTangentList);
           Context.UploadBuffer(objectInfo.BiTangentBufferName, mesh.GpuBiTangentList);
+          //Context.UploadBuffer(objectInfo.TriangleIdBufferName, mesh.GpuTriangleId);
           Context.UploadElementBuffer(objectInfo.IndexBufferName, mesh.GpuIndexList);
-
+          //Console.WriteLine("G " + mesh.GpuTriangleId.Length);
           // _context.BindMatrix(layer.Name, "uModelMatrix", mesh.Transform.Matrix);
 
           // Mesh has texture
@@ -517,7 +689,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
           }
         }
 
-        /*if (mesh.PositionTexture != null)
+        if (mesh.PositionTexture != null)
         {
           if (objectInfo.PositionTextureId != mesh.PositionTexture.Id)
           {
@@ -531,7 +703,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             Context.CreateTexture(objectInfo.PositionTextureName, mesh.PositionTexture.GPU_RAW,
               mesh.PositionTexture.Options);
           }
-        }*/
+        }
 
         // gl draw arrays
         objectInfo.DrawElements();
