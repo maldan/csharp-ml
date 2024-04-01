@@ -10,6 +10,8 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
 {
   public class GLRL_StaticMesh : GLRL_Base
   {
+    private Dictionary<ulong, TT> _obj = new();
+
     public GLRL_StaticMesh(Context_OpenGL context, RL_Base layer, Render_Scene scene) : base(context, layer, scene)
     {
     }
@@ -491,15 +493,86 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
 
       #endregion
 
-      Context.CreateShader(Layer.Name, new Dictionary<string, string>
+      /*Context.CreateShader(Layer.Name, new Dictionary<string, string>
       {
         { "vertex", vertex },
         { "geometry", geometry },
         { "fragment", fragment }
-      });
+      });*/
+      Shader.ShaderCode["vertex"] = vertex;
+      Shader.ShaderCode["geometry"] = geometry;
+      Shader.ShaderCode["fragment"] = fragment;
+      Shader.Compile();
     }
 
     public override void Render()
+    {
+      var layer = (RL_StaticMesh)Layer;
+
+      Shader.Use();
+
+      OpenGL32.glEnable(OpenGL32.GL_BLEND);
+      OpenGL32.glBlendFunc(OpenGL32.GL_SRC_ALPHA, OpenGL32.GL_ONE_MINUS_SRC_ALPHA);
+
+      // gl enable depth test
+      OpenGL32.glEnable(OpenGL32.GL_DEPTH_TEST);
+      OpenGL32.glDepthFunc(OpenGL32.GL_LEQUAL);
+
+      OpenGL32.glUniform3f(Shader.GetUniformLocation("uCameraPosition"), Scene.Camera.Position.X,
+        Scene.Camera.Position.Y, Scene.Camera.Position.Z);
+
+      OpenGL32.glUniformMatrix4fv(Shader.GetUniformLocation("uProjectionMatrix"), 1, 0,
+        Scene.Camera.ProjectionMatrix.Raw);
+      OpenGL32.glUniformMatrix4fv(Shader.GetUniformLocation("uViewMatrix"), 1, 0, Scene.Camera.ViewMatrix.Raw);
+
+      //Context.BindVector(layer.Name, "uCameraPosition", Scene.Camera.Position);
+      //Context.BindMatrix(layer.Name, "uProjectionMatrix", Scene.Camera.ProjectionMatrix);
+      //Context.BindMatrix(layer.Name, "uViewMatrix", Scene.Camera.ViewMatrix);
+
+      Context.ActivateCubeTexture(Shader, "uSkybox", "main", 10);
+
+      // Draw each mesh
+      layer.ForEach<RO_Mesh>(mesh =>
+      {
+        TT tt;
+        if (!_obj.ContainsKey(mesh.Id))
+        {
+          tt = new TT(Shader, Context, mesh);
+          tt.BufferList.AddRange(new[]
+          {
+            "vertex -> aPosition:vec3",
+            "uv0 -> aUV:vec2",
+            "normal -> aNormal:vec3",
+            "tangent -> aTangent:vec3",
+            "biTangent -> aBiTangent:vec3",
+            "index",
+          });
+          tt.TextureList.AddRange(new[]
+          {
+            "albedo -> uTextureColor",
+            "normal -> uNormalColor",
+            "roughness -> uRoughnessColor",
+            "metallic -> uMetallicColor"
+          });
+          tt.UniformList.Add("uModelMatrix", () => mesh.Transform.Matrix);
+          tt.Init();
+          _obj[mesh.Id] = tt;
+        }
+        else
+        {
+          tt = _obj[mesh.Id];
+        }
+
+        // gl draw arrays
+        tt.Render();
+      });
+
+      // Unbind
+      OpenGL32.glBindBuffer(OpenGL32.GL_ARRAY_BUFFER, 0);
+      OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
+
+    public void RenderX()
     {
       var layer = (RL_StaticMesh)Layer;
 
@@ -512,8 +585,8 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
 
       // bind camera
       // var cp = _scene.Camera.Position.Inverted;
-      //var cp = new Vector4(0, 0, 0, 1);
-      //cp *= Scene.Camera.ViewMatrix;
+      // var cp = new Vector4(0, 0, 0, 1);
+      // cp *= Scene.Camera.ViewMatrix;
       // Console.WriteLine(Scene.Camera.Position);
       Context.BindVector(layer.Name, "uCameraPosition", Scene.Camera.Position);
       // _context.BindVector(layer.Name, "uLightPosition", new Vector3(0, 0, -2));
@@ -547,8 +620,6 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             TangentBufferName = $"{layer.Name}_{mesh.Id}.tangent",
             BiTangentBufferName = $"{layer.Name}_{mesh.Id}.biTangent",
 
-            // TriangleIdBufferName = $"{layer.Name}_{mesh.Id}.triangleId",
-
             IndexBufferName = $"{layer.Name}_{mesh.Id}.index",
             IndexAmount = mesh.GpuIndexList.Length,
             ShaderName = layer.Name,
@@ -564,8 +635,6 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
 
             $"{objectInfo.TangentBufferName} -> aTangent:vec3",
             $"{objectInfo.BiTangentBufferName} -> aBiTangent:vec3",
-
-            //$"{objectInfo.TriangleIdBufferName} -> aTriangleId:uint",
           };
 
           // Create vao

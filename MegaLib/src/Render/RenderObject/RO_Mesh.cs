@@ -136,6 +136,9 @@ namespace MegaLib.Render.RenderObject
       }
     }
 
+    public List<Vector3> TangentList = new List<Vector3>();
+    public List<Vector3> BiTangentList = new List<Vector3>();
+
     public float[] GpuVertexList { get; private set; }
     public float[] GpuNormalList { get; private set; }
     public float[] GpuTangentList { get; private set; }
@@ -159,6 +162,47 @@ namespace MegaLib.Render.RenderObject
     public RO_Mesh()
     {
       Transform = new Transform();
+    }
+
+    public override dynamic GetDataByName(RO_DataType type, string name)
+    {
+      switch (type)
+      {
+        case RO_DataType.Buffer:
+          switch (name)
+          {
+            case "vertex":
+              return VertexList;
+            case "normal":
+              return NormalList;
+            case "uv0":
+              return UVList;
+            case "tangent":
+              return TangentList;
+            case "biTangent":
+              return BiTangentList;
+            case "index":
+              return IndexList;
+          }
+
+          break;
+        case RO_DataType.Texture:
+          switch (name)
+          {
+            case "albedo":
+              return Texture;
+            case "normal":
+              return NormalTexture;
+            case "roughness":
+              return RoughnessTexture;
+            case "metallic":
+              return MetallicTexture;
+          }
+
+          break;
+      }
+
+      throw new Exception($"Type {type} with Name {name} - Not found");
     }
 
     public void AlignUV(int width)
@@ -264,6 +308,9 @@ namespace MegaLib.Render.RenderObject
       }
 
       GpuBiTangentList = v.ToArray();
+
+      TangentList = tangentList.ToList();
+      BiTangentList = biTangentList.ToList();
     }
 
     public void CalculateNormals()

@@ -5,7 +5,9 @@ using GLboolean = System.Byte;
 using GLint = System.Int32;
 using GLsizei = System.Int32;
 using GLuint = System.UInt32;
+using GLbitfield = System.UInt32;
 using GLfloat = System.Single;
+using GLsizeiptr = System.IntPtr;
 
 namespace MegaLib.OS.Api
 {
@@ -40,11 +42,6 @@ namespace MegaLib.OS.Api
     [DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl,
       SetLastError = true)]
     public static extern void glDepthFunc(GLenum func);
-
-// 
-    [DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl,
-      SetLastError = true)]
-    public static extern void glBindBuffer(GLenum target, GLuint buffer);
 
 // 
     [DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl,
@@ -140,12 +137,71 @@ namespace MegaLib.OS.Api
     public static extern void glTextureParameterIuiv(GLuint texture, GLenum pname, ref GLuint paramsList);
 
 // 
+    [DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl,
+      SetLastError = true)]
+    public static extern bool wglDeleteContext(IntPtr hglrc);
+
+// 
+    [DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl,
+      SetLastError = true)]
+    public static extern IntPtr wglCreateContext(IntPtr hdc);
+
+// 
+    [DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl,
+      SetLastError = true)]
+    public static extern bool wglMakeCurrent(IntPtr hdc, IntPtr hglrc);
+
+// 
+    [DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl,
+      SetLastError = true)]
+    public static extern IntPtr glGetString(uint name);
+
+// 
+    [DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl,
+      SetLastError = true)]
+    public static extern void glClear(GLbitfield mask);
+
+// 
+    [DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl,
+      SetLastError = true)]
+    public static extern void glClearColor(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
+
+// 
+    [DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl,
+      SetLastError = true)]
+    public static extern void glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type,
+      IntPtr data);
+
+// 
+    [DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl,
+      SetLastError = true)]
+    public static extern IntPtr wglGetCurrentDC();
+
+// 
+    [DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl,
+      SetLastError = true)]
+    public static extern IntPtr wglSwapBuffers(IntPtr hdc);
+
+// 
+    [DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl,
+      SetLastError = true)]
+    public static extern void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
+
+// 
     public static void glGenBuffers(GLsizei n, ref GLuint buffers)
     {
       GetProcedure<glGenBuffersDelegate>("glGenBuffers")(n, ref buffers);
     }
 
     private delegate void glGenBuffersDelegate(GLsizei n, ref GLuint buffers);
+
+// 
+    public static void glBindBuffer(GLenum target, GLuint buffer)
+    {
+      GetProcedure<glBindBufferDelegate>("glBindBuffer")(target, buffer);
+    }
+
+    private delegate void glBindBufferDelegate(GLenum target, GLuint buffer);
 
 // 
     public static void glPatchParameteri(GLenum pname, GLint value)
@@ -156,12 +212,12 @@ namespace MegaLib.OS.Api
     private delegate void glPatchParameteriDelegate(GLenum pname, GLint value);
 
 // specifies the parameters for patch primitives
-    public static void glPatchParameterfv(GLenum pname, ref GLfloat values)
+    public static void glPatchParameterfv(GLenum pname, GLfloat[] values)
     {
-      GetProcedure<glPatchParameterfvDelegate>("glPatchParameterfv")(pname, ref values);
+      GetProcedure<glPatchParameterfvDelegate>("glPatchParameterfv")(pname, values);
     }
 
-    private delegate void glPatchParameterfvDelegate(GLenum pname, ref GLfloat values);
+    private delegate void glPatchParameterfvDelegate(GLenum pname, GLfloat[] values);
 
 // 
     public static GLuint glCreateProgram()
@@ -204,12 +260,12 @@ namespace MegaLib.OS.Api
     private delegate GLuint glCreateShaderDelegate(GLenum shaderType);
 
 // 
-    public static void glShaderSource(GLuint shader, GLsizei count, IntPtr str, ref GLint length)
+    public static void glShaderSource(GLuint shader, GLsizei count, IntPtr str, GLint[] length)
     {
-      GetProcedure<glShaderSourceDelegate>("glShaderSource")(shader, count, str, ref length);
+      GetProcedure<glShaderSourceDelegate>("glShaderSource")(shader, count, str, length);
     }
 
-    private delegate void glShaderSourceDelegate(GLuint shader, GLsizei count, IntPtr str, ref GLint length);
+    private delegate void glShaderSourceDelegate(GLuint shader, GLsizei count, IntPtr str, GLint[] length);
 
 // 
     public static void glActiveTexture(GLenum texture)
@@ -316,181 +372,181 @@ namespace MegaLib.OS.Api
     private delegate void glUniform4uiDelegate(GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
 
 // 
-    public static void glUniform1fv(GLint location, GLsizei count, ref GLfloat value)
+    public static void glUniform1fv(GLint location, GLsizei count, GLfloat[] value)
     {
-      GetProcedure<glUniform1fvDelegate>("glUniform1fv")(location, count, ref value);
+      GetProcedure<glUniform1fvDelegate>("glUniform1fv")(location, count, value);
     }
 
-    private delegate void glUniform1fvDelegate(GLint location, GLsizei count, ref GLfloat value);
+    private delegate void glUniform1fvDelegate(GLint location, GLsizei count, GLfloat[] value);
 
 // 
-    public static void glUniform2fv(GLint location, GLsizei count, ref GLfloat value)
+    public static void glUniform2fv(GLint location, GLsizei count, GLfloat[] value)
     {
-      GetProcedure<glUniform2fvDelegate>("glUniform2fv")(location, count, ref value);
+      GetProcedure<glUniform2fvDelegate>("glUniform2fv")(location, count, value);
     }
 
-    private delegate void glUniform2fvDelegate(GLint location, GLsizei count, ref GLfloat value);
+    private delegate void glUniform2fvDelegate(GLint location, GLsizei count, GLfloat[] value);
 
 // 
-    public static void glUniform3fv(GLint location, GLsizei count, ref GLfloat value)
+    public static void glUniform3fv(GLint location, GLsizei count, GLfloat[] value)
     {
-      GetProcedure<glUniform3fvDelegate>("glUniform3fv")(location, count, ref value);
+      GetProcedure<glUniform3fvDelegate>("glUniform3fv")(location, count, value);
     }
 
-    private delegate void glUniform3fvDelegate(GLint location, GLsizei count, ref GLfloat value);
+    private delegate void glUniform3fvDelegate(GLint location, GLsizei count, GLfloat[] value);
 
 // 
-    public static void glUniform4fv(GLint location, GLsizei count, ref GLfloat value)
+    public static void glUniform4fv(GLint location, GLsizei count, GLfloat[] value)
     {
-      GetProcedure<glUniform4fvDelegate>("glUniform4fv")(location, count, ref value);
+      GetProcedure<glUniform4fvDelegate>("glUniform4fv")(location, count, value);
     }
 
-    private delegate void glUniform4fvDelegate(GLint location, GLsizei count, ref GLfloat value);
+    private delegate void glUniform4fvDelegate(GLint location, GLsizei count, GLfloat[] value);
 
 // 
-    public static void glUniform1iv(GLint location, GLsizei count, ref GLint value)
+    public static void glUniform1iv(GLint location, GLsizei count, GLint[] value)
     {
-      GetProcedure<glUniform1ivDelegate>("glUniform1iv")(location, count, ref value);
+      GetProcedure<glUniform1ivDelegate>("glUniform1iv")(location, count, value);
     }
 
-    private delegate void glUniform1ivDelegate(GLint location, GLsizei count, ref GLint value);
+    private delegate void glUniform1ivDelegate(GLint location, GLsizei count, GLint[] value);
 
 // 
-    public static void glUniform2iv(GLint location, GLsizei count, ref GLint value)
+    public static void glUniform2iv(GLint location, GLsizei count, GLint[] value)
     {
-      GetProcedure<glUniform2ivDelegate>("glUniform2iv")(location, count, ref value);
+      GetProcedure<glUniform2ivDelegate>("glUniform2iv")(location, count, value);
     }
 
-    private delegate void glUniform2ivDelegate(GLint location, GLsizei count, ref GLint value);
+    private delegate void glUniform2ivDelegate(GLint location, GLsizei count, GLint[] value);
 
 // 
-    public static void glUniform3iv(GLint location, GLsizei count, ref GLint value)
+    public static void glUniform3iv(GLint location, GLsizei count, GLint[] value)
     {
-      GetProcedure<glUniform3ivDelegate>("glUniform3iv")(location, count, ref value);
+      GetProcedure<glUniform3ivDelegate>("glUniform3iv")(location, count, value);
     }
 
-    private delegate void glUniform3ivDelegate(GLint location, GLsizei count, ref GLint value);
+    private delegate void glUniform3ivDelegate(GLint location, GLsizei count, GLint[] value);
 
 // 
-    public static void glUniform4iv(GLint location, GLsizei count, ref GLint value)
+    public static void glUniform4iv(GLint location, GLsizei count, GLint[] value)
     {
-      GetProcedure<glUniform4ivDelegate>("glUniform4iv")(location, count, ref value);
+      GetProcedure<glUniform4ivDelegate>("glUniform4iv")(location, count, value);
     }
 
-    private delegate void glUniform4ivDelegate(GLint location, GLsizei count, ref GLint value);
+    private delegate void glUniform4ivDelegate(GLint location, GLsizei count, GLint[] value);
 
 // 
-    public static void glUniform1uiv(GLint location, GLsizei count, ref GLuint value)
+    public static void glUniform1uiv(GLint location, GLsizei count, GLuint[] value)
     {
-      GetProcedure<glUniform1uivDelegate>("glUniform1uiv")(location, count, ref value);
+      GetProcedure<glUniform1uivDelegate>("glUniform1uiv")(location, count, value);
     }
 
-    private delegate void glUniform1uivDelegate(GLint location, GLsizei count, ref GLuint value);
+    private delegate void glUniform1uivDelegate(GLint location, GLsizei count, GLuint[] value);
 
 // 
-    public static void glUniform2uiv(GLint location, GLsizei count, ref GLuint value)
+    public static void glUniform2uiv(GLint location, GLsizei count, GLuint[] value)
     {
-      GetProcedure<glUniform2uivDelegate>("glUniform2uiv")(location, count, ref value);
+      GetProcedure<glUniform2uivDelegate>("glUniform2uiv")(location, count, value);
     }
 
-    private delegate void glUniform2uivDelegate(GLint location, GLsizei count, ref GLuint value);
+    private delegate void glUniform2uivDelegate(GLint location, GLsizei count, GLuint[] value);
 
 // 
-    public static void glUniform3uiv(GLint location, GLsizei count, ref GLuint value)
+    public static void glUniform3uiv(GLint location, GLsizei count, GLuint[] value)
     {
-      GetProcedure<glUniform3uivDelegate>("glUniform3uiv")(location, count, ref value);
+      GetProcedure<glUniform3uivDelegate>("glUniform3uiv")(location, count, value);
     }
 
-    private delegate void glUniform3uivDelegate(GLint location, GLsizei count, ref GLuint value);
+    private delegate void glUniform3uivDelegate(GLint location, GLsizei count, GLuint[] value);
 
 // 
-    public static void glUniform4uiv(GLint location, GLsizei count, ref GLuint value)
+    public static void glUniform4uiv(GLint location, GLsizei count, GLuint[] value)
     {
-      GetProcedure<glUniform4uivDelegate>("glUniform4uiv")(location, count, ref value);
+      GetProcedure<glUniform4uivDelegate>("glUniform4uiv")(location, count, value);
     }
 
-    private delegate void glUniform4uivDelegate(GLint location, GLsizei count, ref GLuint value);
+    private delegate void glUniform4uivDelegate(GLint location, GLsizei count, GLuint[] value);
 
 // 
-    public static void glUniformMatrix2fv(GLint location, GLsizei count, GLboolean transpose, ref GLfloat value)
+    public static void glUniformMatrix2fv(GLint location, GLsizei count, GLboolean transpose, GLfloat[] value)
     {
-      GetProcedure<glUniformMatrix2fvDelegate>("glUniformMatrix2fv")(location, count, transpose, ref value);
+      GetProcedure<glUniformMatrix2fvDelegate>("glUniformMatrix2fv")(location, count, transpose, value);
     }
 
     private delegate void glUniformMatrix2fvDelegate(GLint location, GLsizei count, GLboolean transpose,
-      ref GLfloat value);
+      GLfloat[] value);
 
 // 
-    public static void glUniformMatrix3fv(GLint location, GLsizei count, GLboolean transpose, ref GLfloat value)
+    public static void glUniformMatrix3fv(GLint location, GLsizei count, GLboolean transpose, GLfloat[] value)
     {
-      GetProcedure<glUniformMatrix3fvDelegate>("glUniformMatrix3fv")(location, count, transpose, ref value);
+      GetProcedure<glUniformMatrix3fvDelegate>("glUniformMatrix3fv")(location, count, transpose, value);
     }
 
     private delegate void glUniformMatrix3fvDelegate(GLint location, GLsizei count, GLboolean transpose,
-      ref GLfloat value);
+      GLfloat[] value);
 
 // 
-    public static void glUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, ref GLfloat value)
+    public static void glUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, GLfloat[] value)
     {
-      GetProcedure<glUniformMatrix4fvDelegate>("glUniformMatrix4fv")(location, count, transpose, ref value);
+      GetProcedure<glUniformMatrix4fvDelegate>("glUniformMatrix4fv")(location, count, transpose, value);
     }
 
     private delegate void glUniformMatrix4fvDelegate(GLint location, GLsizei count, GLboolean transpose,
-      ref GLfloat value);
+      GLfloat[] value);
 
 // 
-    public static void glUniformMatrix2x3fv(GLint location, GLsizei count, GLboolean transpose, ref GLfloat value)
+    public static void glUniformMatrix2x3fv(GLint location, GLsizei count, GLboolean transpose, GLfloat[] value)
     {
-      GetProcedure<glUniformMatrix2x3fvDelegate>("glUniformMatrix2x3fv")(location, count, transpose, ref value);
+      GetProcedure<glUniformMatrix2x3fvDelegate>("glUniformMatrix2x3fv")(location, count, transpose, value);
     }
 
     private delegate void glUniformMatrix2x3fvDelegate(GLint location, GLsizei count, GLboolean transpose,
-      ref GLfloat value);
+      GLfloat[] value);
 
 // 
-    public static void glUniformMatrix3x2fv(GLint location, GLsizei count, GLboolean transpose, ref GLfloat value)
+    public static void glUniformMatrix3x2fv(GLint location, GLsizei count, GLboolean transpose, GLfloat[] value)
     {
-      GetProcedure<glUniformMatrix3x2fvDelegate>("glUniformMatrix3x2fv")(location, count, transpose, ref value);
+      GetProcedure<glUniformMatrix3x2fvDelegate>("glUniformMatrix3x2fv")(location, count, transpose, value);
     }
 
     private delegate void glUniformMatrix3x2fvDelegate(GLint location, GLsizei count, GLboolean transpose,
-      ref GLfloat value);
+      GLfloat[] value);
 
 // 
-    public static void glUniformMatrix2x4fv(GLint location, GLsizei count, GLboolean transpose, ref GLfloat value)
+    public static void glUniformMatrix2x4fv(GLint location, GLsizei count, GLboolean transpose, GLfloat[] value)
     {
-      GetProcedure<glUniformMatrix2x4fvDelegate>("glUniformMatrix2x4fv")(location, count, transpose, ref value);
+      GetProcedure<glUniformMatrix2x4fvDelegate>("glUniformMatrix2x4fv")(location, count, transpose, value);
     }
 
     private delegate void glUniformMatrix2x4fvDelegate(GLint location, GLsizei count, GLboolean transpose,
-      ref GLfloat value);
+      GLfloat[] value);
 
 // 
-    public static void glUniformMatrix4x2fv(GLint location, GLsizei count, GLboolean transpose, ref GLfloat value)
+    public static void glUniformMatrix4x2fv(GLint location, GLsizei count, GLboolean transpose, GLfloat[] value)
     {
-      GetProcedure<glUniformMatrix4x2fvDelegate>("glUniformMatrix4x2fv")(location, count, transpose, ref value);
+      GetProcedure<glUniformMatrix4x2fvDelegate>("glUniformMatrix4x2fv")(location, count, transpose, value);
     }
 
     private delegate void glUniformMatrix4x2fvDelegate(GLint location, GLsizei count, GLboolean transpose,
-      ref GLfloat value);
+      GLfloat[] value);
 
 // 
-    public static void glUniformMatrix3x4fv(GLint location, GLsizei count, GLboolean transpose, ref GLfloat value)
+    public static void glUniformMatrix3x4fv(GLint location, GLsizei count, GLboolean transpose, GLfloat[] value)
     {
-      GetProcedure<glUniformMatrix3x4fvDelegate>("glUniformMatrix3x4fv")(location, count, transpose, ref value);
+      GetProcedure<glUniformMatrix3x4fvDelegate>("glUniformMatrix3x4fv")(location, count, transpose, value);
     }
 
     private delegate void glUniformMatrix3x4fvDelegate(GLint location, GLsizei count, GLboolean transpose,
-      ref GLfloat value);
+      GLfloat[] value);
 
 // 
-    public static void glUniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose, ref GLfloat value)
+    public static void glUniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose, GLfloat[] value)
     {
-      GetProcedure<glUniformMatrix4x3fvDelegate>("glUniformMatrix4x3fv")(location, count, transpose, ref value);
+      GetProcedure<glUniformMatrix4x3fvDelegate>("glUniformMatrix4x3fv")(location, count, transpose, value);
     }
 
     private delegate void glUniformMatrix4x3fvDelegate(GLint location, GLsizei count, GLboolean transpose,
-      ref GLfloat value);
+      GLfloat[] value);
 
 // 
     public static GLint glGetUniformLocation(GLuint program, IntPtr name)
@@ -586,12 +642,12 @@ namespace MegaLib.OS.Api
     private delegate void glGenerateMipmapDelegate(GLuint target);
 
 // 
-    public static void glDeleteTextures(GLsizei n, ref GLuint textures)
+    public static void glDeleteTextures(GLsizei n, GLuint[] textures)
     {
-      GetProcedure<glDeleteTexturesDelegate>("glDeleteTextures")(n, ref textures);
+      GetProcedure<glDeleteTexturesDelegate>("glDeleteTextures")(n, textures);
     }
 
-    private delegate void glDeleteTexturesDelegate(GLsizei n, ref GLuint textures);
+    private delegate void glDeleteTexturesDelegate(GLsizei n, GLuint[] textures);
 
 // 
     public static void glUseProgram(GLuint program)
@@ -600,5 +656,80 @@ namespace MegaLib.OS.Api
     }
 
     private delegate void glUseProgramDelegate(GLuint program);
+
+// 
+    public static void glGetProgramiv(GLuint program, GLenum pname, ref GLint paramsList)
+    {
+      GetProcedure<glGetProgramivDelegate>("glGetProgramiv")(program, pname, ref paramsList);
+    }
+
+    private delegate void glGetProgramivDelegate(GLuint program, GLenum pname, ref GLint paramsList);
+
+// 
+    public static void glBufferData(GLenum target, GLsizeiptr size, IntPtr data, GLenum usage)
+    {
+      GetProcedure<glBufferDataDelegate>("glBufferData")(target, size, data, usage);
+    }
+
+    private delegate void glBufferDataDelegate(GLenum target, GLsizeiptr size, IntPtr data, GLenum usage);
+
+// 
+    public static void glEnableVertexAttribArray(GLuint index)
+    {
+      GetProcedure<glEnableVertexAttribArrayDelegate>("glEnableVertexAttribArray")(index);
+    }
+
+    private delegate void glEnableVertexAttribArrayDelegate(GLuint index);
+
+// 
+    public static void glDisableVertexAttribArray(GLuint index)
+    {
+      GetProcedure<glDisableVertexAttribArrayDelegate>("glDisableVertexAttribArray")(index);
+    }
+
+    private delegate void glDisableVertexAttribArrayDelegate(GLuint index);
+
+// 
+    public static void glEnableVertexArrayAttrib(GLuint vaobj, GLuint index)
+    {
+      GetProcedure<glEnableVertexArrayAttribDelegate>("glEnableVertexArrayAttrib")(vaobj, index);
+    }
+
+    private delegate void glEnableVertexArrayAttribDelegate(GLuint vaobj, GLuint index);
+
+// 
+    public static void glDisableVertexArrayAttrib(GLuint vaobj, GLuint index)
+    {
+      GetProcedure<glDisableVertexArrayAttribDelegate>("glDisableVertexArrayAttrib")(vaobj, index);
+    }
+
+    private delegate void glDisableVertexArrayAttribDelegate(GLuint vaobj, GLuint index);
+
+// 
+    public static void glGetShaderInfoLog(GLuint shader, GLsizei maxLength, ref GLsizei length, IntPtr infoLog)
+    {
+      GetProcedure<glGetShaderInfoLogDelegate>("glGetShaderInfoLog")(shader, maxLength, ref length, infoLog);
+    }
+
+    private delegate void glGetShaderInfoLogDelegate(GLuint shader, GLsizei maxLength, ref GLsizei length,
+      IntPtr infoLog);
+
+// 
+    public static void glGetProgramInfoLog(GLuint program, GLsizei maxLength, ref GLsizei length, IntPtr infoLog)
+    {
+      GetProcedure<glGetProgramInfoLogDelegate>("glGetProgramInfoLog")(program, maxLength, ref length, infoLog);
+    }
+
+    private delegate void glGetProgramInfoLogDelegate(GLuint program, GLsizei maxLength, ref GLsizei length,
+      IntPtr infoLog);
+
+// 
+    public static IntPtr wglCreateContextAttribsARB(IntPtr hDC, IntPtr hShareContext, GLint[] attribList)
+    {
+      return GetProcedure<wglCreateContextAttribsARBDelegate>("wglCreateContextAttribsARB")(hDC, hShareContext,
+        attribList);
+    }
+
+    private delegate IntPtr wglCreateContextAttribsARBDelegate(IntPtr hDC, IntPtr hShareContext, GLint[] attribList);
   }
 }
