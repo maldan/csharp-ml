@@ -477,7 +477,8 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
         if (skinObjectInfo == null)
         {
           var boneTextureName = $"{layer.Name}_{skin.BoneTexture.Id}.boneMatrixTexture";
-          Context.CreateTexture(boneTextureName, skin.BoneTexture.GPU_RAW, skin.BoneTexture.Options);
+          // @TODO Change to RAW_FLOAT
+          Context.CreateTexture(boneTextureName, skin.BoneTexture.RAW_BYTE, skin.BoneTexture.Options);
 
           // Define object
           skinObjectInfo = new ObjectInfo_OpenGL(Context)
@@ -495,7 +496,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
           if (skin.BoneTexture.IsChanged)
           {
             skin.BoneTexture.IsChanged = false;
-            Context.UpdateTexture(skinObjectInfo.TextureName, skin.BoneTexture.GPU_FLOAT);
+            Context.UpdateTexture(skinObjectInfo.TextureName, skin.BoneTexture.RAW_FLOAT);
           }
         }
 
@@ -583,7 +584,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
               // Create new
               objectInfo.TextureId = mesh.Texture.Id;
               objectInfo.TextureName = $"{layer.Name}_{mesh.Texture.Id}.texture";
-              Context.CreateTexture(objectInfo.TextureName, mesh.Texture.GPU_RAW, mesh.Texture.Options);
+              Context.CreateTexture(objectInfo.TextureName, mesh.Texture.RAW_BYTE, mesh.Texture.Options);
             }
           }
 
@@ -598,7 +599,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
               // Create new
               objectInfo.NormalTextureId = mesh.NormalTexture.Id;
               objectInfo.NormalTextureName = $"{layer.Name}_{mesh.NormalTexture.Id}.normalTexture";
-              Context.CreateTexture(objectInfo.NormalTextureName, mesh.NormalTexture.GPU_RAW,
+              Context.CreateTexture(objectInfo.NormalTextureName, mesh.NormalTexture.RAW_BYTE,
                 mesh.NormalTexture.Options);
             }
           }
@@ -614,7 +615,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
               // Create new
               objectInfo.RoughnessTextureId = mesh.RoughnessTexture.Id;
               objectInfo.RoughnessTextureName = $"{layer.Name}_{mesh.RoughnessTexture.Id}.roughnessTexture";
-              Context.CreateTexture(objectInfo.RoughnessTextureName, mesh.RoughnessTexture.GPU_RAW,
+              Context.CreateTexture(objectInfo.RoughnessTextureName, mesh.RoughnessTexture.RAW_BYTE,
                 mesh.RoughnessTexture.Options);
             }
           }
@@ -632,7 +633,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
               objectInfo.MetallicTextureName = $"{layer.Name}_{mesh.MetallicTexture.Id}.metallicTexture";
               Context.CreateTexture(
                 objectInfo.MetallicTextureName,
-                mesh.MetallicTexture.GPU_RAW,
+                mesh.MetallicTexture.RAW_BYTE,
                 mesh.MetallicTexture.Options);
             }
           }

@@ -38,10 +38,31 @@ namespace MegaLib.Render.Texture
 
     public ulong Id;
     public TextureOptions Options;
-    public byte[] GPU_RAW { get; set; }
+
     public bool IsChanged;
 
-    public float[] GPU_FLOAT { get; set; }
+    public byte[] RAW_BYTE { get; private set; }
+    public float[] RAW_FLOAT { get; private set; }
+
+    public int NumberOfChannels
+    {
+      get
+      {
+        switch (Options.Format)
+        {
+          case TextureFormat.RGBA8:
+          case TextureFormat.BGRA8:
+            return 4;
+          case TextureFormat.BGR8:
+          case TextureFormat.RGB8:
+            return 3;
+          case TextureFormat.R32F:
+            return 1;
+          default:
+            return 0;
+        }
+      }
+    }
 
     public Texture_Base()
     {
@@ -50,52 +71,81 @@ namespace MegaLib.Render.Texture
       Options.WrapMode = TextureWrapMode.Repeat;
       Options.UseMipMaps = true;
 
-      GPU_RAW = new byte[] { 255, 0, 0, 255 };
+      RAW_BYTE = new byte[] { 255, 0, 0, 255 };
       Options.Width = 1;
       Options.Height = 1;
 
       Id = _nextId++;
     }
 
-    /*public Texture_Base(byte[] data)
+    public Texture_Base(TextureFormat format, int width, int height, byte[] data)
     {
-      if (data == null) throw new Exception("Empty texture data");
-      using var memoryStream = new MemoryStream(data);
-      var bmp = new Bitmap(memoryStream);
-      var channelCount = GetChannelsCount(bmp.PixelFormat);
-      if (channelCount == 3) Options.Format = TextureFormat.BGR8;
-      if (channelCount == 4) Options.Format = TextureFormat.RGBA8;
-
-      var rect = new Rectangle(0, 0, bmp.Width, bmp.Height);
-      var bmpData = bmp.LockBits(rect, ImageLockMode.ReadOnly, bmp.PixelFormat);
-
-      var bytes = Math.Abs(bmpData.Stride) * bmp.Height;
-      GPU_RAW = new byte[bytes];
-      Marshal.Copy(bmpData.Scan0, GPU_RAW, 0, bytes);
-      bmp.UnlockBits(bmpData);
-      
-      Options.Width = (ushort)bmp.Width;
-      Options.Height = (ushort)bmp.Height;
-
-      // Set default filtration mode
+      Options.Format = format;
       Options.FiltrationMode = TextureFiltrationMode.Linear;
       Options.WrapMode = TextureWrapMode.Repeat;
-    }*/
+      Options.UseMipMaps = true;
 
-    /*private static int GetChannelsCount(PixelFormat pixelFormat)
+      RAW_BYTE = data;
+      Options.Width = (ushort)width;
+      Options.Height = (ushort)height;
+
+      Id = _nextId++;
+    }
+
+    public void SetPixels(float[] pixels)
     {
-      Console.WriteLine(pixelFormat);
-      switch (pixelFormat)
+      RAW_FLOAT = pixels;
+      IsChanged = true;
+    }
+
+    public void SetPixels(byte[] pixels)
+    {
+      RAW_BYTE = pixels;
+      IsChanged = true;
+    }
+
+    public void SetPixel(int x, int y, byte r, byte g, byte b, byte a)
+    {
+      var ch = NumberOfChannels;
+      var index = (y * Options.Width + x) * ch;
+
+      switch (ch)
       {
-        case PixelFormat.Format24bppRgb:
-          return 3; // RGB
-        case PixelFormat.Format32bppArgb:
-        case PixelFormat.Format32bppPArgb:
-          return 4; // RGBA
-        // Другие форматы изображений можно добавить по необходимости
-        default:
-          throw new NotSupportedException("Не поддерживаемый формат изображения");
+        case 1:
+          RAW_BYTE[index] = r;
+          break;
+        case 2:
+          RAW_BYTE[index] = r;
+          RAW_BYTE[index + 1] = g;
+          break;
+        case 3:
+          RAW_BYTE[index] = r;
+          RAW_BYTE[index + 1] = g;
+          RAW_BYTE[index + 2] = b;
+          break;
+        case 4:
+          RAW_BYTE[index] = r;
+          RAW_BYTE[index + 1] = g;
+          RAW_BYTE[index + 2] = b;
+          RAW_BYTE[index + 3] = a;
+          break;
       }
-    }*/
+
+      IsChanged = true;
+    }
+
+    public (byte, byte, byte, byte) GetPixel(int x, int y)
+    {
+      var ch = NumberOfChannels;
+      var index = (y * Options.Width + x) * ch;
+      return ch switch
+      {
+        1 => (RAW_BYTE[index], 0, 0, 0),
+        2 => (RAW_BYTE[index], RAW_BYTE[index + 1], 0, 0),
+        3 => (RAW_BYTE[index], RAW_BYTE[index + 1], RAW_BYTE[index + 2], 0),
+        4 => (RAW_BYTE[index], RAW_BYTE[index + 1], RAW_BYTE[index + 2], RAW_BYTE[index + 3]),
+        _ => (0, 0, 0, 0)
+      };
+    }
   }
 }

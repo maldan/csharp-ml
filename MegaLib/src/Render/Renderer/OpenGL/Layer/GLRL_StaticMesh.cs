@@ -10,8 +10,6 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
 {
   public class GLRL_StaticMesh : GLRL_Base
   {
-    private Dictionary<ulong, TT> _obj = new();
-
     public GLRL_StaticMesh(Context_OpenGL context, RL_Base layer, Render_Scene scene) : base(context, layer, scene)
     {
     }
@@ -518,26 +516,19 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
       OpenGL32.glEnable(OpenGL32.GL_DEPTH_TEST);
       OpenGL32.glDepthFunc(OpenGL32.GL_LEQUAL);
 
-      OpenGL32.glUniform3f(Shader.GetUniformLocation("uCameraPosition"), Scene.Camera.Position.X,
-        Scene.Camera.Position.Y, Scene.Camera.Position.Z);
-
-      OpenGL32.glUniformMatrix4fv(Shader.GetUniformLocation("uProjectionMatrix"), 1, 0,
-        Scene.Camera.ProjectionMatrix.Raw);
-      OpenGL32.glUniformMatrix4fv(Shader.GetUniformLocation("uViewMatrix"), 1, 0, Scene.Camera.ViewMatrix.Raw);
-
-      //Context.BindVector(layer.Name, "uCameraPosition", Scene.Camera.Position);
-      //Context.BindMatrix(layer.Name, "uProjectionMatrix", Scene.Camera.ProjectionMatrix);
-      //Context.BindMatrix(layer.Name, "uViewMatrix", Scene.Camera.ViewMatrix);
+      Shader.SetUniform("uCameraPosition", Scene.Camera.Position);
+      Shader.SetUniform("uProjectionMatrix", Scene.Camera.ProjectionMatrix);
+      Shader.SetUniform("uViewMatrix", Scene.Camera.ViewMatrix);
 
       Context.ActivateCubeTexture(Shader, "uSkybox", "main", 10);
 
       // Draw each mesh
       layer.ForEach<RO_Mesh>(mesh =>
       {
-        TT tt;
-        if (!_obj.ContainsKey(mesh.Id))
+        OpenGL_Object tt;
+        if (!ObjectList.ContainsKey(mesh.Id))
         {
-          tt = new TT(Shader, Context, mesh);
+          tt = new OpenGL_Object(mesh, Shader);
           tt.BufferList.AddRange(new[]
           {
             "vertex -> aPosition:vec3",
@@ -556,11 +547,11 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
           });
           tt.UniformList.Add("uModelMatrix", () => mesh.Transform.Matrix);
           tt.Init();
-          _obj[mesh.Id] = tt;
+          ObjectList[mesh.Id] = tt;
         }
         else
         {
-          tt = _obj[mesh.Id];
+          tt = ObjectList[mesh.Id];
         }
 
         // gl draw arrays
@@ -704,7 +695,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             // Create new
             objectInfo.TextureId = mesh.Texture.Id;
             objectInfo.TextureName = $"{layer.Name}_{mesh.Texture.Id}.texture";
-            Context.CreateTexture(objectInfo.TextureName, mesh.Texture.GPU_RAW, mesh.Texture.Options);
+            Context.CreateTexture(objectInfo.TextureName, mesh.Texture.RAW_BYTE, mesh.Texture.Options);
           }
         }
 
@@ -719,7 +710,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             // Create new
             objectInfo.NormalTextureId = mesh.NormalTexture.Id;
             objectInfo.NormalTextureName = $"{layer.Name}_{mesh.NormalTexture.Id}.normalTexture";
-            Context.CreateTexture(objectInfo.NormalTextureName, mesh.NormalTexture.GPU_RAW,
+            Context.CreateTexture(objectInfo.NormalTextureName, mesh.NormalTexture.RAW_BYTE,
               mesh.NormalTexture.Options);
           }
         }
@@ -735,7 +726,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             // Create new
             objectInfo.RoughnessTextureId = mesh.RoughnessTexture.Id;
             objectInfo.RoughnessTextureName = $"{layer.Name}_{mesh.RoughnessTexture.Id}.roughnessTexture";
-            Context.CreateTexture(objectInfo.RoughnessTextureName, mesh.RoughnessTexture.GPU_RAW,
+            Context.CreateTexture(objectInfo.RoughnessTextureName, mesh.RoughnessTexture.RAW_BYTE,
               mesh.RoughnessTexture.Options);
           }
         }
@@ -753,7 +744,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             objectInfo.MetallicTextureName = $"{layer.Name}_{mesh.MetallicTexture.Id}.metallicTexture";
             Context.CreateTexture(
               objectInfo.MetallicTextureName,
-              mesh.MetallicTexture.GPU_RAW,
+              mesh.MetallicTexture.RAW_BYTE,
               mesh.MetallicTexture.Options);
           }
         }
@@ -769,7 +760,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             // Create new
             objectInfo.PositionTextureId = mesh.PositionTexture.Id;
             objectInfo.PositionTextureName = $"{layer.Name}_{mesh.PositionTexture.Id}.positionTexture";
-            Context.CreateTexture(objectInfo.PositionTextureName, mesh.PositionTexture.GPU_RAW,
+            Context.CreateTexture(objectInfo.PositionTextureName, mesh.PositionTexture.RAW_BYTE,
               mesh.PositionTexture.Options);
           }
         }

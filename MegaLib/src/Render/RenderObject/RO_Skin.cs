@@ -44,10 +44,7 @@ namespace MegaLib.Render.RenderObject
         }
       }
 
-      /*var byteArray = new byte[pixel.Length * sizeof(float)];
-      Buffer.BlockCopy(pixel, 0, byteArray, 0, byteArray.Length);
-      BoneTexture.GPU_RAW = byteArray;*/
-      BoneTexture.GPU_FLOAT = pixel;
+      BoneTexture.SetPixels(pixel);
       BoneTexture.IsChanged = true;
     }
   }

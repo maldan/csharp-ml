@@ -10,6 +10,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
     protected readonly RL_Base Layer;
     protected readonly Render_Scene Scene;
     protected readonly OpenGL_Shader Shader = new();
+    protected Dictionary<ulong, OpenGL_Object> ObjectList = new();
 
     public GLRL_Base(Context_OpenGL context, RL_Base layer, Render_Scene scene)
     {
