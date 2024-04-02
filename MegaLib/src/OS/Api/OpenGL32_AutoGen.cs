@@ -731,5 +731,13 @@ namespace MegaLib.OS.Api
     }
 
     private delegate IntPtr wglCreateContextAttribsARBDelegate(IntPtr hDC, IntPtr hShareContext, GLint[] attribList);
+
+// 
+    public static void glDeleteBuffers(GLsizei n, GLuint[] buffers)
+    {
+      GetProcedure<glDeleteBuffersDelegate>("glDeleteBuffers")(n, buffers);
+    }
+
+    private delegate void glDeleteBuffersDelegate(GLsizei n, GLuint[] buffers);
   }
 }

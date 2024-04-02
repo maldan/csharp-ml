@@ -1,38 +1,44 @@
+using MegaLib.Render.Buffer;
+
 namespace MegaLib.Render.Texture
 {
   public class Texture_Cube
   {
-    public byte[] GPU_FRONT { get; set; }
-    public byte[] GPU_BACK { get; set; }
+    public ImageGPU<(byte, byte, byte)> FRONT { get; set; }
+    public ImageGPU<(byte, byte, byte)> BACK { get; set; }
 
-    public byte[] GPU_TOP { get; set; }
-    public byte[] GPU_BOTTOM { get; set; }
+    public ImageGPU<(byte, byte, byte)> TOP { get; set; }
+    public ImageGPU<(byte, byte, byte)> BOTTOM { get; set; }
 
-    public byte[] GPU_LEFT { get; set; }
-    public byte[] GPU_RIGHT { get; set; }
+    public ImageGPU<(byte, byte, byte)> LEFT { get; set; }
+    public ImageGPU<(byte, byte, byte)> RIGHT { get; set; }
 
     public TextureOptions Options;
 
     public Texture_Cube()
     {
-      Options = new TextureOptions();
-      Options.Width = 4;
-      Options.Height = 4;
-      Options.FiltrationMode = TextureFiltrationMode.Linear;
-      Options.UseMipMaps = true;
-
-      GPU_TOP = new byte[]
+      Options = new TextureOptions
       {
-        128, 128, 128, 255, 255, 255, 255, 255, 128, 128, 128, 255, 255, 255, 255, 255,
-        255, 255, 255, 255, 128, 128, 128, 255, 255, 255, 255, 255, 128, 128, 128, 255,
-        128, 128, 128, 255, 255, 255, 255, 255, 128, 128, 128, 255, 255, 255, 255, 255,
-        255, 255, 255, 255, 128, 128, 128, 255, 255, 255, 255, 255, 128, 128, 128, 255,
+        Format = TextureFormat.RGB8,
+        Width = 4,
+        Height = 4,
+        FiltrationMode = TextureFiltrationMode.Linear,
+        UseMipMaps = true
       };
-      GPU_FRONT = GPU_TOP;
-      GPU_BACK = GPU_TOP;
-      GPU_LEFT = GPU_TOP;
-      GPU_RIGHT = GPU_TOP;
-      GPU_BOTTOM = GPU_TOP;
+
+      TOP = new ImageGPU<(byte, byte, byte)>(4, 4);
+      TOP.SetPixels(new (byte, byte, byte)[]
+      {
+        (128, 128, 128), (255, 255, 255), (128, 128, 128), (255, 255, 255),
+        (255, 255, 255), (128, 128, 128), (255, 255, 255), (128, 128, 128),
+        (128, 128, 128), (255, 255, 255), (128, 128, 128), (255, 255, 255),
+        (255, 255, 255), (128, 128, 128), (255, 255, 255), (128, 128, 128),
+      });
+      FRONT = TOP;
+      BACK = TOP;
+      LEFT = TOP;
+      RIGHT = TOP;
+      BOTTOM = TOP;
     }
   }
 }

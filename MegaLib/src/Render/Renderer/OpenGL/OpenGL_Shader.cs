@@ -74,6 +74,26 @@ namespace MegaLib.Render.Renderer.OpenGL
       OpenGL32.glUseProgram(Id);
     }
 
+    public void Enable(uint v)
+    {
+      OpenGL32.glEnable(v);
+
+      if (v == OpenGL32.GL_BLEND)
+      {
+        OpenGL32.glBlendFunc(OpenGL32.GL_SRC_ALPHA, OpenGL32.GL_ONE_MINUS_SRC_ALPHA);
+      }
+
+      if (v == OpenGL32.GL_DEPTH_TEST)
+      {
+        OpenGL32.glDepthFunc(OpenGL32.GL_LEQUAL);
+      }
+    }
+
+    public void Disable(uint v)
+    {
+      OpenGL32.glDisable(v);
+    }
+
     public int GetUniformLocation(string name)
     {
       var uniformLocation = OpenGL32.glGetUniformLocation(Id, name);

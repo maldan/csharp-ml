@@ -7,13 +7,13 @@ using MegaLib.Render.RenderObject;
 
 namespace MegaLib.Render.Renderer.OpenGL.Layer
 {
-  public class GLRL_Line : GLRL_Base
+  public class LR_Line : LR_Base
   {
-    public GLRL_Line(Context_OpenGL context, RL_Base layer, Render_Scene scene) : base(context, layer, scene)
+    public LR_Line(OpenGL_Context context, RL_Base layer, Render_Scene scene) : base(context, layer, scene)
     {
     }
 
-    public override void Init()
+    public new void Init()
     {
       // language=glsl
       var lineShaderVertex = @"#version 330 core
@@ -54,7 +54,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
       // Create buffer color
     }
 
-    public override void Render()
+    public new void Render()
     {
       var layer = (RL_StaticLine)Layer;
 

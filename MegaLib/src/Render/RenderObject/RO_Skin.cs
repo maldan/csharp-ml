@@ -10,12 +10,12 @@ namespace MegaLib.Render.RenderObject
   {
     public Skeleton Skeleton;
     public List<RO_Mesh> MeshList = new();
-    public Texture_Base BoneTexture;
+    public Texture_2D<float> BoneTexture;
 
     public RO_Skin()
     {
       Skeleton = new Skeleton();
-      BoneTexture = new Texture_Base();
+      BoneTexture = new Texture_2D<float>();
       BoneTexture.Options.Width = 64;
       BoneTexture.Options.Height = 64;
       BoneTexture.Options.FiltrationMode = TextureFiltrationMode.Nearest;
@@ -29,7 +29,7 @@ namespace MegaLib.Render.RenderObject
       Skeleton.Update();
 
       // Update bone texture
-      var pixel = new float[64 * 64];
+      // var pixel = new float[64 * 64];
       var id = 0;
 
       foreach (var bone in Skeleton.BoneList)
@@ -39,13 +39,13 @@ namespace MegaLib.Render.RenderObject
 
         foreach (var v in raw)
         {
-          pixel[id] = v;
+          BoneTexture.RAW[id] = v;
           id += 1;
         }
       }
 
-      BoneTexture.SetPixels(pixel);
-      BoneTexture.IsChanged = true;
+      //BoneTexture.SetPixels(pixel);
+      //BoneTexture.IsChanged = true;
     }
   }
 }

@@ -32,5 +32,9 @@ namespace MegaLib.Render.Core
       if (layer == null) throw new Exception("Layer not found");
       layer.Remove(obj);
     }
+
+    public void Render()
+    {
+    }
   }
 }

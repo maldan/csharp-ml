@@ -3,161 +3,26 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using MegaLib.Mathematics.LinearAlgebra;
+using MegaLib.Render.Buffer;
 using MegaLib.Render.Texture;
 
 namespace MegaLib.Render.RenderObject
 {
   public class RO_Mesh : RO_Base
   {
-    public string Name = "";
+    public string Name;
 
-    private List<Vector3> _normalList = new();
+    public ListGPU<Vector3> VertexList;
+    public ListGPU<Vector2> UV0List;
+    public ListGPU<Vector3> NormalList;
+    public ListGPU<uint> IndexList;
+    public ListGPU<Vector3> TangentList;
+    public ListGPU<Vector3> BiTangentList;
 
-    public List<Vector3> NormalList
-    {
-      get => _normalList;
-      set
-      {
-        _normalList = value;
-
-        var v = new List<float>();
-        for (var i = 0; i < value.Count; i++)
-        {
-          v.Add(value[i].X);
-          v.Add(value[i].Y);
-          v.Add(value[i].Z);
-        }
-
-        GpuNormalList = v.ToArray();
-      }
-    }
-
-    private List<Vector3> _vertexList = new();
-
-    public List<Vector3> VertexList
-    {
-      get => _vertexList;
-      set
-      {
-        _vertexList = value;
-
-        var v = new List<float>();
-        for (var i = 0; i < value.Count; i++)
-        {
-          v.Add(value[i].X);
-          v.Add(value[i].Y);
-          v.Add(value[i].Z);
-        }
-
-        GpuVertexList = v.ToArray();
-      }
-    }
-
-    private List<Vector2> _uvList = new();
-
-    public List<Vector2> UVList
-    {
-      get => _uvList;
-      set
-      {
-        _uvList = value;
-
-        var v = new List<float>();
-        for (var i = 0; i < value.Count; i++)
-        {
-          v.Add(value[i].X);
-          v.Add(value[i].Y);
-        }
-
-        GpuUVList = v.ToArray();
-      }
-    }
-
-    private List<uint> _indexList = new();
-
-    public List<uint> IndexList
-    {
-      get => _indexList;
-      set
-      {
-        _indexList = value;
-        GpuIndexList = Enumerable.ToArray(value);
-      }
-    }
-
-    private List<Vector4> _boneWeightList = new();
-
-    public List<Vector4> BoneWeightList
-    {
-      get => _boneWeightList;
-      set
-      {
-        _boneWeightList = value;
-
-        var v = new List<float>();
-        for (var i = 0; i < value.Count; i++)
-        {
-          v.Add(value[i].X);
-          v.Add(value[i].Y);
-          v.Add(value[i].Z);
-          v.Add(value[i].W);
-        }
-
-        GpuBoneWeightList = v.ToArray();
-      }
-    }
-
-    private List<Vector4Int> _boneIndexList = new();
-
-    public List<Vector4Int> BoneIndexList
-    {
-      get => _boneIndexList;
-      set
-      {
-        _boneIndexList = value;
-
-        var v = new List<byte>();
-        for (var i = 0; i < value.Count; i++)
-        {
-          v.Add((byte)value[i].W);
-          v.Add((byte)value[i].Z);
-          v.Add((byte)value[i].Y);
-          v.Add((byte)value[i].X);
-        }
-
-        var uintArray = new uint[v.Count / 4];
-        var vv = v.ToArray();
-        for (var i = 0; i < uintArray.Length; i++)
-        {
-          uintArray[i] = BitConverter.ToUInt32(vv, i * 4);
-        }
-
-        GpuBoneIndexList = uintArray;
-      }
-    }
-
-    public List<Vector3> TangentList = new List<Vector3>();
-    public List<Vector3> BiTangentList = new List<Vector3>();
-
-    public float[] GpuVertexList { get; private set; }
-    public float[] GpuNormalList { get; private set; }
-    public float[] GpuTangentList { get; private set; }
-    public float[] GpuBiTangentList { get; private set; }
-    public float[] GpuUVList { get; private set; }
-
-    public float[] GpuBoneWeightList { get; private set; }
-    public uint[] GpuBoneIndexList { get; private set; }
-
-    public uint[] GpuIndexList { get; private set; }
-
-    public uint[] GpuTriangleId { get; set; }
-
-    public Texture_Base Texture;
-    public Texture_Base NormalTexture;
-    public Texture_Base RoughnessTexture;
-    public Texture_Base MetallicTexture;
-
-    public Texture_Base PositionTexture;
+    public Texture_2D<(byte, byte, byte)> AlbedoTexture;
+    public Texture_2D<(byte, byte, byte)> NormalTexture;
+    public Texture_2D<(byte, byte, byte)> RoughnessTexture;
+    public Texture_2D<(byte, byte, byte)> MetallicTexture;
 
     public RO_Mesh()
     {
@@ -176,7 +41,7 @@ namespace MegaLib.Render.RenderObject
             case "normal":
               return NormalList;
             case "uv0":
-              return UVList;
+              return UV0List;
             case "tangent":
               return TangentList;
             case "biTangent":
@@ -190,7 +55,7 @@ namespace MegaLib.Render.RenderObject
           switch (name)
           {
             case "albedo":
-              return Texture;
+              return AlbedoTexture;
             case "normal":
               return NormalTexture;
             case "roughness":
@@ -205,48 +70,12 @@ namespace MegaLib.Render.RenderObject
       throw new Exception($"Type {type} with Name {name} - Not found");
     }
 
-    public void AlignUV(int width)
-    {
-      var newUv = new List<Vector2>();
-      var texelSize = 1.0f / width;
-      foreach (var t in _uvList)
-      {
-        var p = t;
-        p.X = (float)Math.Floor(p.X / texelSize) * texelSize + texelSize * 0.5f;
-        p.Y = (float)Math.Floor(p.Y / texelSize) * texelSize + texelSize * 0.5f;
-        newUv.Add(p);
-      }
-
-      UVList = newUv;
-    }
-
-    public void ExportToObj(string filePath)
-    {
-      using var writer = new StreamWriter(filePath);
-      // Записываем вертексы
-      foreach (var vertex in _vertexList)
-      {
-        writer.WriteLine("v " + vertex.X + " " + vertex.Y + " " + vertex.Z);
-      }
-
-      // Записываем UV-координаты
-      foreach (var uv in _uvList)
-      {
-        writer.WriteLine("vt " + uv.X + " " + (1.0 - uv.Y));
-      }
-
-      // Записываем индексы
-      for (var i = 0; i < _indexList.Count; i += 3)
-      {
-        writer.WriteLine("f " + (_indexList[i] + 1) + "/" + (_indexList[i] + 1) + " " + (_indexList[i + 1] + 1) + "/" +
-                         (_indexList[i + 1] + 1) + " " + (_indexList[i + 2] + 1) + "/" + (_indexList[i + 2] + 1));
-      }
-    }
-
     public void CalculateTangent()
     {
       var tangentList = new Vector3[VertexList.Count];
       var biTangentList = new Vector3[VertexList.Count];
+      TangentList = new ListGPU<Vector3>(VertexList.Count);
+      BiTangentList = new ListGPU<Vector3>(VertexList.Count);
 
       for (var i = 0; i < IndexList.Count; i += 3)
       {
@@ -258,9 +87,9 @@ namespace MegaLib.Render.RenderObject
         var v1 = VertexList[(int)i1];
         var v2 = VertexList[(int)i2];
 
-        var uv0 = UVList[(int)i0];
-        var uv1 = UVList[(int)i1];
-        var uv2 = UVList[(int)i2];
+        var uv0 = UV0List[(int)i0];
+        var uv1 = UV0List[(int)i1];
+        var uv2 = UV0List[(int)i2];
 
         var deltaPos1 = v1 - v0;
         var deltaPos2 = v2 - v0;
@@ -287,69 +116,15 @@ namespace MegaLib.Render.RenderObject
         biTangentList[i2] = biTangent;
       }
 
-      // Fill tangent
-      var v = new List<float>();
-      for (var i = 0; i < tangentList.Length; i++)
-      {
-        v.Add(tangentList[i].X);
-        v.Add(tangentList[i].Y);
-        v.Add(tangentList[i].Z);
-      }
-
-      GpuTangentList = v.ToArray();
-
-      // Fill biTangent
-      v = new List<float>();
-      for (var i = 0; i < biTangentList.Length; i++)
-      {
-        v.Add(biTangentList[i].X);
-        v.Add(biTangentList[i].Y);
-        v.Add(biTangentList[i].Z);
-      }
-
-      GpuBiTangentList = v.ToArray();
-
-      TangentList = tangentList.ToList();
-      BiTangentList = biTangentList.ToList();
-    }
-
-    public void CalculateNormals()
-    {
-      List<Vector3> normals = new List<Vector3>();
-
-      for (int i = 0; i < VertexList.Count; i++)
-      {
-        normals.Add(Vector3.Zero);
-      }
-
-      for (int i = 0; i < IndexList.Count; i += 3)
-      {
-        uint i0 = IndexList[i];
-        uint i1 = IndexList[i + 1];
-        uint i2 = IndexList[i + 2];
-
-        Vector3 v1 = VertexList[(int)i1] - VertexList[(int)i0];
-        Vector3 v2 = VertexList[(int)i2] - VertexList[(int)i0];
-        Vector3 normal = Vector3.Cross(v1, v2);
-
-        normals[(int)i0] += normal;
-        normals[(int)i1] += normal;
-        normals[(int)i2] += normal;
-      }
-
-      for (int i = 0; i < normals.Count; i++)
-      {
-        normals[i] = normals[i].Normalized;
-      }
-
-      NormalList = normals;
+      foreach (var v in tangentList) TangentList.Add(v);
+      foreach (var v in biTangentList) BiTangentList.Add(v);
     }
 
     public static RO_Mesh GenerateUVSphere(float radius, int longitudeSegments, int latitudeSegments)
     {
-      List<Vector3> vertices = new List<Vector3>();
-      List<Vector2> uvs = new List<Vector2>();
-      List<uint> indices = new List<uint>();
+      var vertices = new ListGPU<Vector3>();
+      var uvs = new ListGPU<Vector2>();
+      var indices = new ListGPU<uint>();
 
       for (int lat = 0; lat <= latitudeSegments; lat++)
       {
@@ -390,7 +165,7 @@ namespace MegaLib.Render.RenderObject
       }
 
       var mesh = new RO_Mesh();
-      mesh.UVList = uvs;
+      mesh.UV0List = uvs;
       mesh.VertexList = vertices;
       mesh.IndexList = indices;
 
@@ -400,10 +175,10 @@ namespace MegaLib.Render.RenderObject
     public static RO_Mesh GenerateCube(float size)
     {
       var m = new RO_Mesh();
-      var vertices = new List<Vector3>();
-      var normals = new List<Vector3>();
-      var uv = new List<Vector2>();
-      var indices = new List<uint>();
+      var vertices = new ListGPU<Vector3>();
+      var normals = new ListGPU<Vector3>();
+      var uv = new ListGPU<Vector2>();
+      var indices = new ListGPU<uint>();
 
       // Front
       vertices.Add(new Vector3(-1.0f, -1.0f, 1.0f));
@@ -473,7 +248,7 @@ namespace MegaLib.Render.RenderObject
 
       m.VertexList = vertices;
       m.NormalList = normals;
-      m.UVList = uv;
+      m.UV0List = uv;
       m.IndexList = indices;
 
       m.CalculateTangent();

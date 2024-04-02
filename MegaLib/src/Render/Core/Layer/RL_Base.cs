@@ -4,11 +4,12 @@ using MegaLib.Render.RenderObject;
 
 namespace MegaLib.Render.Core.Layer
 {
-  public class RL_StaticLine : RL_Base
+  public interface ILayerRenderer
   {
-    public float LineWidth = 1.0f;
-    public bool IsSmooth = true;
+    public void Init();
+    public void Render();
   }
+
 
   public class RL_StaticMesh : RL_Base
   {
@@ -26,8 +27,8 @@ namespace MegaLib.Render.Core.Layer
   {
     private readonly List<RO_Base> _objectList = new();
     public string Name;
-
     public int Count => _objectList.Count;
+    public ILayerRenderer LayerRenderer;
 
     public void Add(RO_Base obj)
     {
@@ -47,6 +48,16 @@ namespace MegaLib.Render.Core.Layer
     public void Clear()
     {
       _objectList.Clear();
+    }
+
+    public void Init()
+    {
+      LayerRenderer?.Init();
+    }
+
+    public void Render()
+    {
+      LayerRenderer?.Render();
     }
   }
 }
