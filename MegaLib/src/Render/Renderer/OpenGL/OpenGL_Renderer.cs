@@ -21,11 +21,13 @@ namespace MegaLib.Render.Renderer.OpenGL
         switch (layer)
         {
           case RL_StaticLine:
-            layer.LayerRenderer = new GLLayerRenderer_Line(_context, layer, _scene);
+            layer.LayerRenderer = new LR_Line(_context, layer, _scene);
             break;
           default:
             throw new Exception("Unsupported layer type");
         }
+
+        layer.Init();
       }
 
       // Init cube map
@@ -39,6 +41,10 @@ namespace MegaLib.Render.Renderer.OpenGL
 
     public void Render()
     {
+      foreach (var layer in _scene.Pipeline)
+      {
+        layer.Render();
+      }
     }
 
     public byte[] GetScreen()

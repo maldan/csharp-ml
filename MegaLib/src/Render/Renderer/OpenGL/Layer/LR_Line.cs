@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
+using MegaLib.Render.Buffer;
 using MegaLib.Render.Core;
 using MegaLib.Render.Core.Layer;
 using MegaLib.Render.RenderObject;
@@ -9,14 +11,17 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
 {
   public class LR_Line : LR_Base
   {
+    private ListGPU<Vector3> _lines;
+    private uint _vaoId;
+
     public LR_Line(OpenGL_Context context, RL_Base layer, Render_Scene scene) : base(context, layer, scene)
     {
     }
 
-    public new void Init()
+    public override void Init()
     {
       // language=glsl
-      var lineShaderVertex = @"#version 330 core
+      var vertex = @"#version 330 core
         precision highp float;
         precision highp int;
         precision highp usampler2D;
@@ -32,7 +37,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
         }".Replace("\r", "");
 
       // language=glsl
-      var lineShaderFragment = @"#version 330 core
+      var fragment = @"#version 330 core
           precision highp float;
           precision highp int;
           precision highp sampler2D;
@@ -45,40 +50,41 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
           }".Replace("\r", "");
 
       // Create shader line
-      Context.CreateShader(Layer.Name, lineShaderVertex, lineShaderFragment);
+      //Context.CreateShader(Layer.Name, lineShaderVertex, lineShaderFragment);
 
       // Create buffer vertex
-      Context.CreateBuffer($"{Layer.Name}.vertex");
-      Context.CreateVAO($"{Layer.Name}");
+      //Context.CreateBuffer($"{Layer.Name}.vertex");
+      //Context.CreateVAO($"{Layer.Name}");
 
       // Create buffer color
+      Shader.ShaderCode["vertex"] = vertex;
+      Shader.ShaderCode["fragment"] = fragment;
+      Shader.Compile();
+
+      _lines = new ListGPU<Vector3>();
+      Context.MapBuffer(_lines);
+
+      // Create vao
+      OpenGL32.glGenVertexArrays(1, ref _vaoId);
     }
 
-    public new void Render()
+    public override void Render()
     {
       var layer = (RL_StaticLine)Layer;
 
-      // User shader line
-      Context.UseProgram(layer.Name);
+      Shader.Use();
+      Shader.Enable(OpenGL32.GL_BLEND);
+      Shader.Enable(OpenGL32.GL_DEPTH_TEST);
 
-      // gl blend fn
-      OpenGL32.glEnable(OpenGL32.GL_BLEND);
-      OpenGL32.glBlendFunc(OpenGL32.GL_SRC_ALPHA, OpenGL32.GL_ONE_MINUS_SRC_ALPHA);
-
-      // bind matrix
-      Context.BindMatrix(layer.Name, "uProjectionMatrix", Scene.Camera.ProjectionMatrix);
-      Context.BindMatrix(layer.Name, "uViewMatrix", Scene.Camera.ViewMatrix);
-
-      // gl enable depth test
-      OpenGL32.glEnable(OpenGL32.GL_DEPTH_TEST);
-      OpenGL32.glDepthFunc(OpenGL32.GL_LEQUAL);
+      Shader.SetUniform("uProjectionMatrix", Scene.Camera.ProjectionMatrix);
+      Shader.SetUniform("uViewMatrix", Scene.Camera.ViewMatrix);
 
       if (layer.IsSmooth) OpenGL32.glEnable(OpenGL32.GL_LINE_SMOOTH);
       else OpenGL32.glDisable(OpenGL32.GL_LINE_SMOOTH);
       OpenGL32.glLineWidth(layer.LineWidth);
 
       // Build actual line arrays data
-      var vertexList = new List<float>();
+      _lines.Clear();
       layer.ForEach<RO_Line>((line) =>
       {
         var from = line.From;
@@ -89,20 +95,16 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
           to = line.To * line.Transform.Matrix;
         }
 
-        vertexList.Add(from.X);
-        vertexList.Add(from.Y);
-        vertexList.Add(from.Z);
-        vertexList.Add(to.X);
-        vertexList.Add(to.Y);
-        vertexList.Add(to.Z);
+        _lines.Add(from);
+        _lines.Add(to);
       });
 
-      // gl upload buffers
-      Context.UploadBuffer($"{layer.Name}.vertex", vertexList.ToArray());
+      // Upload on gpu
+      _lines.Sync();
 
       // gl enable attributes
-      Context.BindVAO(layer.Name);
-      Context.EnableAttribute(layer.Name, $"{layer.Name}.vertex", "aVertex:vec3");
+      OpenGL32.glBindVertexArray(_vaoId);
+      Shader.EnableAttribute(_lines, "aVertex");
 
       // gl draw arrays
       OpenGL32.glDrawArrays(OpenGL32.GL_LINES, 0, layer.Count * 2);

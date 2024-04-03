@@ -13,6 +13,8 @@ namespace MegaLib.Render.RenderObject
   {
     public Transform Transform;
 
+    public event EventHandler OnBeforeRender;
+
     protected RO_Base()
     {
     }
