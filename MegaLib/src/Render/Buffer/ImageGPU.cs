@@ -89,7 +89,7 @@ namespace MegaLib.Render.Buffer
       }
     }
 
-    public byte[] GetBytes()
+    /*public byte[] GetBytes()
     {
       if (_pixelData is RGB<byte>[] p)
       {
@@ -121,7 +121,7 @@ namespace MegaLib.Render.Buffer
       }
 
       return null;
-    }
+    }*/
 
     public void SetPixels(T[] list)
     {

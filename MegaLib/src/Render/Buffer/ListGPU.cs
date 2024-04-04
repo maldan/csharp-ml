@@ -71,7 +71,6 @@ namespace MegaLib.Render.Buffer
       OnDestroy?.Invoke(this, Id);
     }
 
-
     public void Add(T item)
     {
       if (_count == _capacity)
