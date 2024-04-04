@@ -11,12 +11,14 @@ namespace MegaLib.Render.RenderObject
 
   public class RO_Base
   {
-    public Transform Transform;
+    private static ulong _nextId = 1;
 
-    public event EventHandler OnBeforeRender;
+    public Transform Transform;
+    public ulong Id;
 
     protected RO_Base()
     {
+      Id = _nextId++;
     }
 
     public virtual dynamic GetDataByName(RO_DataType type, string name)

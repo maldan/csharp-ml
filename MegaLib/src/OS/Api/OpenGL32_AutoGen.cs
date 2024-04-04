@@ -188,6 +188,16 @@ namespace MegaLib.OS.Api
     public static extern void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 // 
+    [DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl,
+      SetLastError = true)]
+    public static extern void glPixelStoref(GLenum pname, GLfloat param);
+
+// 
+    [DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl,
+      SetLastError = true)]
+    public static extern void glPixelStorei(GLenum pname, GLint param);
+
+// 
     public static void glGenBuffers(GLsizei n, ref GLuint buffers)
     {
       GetProcedure<glGenBuffersDelegate>("glGenBuffers")(n, ref buffers);

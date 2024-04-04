@@ -1,9 +1,11 @@
 using System;
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 
 namespace MegaLib.Mathematics.LinearAlgebra
 {
+  [StructLayout(LayoutKind.Sequential, Pack = 1)]
   public struct Vector2
   {
     [JsonInclude] [JsonPropertyName("x")] public float X;

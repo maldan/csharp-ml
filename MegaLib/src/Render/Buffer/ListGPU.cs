@@ -1,13 +1,36 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace MegaLib.Render.Buffer
 {
-  public class ListGPU<T> : IEnumerable<T>
+  internal static class ListGPUId
   {
     private static ulong _nextId = 1;
+    private static readonly Mutex Mutex = new();
 
+    public static ulong NextId()
+    {
+      ulong id;
+      Mutex.WaitOne();
+      try
+      {
+        id = _nextId;
+        _nextId += 1;
+      }
+      finally
+      {
+        Mutex.ReleaseMutex();
+      }
+
+      return id;
+    }
+  }
+
+  public class ListGPU<T> : IEnumerable<T>
+  {
     public ulong Id { get; private set; }
     public bool IsChanged { get; private set; }
 
@@ -23,7 +46,7 @@ namespace MegaLib.Render.Buffer
       _capacity = 4;
       _array = new T[_capacity];
       _count = 0;
-      Id = _nextId++;
+      Id = ListGPUId.NextId();
     }
 
     public ListGPU(int capacity)
@@ -31,13 +54,23 @@ namespace MegaLib.Render.Buffer
       _capacity = capacity;
       _array = new T[_capacity];
       _count = 0;
-      Id = _nextId++;
+      Id = ListGPUId.NextId();
+    }
+
+    public ListGPU(List<T> arr)
+    {
+      _capacity = arr.Capacity;
+      _array = arr.ToArray();
+      _count = arr.Count;
+      IsChanged = true;
+      Id = ListGPUId.NextId();
     }
 
     ~ListGPU()
     {
       OnDestroy?.Invoke(this, Id);
     }
+
 
     public void Add(T item)
     {
@@ -98,8 +131,10 @@ namespace MegaLib.Render.Buffer
 
     public void Sync()
     {
+      //var handle = GCHandle.Alloc(_array, GCHandleType.Pinned);
       OnSync?.Invoke(_array);
       IsChanged = false;
+      //handle.Free();
     }
   }
 }

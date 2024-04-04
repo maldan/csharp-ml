@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.Render.Buffer;
+using MegaLib.Render.Color;
 using MegaLib.Render.Texture;
 
 namespace MegaLib.Render.RenderObject
@@ -19,10 +20,10 @@ namespace MegaLib.Render.RenderObject
     public ListGPU<Vector3> TangentList;
     public ListGPU<Vector3> BiTangentList;
 
-    public Texture_2D<(byte, byte, byte)> AlbedoTexture;
-    public Texture_2D<(byte, byte, byte)> NormalTexture;
-    public Texture_2D<(byte, byte, byte)> RoughnessTexture;
-    public Texture_2D<(byte, byte, byte)> MetallicTexture;
+    public Texture_2D<RGBA<byte>> AlbedoTexture;
+    public Texture_2D<RGB<byte>> NormalTexture;
+    public Texture_2D<RGBA<byte>> RoughnessTexture;
+    public Texture_2D<RGBA<byte>> MetallicTexture;
 
     public RO_Mesh()
     {

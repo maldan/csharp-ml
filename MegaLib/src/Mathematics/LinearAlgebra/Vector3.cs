@@ -1,7 +1,9 @@
 using System;
+using System.Runtime.InteropServices;
 
 namespace MegaLib.Mathematics.LinearAlgebra
 {
+  [StructLayout(LayoutKind.Sequential, Pack = 1)]
   public struct Vector3
   {
     public float X;

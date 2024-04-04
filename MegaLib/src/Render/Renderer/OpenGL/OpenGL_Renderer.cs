@@ -16,12 +16,17 @@ namespace MegaLib.Render.Renderer.OpenGL
     {
       _scene = scene;
 
+      _context.MapTexture(_scene.Skybox);
+
       foreach (var layer in scene.Pipeline)
       {
         switch (layer)
         {
           case RL_StaticLine:
             layer.LayerRenderer = new LR_Line(_context, layer, _scene);
+            break;
+          case RL_StaticMesh:
+            layer.LayerRenderer = new LR_Mesh(_context, layer, _scene);
             break;
           default:
             throw new Exception("Unsupported layer type");

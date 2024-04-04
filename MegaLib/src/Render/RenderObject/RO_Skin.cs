@@ -15,9 +15,7 @@ namespace MegaLib.Render.RenderObject
     public RO_Skin()
     {
       Skeleton = new Skeleton();
-      BoneTexture = new Texture_2D<float>();
-      BoneTexture.Options.Width = 64;
-      BoneTexture.Options.Height = 64;
+      BoneTexture = new Texture_2D<float>(64, 64);
       BoneTexture.Options.FiltrationMode = TextureFiltrationMode.Nearest;
       BoneTexture.Options.WrapMode = TextureWrapMode.Clamp;
       BoneTexture.Options.Format = TextureFormat.R32F;

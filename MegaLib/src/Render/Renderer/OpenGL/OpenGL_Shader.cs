@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Buffer;
+using MegaLib.Render.Texture;
 
 namespace MegaLib.Render.Renderer.OpenGL
 {
@@ -193,6 +194,52 @@ namespace MegaLib.Render.Renderer.OpenGL
 
       // Unbind
       OpenGL32.glBindBuffer(OpenGL32.GL_ARRAY_BUFFER, 0);
+    }
+
+    public void ActivateTexture<T>(Texture_2D<T> texture, string varName, uint slot)
+    {
+      var textureId = Context.GetTextureId(texture);
+
+      // Activate slot texture
+      OpenGL32.glActiveTexture(OpenGL32.GL_TEXTURE0 + slot);
+
+      // Bind texture
+      OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, textureId);
+
+      // Get shader.varName location
+      var uniformLocation = OpenGL32.glGetUniformLocation(Id, varName);
+      if (uniformLocation == -1)
+      {
+        // Unbind
+        OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, 0);
+        return;
+      }
+
+      // Set shader.varName = slot;
+      OpenGL32.glUniform1i(uniformLocation, (int)slot);
+    }
+
+    public void ActivateTexture(Texture_Cube texture, string varName, uint slot)
+    {
+      var textureId = Context.GetTextureId(texture);
+
+      // Activate slot texture
+      OpenGL32.glActiveTexture(OpenGL32.GL_TEXTURE0 + slot);
+
+      // Bind texture
+      OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_CUBE_MAP, textureId);
+
+      // Get shader.varName location
+      var uniformLocation = OpenGL32.glGetUniformLocation(Id, varName);
+      if (uniformLocation == -1)
+      {
+        // Unbind
+        OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_CUBE_MAP, 0);
+        return;
+      }
+
+      // Set shader.varName = slot;
+      OpenGL32.glUniform1i(uniformLocation, (int)slot);
     }
   }
 }
