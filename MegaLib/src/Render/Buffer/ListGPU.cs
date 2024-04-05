@@ -130,6 +130,7 @@ namespace MegaLib.Render.Buffer
 
     public void Sync()
     {
+      if (!IsChanged) return;
       //var handle = GCHandle.Alloc(_array, GCHandleType.Pinned);
       OnSync?.Invoke(_array);
       IsChanged = false;

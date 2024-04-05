@@ -118,6 +118,8 @@ namespace MegaLib.Render.Renderer.OpenGL
 
     public void EnableAttribute<T>(ListGPU<T> buffer, string attributeName)
     {
+      if (buffer == null) return;
+
       var bufferId = Context.GetBufferId(buffer);
 
       var type = buffer switch
@@ -133,9 +135,6 @@ namespace MegaLib.Render.Renderer.OpenGL
       };
 
       var size = 0;
-      var attributeLocation = OpenGL32.glGetAttribLocation(Id, attributeName);
-      if (attributeLocation == -1) throw new Exception($"Attribute {attributeName} not found");
-
       switch (type)
       {
         case "int":
@@ -161,6 +160,13 @@ namespace MegaLib.Render.Renderer.OpenGL
         default:
           throw new Exception($"Unknown type {type}");
       }
+
+      // Get location
+      var attributeLocation = OpenGL32.glGetAttribLocation(Id, attributeName);
+      if (attributeLocation == -1) throw new Exception($"Attribute {attributeName} not found");
+
+      // Sync if changed
+      buffer.Sync();
 
       // Bind buffer
       OpenGL32.glBindBuffer(OpenGL32.GL_ARRAY_BUFFER, bufferId);
@@ -199,6 +205,9 @@ namespace MegaLib.Render.Renderer.OpenGL
     public void ActivateTexture<T>(Texture_2D<T> texture, string varName, uint slot)
     {
       var textureId = Context.GetTextureId(texture);
+
+      // Sync if changed
+      texture.RAW.Sync();
 
       // Activate slot texture
       OpenGL32.glActiveTexture(OpenGL32.GL_TEXTURE0 + slot);

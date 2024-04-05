@@ -19,6 +19,8 @@ namespace MegaLib.Render.RenderObject
     public ListGPU<uint> IndexList;
     public ListGPU<Vector3> TangentList;
     public ListGPU<Vector3> BiTangentList;
+    public ListGPU<Vector4> BoneWeightList;
+    public ListGPU<uint> BoneIndexList;
 
     public Texture_2D<RGBA<byte>> AlbedoTexture;
     public Texture_2D<RGB<byte>> NormalTexture;
@@ -30,7 +32,7 @@ namespace MegaLib.Render.RenderObject
       Transform = new Transform();
     }
 
-    public override dynamic GetDataByName(RO_DataType type, string name)
+    /*public override dynamic GetDataByName(RO_DataType type, string name)
     {
       switch (type)
       {
@@ -69,7 +71,7 @@ namespace MegaLib.Render.RenderObject
       }
 
       throw new Exception($"Type {type} with Name {name} - Not found");
-    }
+    }*/
 
     public void CalculateTangent()
     {

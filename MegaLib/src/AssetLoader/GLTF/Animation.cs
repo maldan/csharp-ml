@@ -57,7 +57,7 @@ namespace MegaLib.AssetLoader.GLTF
           ValueList[PrevFrame].DropW(),
           ValueList[NextFrame].DropW(),
           t).AddW(0.0f),
-        "rotation" => Quaternion.Lerp(
+        "rotation" => Quaternion.Slerp(
           ValueList[PrevFrame].ToQuaternion(),
           ValueList[NextFrame].ToQuaternion(),
           t).ToVector4(),

@@ -28,6 +28,9 @@ namespace MegaLib.Render.Renderer.OpenGL
           case RL_StaticMesh:
             layer.LayerRenderer = new LR_Mesh(_context, layer, _scene);
             break;
+          case RL_SkinnedMesh:
+            layer.LayerRenderer = new LR_Skin(_context, layer, _scene);
+            break;
           default:
             throw new Exception("Unsupported layer type");
         }

@@ -113,6 +113,7 @@ namespace MegaLib.Mathematics.LinearAlgebra
     }
 
     public Quaternion Inverted => new() { X = -X, Y = -Y, Z = -Z, W = W };
+    public Quaternion Conjugated => new() { X = -X, Y = -Y, Z = -Z, W = W };
 
     #endregion
 
@@ -132,6 +133,14 @@ namespace MegaLib.Mathematics.LinearAlgebra
     }
 
     #region Static
+
+    public static float Dot(Quaternion quaternion1, Quaternion quaternion2)
+    {
+      return (quaternion1.X * quaternion2.X)
+             + (quaternion1.Y * quaternion2.Y)
+             + (quaternion1.Z * quaternion2.Z)
+             + (quaternion1.W * quaternion2.W);
+    }
 
     public static Quaternion FromEuler(float x, float y, float z, string unit)
     {
@@ -195,9 +204,73 @@ namespace MegaLib.Mathematics.LinearAlgebra
       return result;
     }
 
+    public static Quaternion Slerp(Quaternion quaternion1, Quaternion quaternion2, float amount)
+    {
+      var t = amount;
+
+      var cosOmega = quaternion1.X * quaternion2.X + quaternion1.Y * quaternion2.Y +
+                     quaternion1.Z * quaternion2.Z + quaternion1.W * quaternion2.W;
+
+      var flip = false;
+
+      if (cosOmega < 0.0f)
+      {
+        flip = true;
+        cosOmega = -cosOmega;
+      }
+
+      float s1, s2;
+
+      if (cosOmega > (1.0f - 1e-6f))
+      {
+        // Too close, do straight linear interpolation.
+        s1 = 1.0f - t;
+        s2 = (flip) ? -t : t;
+      }
+      else
+      {
+        var omega = MathF.Acos(cosOmega);
+        var invSinOmega = 1 / MathF.Sin(omega);
+
+        s1 = MathF.Sin((1.0f - t) * omega) * invSinOmega;
+        s2 = (flip)
+          ? -MathF.Sin(t * omega) * invSinOmega
+          : MathF.Sin(t * omega) * invSinOmega;
+      }
+
+      Quaternion ans;
+
+      ans.X = s1 * quaternion1.X + s2 * quaternion2.X;
+      ans.Y = s1 * quaternion1.Y + s2 * quaternion2.Y;
+      ans.Z = s1 * quaternion1.Z + s2 * quaternion2.Z;
+      ans.W = s1 * quaternion1.W + s2 * quaternion2.W;
+
+      return ans;
+    }
+
     #endregion
 
     #region Operators
+
+    public static Quaternion operator +(Quaternion value1, Quaternion value2)
+    {
+      return new Quaternion(
+        value1.X + value2.X,
+        value1.Y + value2.Y,
+        value1.Z + value2.Z,
+        value1.W + value2.W
+      );
+    }
+
+    public static Quaternion operator -(Quaternion value1, Quaternion value2)
+    {
+      return new Quaternion(
+        value1.X - value2.X,
+        value1.Y - value2.Y,
+        value1.Z - value2.Z,
+        value1.W - value2.W
+      );
+    }
 
     public static Quaternion operator *(Quaternion a, Quaternion b)
     {
@@ -218,6 +291,72 @@ namespace MegaLib.Mathematics.LinearAlgebra
         Z = w1 * z2 + z1 * w2 + x1 * y2 - y1 * x2,
         W = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2
       };
+    }
+
+    public static Quaternion operator *(Quaternion value1, float value2)
+    {
+      return new Quaternion(
+        value1.X * value2,
+        value1.Y * value2,
+        value1.Z * value2,
+        value1.W * value2
+      );
+    }
+
+    public static Quaternion operator /(Quaternion value1, Quaternion value2)
+    {
+      Quaternion ans;
+
+      float q1x = value1.X;
+      float q1y = value1.Y;
+      float q1z = value1.Z;
+      float q1w = value1.W;
+
+      //-------------------------------------
+      // Inverse part.
+      float ls = value2.X * value2.X + value2.Y * value2.Y +
+                 value2.Z * value2.Z + value2.W * value2.W;
+      float invNorm = 1.0f / ls;
+
+      float q2x = -value2.X * invNorm;
+      float q2y = -value2.Y * invNorm;
+      float q2z = -value2.Z * invNorm;
+      float q2w = value2.W * invNorm;
+
+      //-------------------------------------
+      // Multiply part.
+
+      // cross(av, bv)
+      float cx = q1y * q2z - q1z * q2y;
+      float cy = q1z * q2x - q1x * q2z;
+      float cz = q1x * q2y - q1y * q2x;
+
+      float dot = q1x * q2x + q1y * q2y + q1z * q2z;
+
+      ans.X = q1x * q2w + q2x * q1w + cx;
+      ans.Y = q1y * q2w + q2y * q1w + cy;
+      ans.Z = q1z * q2w + q2z * q1w + cz;
+      ans.W = q1w * q2w - dot;
+
+      return ans;
+    }
+
+    public static bool operator ==(Quaternion value1, Quaternion value2)
+    {
+      return (value1.X == value2.X)
+             && (value1.Y == value2.Y)
+             && (value1.Z == value2.Z)
+             && (value1.W == value2.W);
+    }
+
+    public static bool operator !=(Quaternion value1, Quaternion value2)
+    {
+      return !(value1 == value2);
+    }
+
+    public static Quaternion operator -(Quaternion value)
+    {
+      return new Quaternion(0, 0, 0, 0) - value;
     }
 
     #endregion

@@ -6,9 +6,7 @@ namespace MegaLib.Render.Renderer
   {
     public void SetScene(Render_Scene scene);
     public void Render();
-
     public void Clear();
-
     public byte[] GetScreen();
   }
 }

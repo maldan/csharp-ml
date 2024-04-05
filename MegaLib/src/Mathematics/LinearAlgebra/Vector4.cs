@@ -18,6 +18,9 @@ namespace MegaLib.Mathematics.LinearAlgebra
       W = w;
     }
 
+    public uint UInt32LE => (uint)(X | Y << 8 | Z << 16 | W << 24);
+    public uint UInt32BE => (uint)(W | Z << 8 | Y << 16 | X << 24);
+
     public override string ToString()
     {
       return $"Vector4Int({X}, {Y}, {Z}, {W})";

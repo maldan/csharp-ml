@@ -131,6 +131,8 @@ namespace MegaLib.Render.Buffer
 
     public void Sync()
     {
+      if (!IsChanged) return;
+
       //var handle = GCHandle.Alloc(_pixelData, GCHandleType.Pinned);
       OnSync?.Invoke(_pixelData);
       IsChanged = false;

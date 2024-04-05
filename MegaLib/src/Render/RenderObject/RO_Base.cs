@@ -3,11 +3,11 @@ using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Render.RenderObject
 {
-  public enum RO_DataType
+  /*public enum RO_DataType
   {
     Buffer,
     Texture
-  }
+  }*/
 
   public class RO_Base
   {
@@ -21,9 +21,9 @@ namespace MegaLib.Render.RenderObject
       Id = _nextId++;
     }
 
-    public virtual dynamic GetDataByName(RO_DataType type, string name)
+    /*public virtual dynamic GetDataByName(RO_DataType type, string name)
     {
       return null;
-    }
+    }*/
   }
 }

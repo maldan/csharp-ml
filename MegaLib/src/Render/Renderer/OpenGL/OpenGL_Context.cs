@@ -57,6 +57,8 @@ namespace MegaLib.Render.Renderer.OpenGL
       MapBuffer(mesh.UV0List);
       MapBuffer(mesh.TangentList);
       MapBuffer(mesh.BiTangentList);
+      MapBuffer(mesh.BoneWeightList);
+      MapBuffer(mesh.BoneIndexList);
       MapBuffer(mesh.IndexList, true);
 
       // Map all textures
@@ -144,7 +146,8 @@ namespace MegaLib.Render.Renderer.OpenGL
 
     public void MapTexture<T>(Texture_2D<T> texture)
     {
-      if (texture == null) return;
+      if (texture?.RAW == null) return;
+      if (_textureList.ContainsKey(texture.RAW.Id)) return;
 
       // Create gl texture
       uint textureId = 0;
@@ -177,6 +180,8 @@ namespace MegaLib.Render.Renderer.OpenGL
 
         // Unbind
         OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, 0);
+
+        // Console.WriteLine(texture.GetType().Name);
       };
 
       // On destroy
@@ -201,8 +206,6 @@ namespace MegaLib.Render.Renderer.OpenGL
     public void MapBuffer<T>(ListGPU<T> buffer, bool isIndex = false)
     {
       if (buffer == null) return;
-
-      // Already mapped
       if (_bufferList.ContainsKey(buffer.Id)) return;
 
       // Create opengl buffer
@@ -215,11 +218,6 @@ namespace MegaLib.Render.Renderer.OpenGL
       {
         // if (data.Length == 0) return;
         var target = isIndex ? OpenGL32.GL_ELEMENT_ARRAY_BUFFER : OpenGL32.GL_ARRAY_BUFFER;
-        /*if (isIndex)
-        {
-          Console.WriteLine(data[0]);
-          Console.WriteLine(Marshal.SizeOf(data[0]));
-        }*/
 
         // Bind
         OpenGL32.glBindBuffer(target, bufferId);
