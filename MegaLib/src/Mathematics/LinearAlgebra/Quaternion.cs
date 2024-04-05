@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.Intrinsics;
 
 namespace MegaLib.Mathematics.LinearAlgebra
 {
@@ -130,6 +132,24 @@ namespace MegaLib.Mathematics.LinearAlgebra
     public Quaternion RotateEuler(float x, float y, float z, string unit)
     {
       return this * FromEuler(x, y, z, unit);
+    }
+
+    public readonly override bool Equals(object obj)
+    {
+      return (obj is Quaternion other) && Equals(other);
+    }
+
+    public readonly bool Equals(Quaternion other)
+    {
+      return X.Equals(other.X)
+             && Y.Equals(other.Y)
+             && Z.Equals(other.Z)
+             && W.Equals(other.W);
+    }
+
+    public readonly override int GetHashCode()
+    {
+      return HashCode.Combine(X, Y, Z, W);
     }
 
     #region Static
