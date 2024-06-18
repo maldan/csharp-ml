@@ -24,6 +24,7 @@ namespace MegaLib.OS.Api
     public const int WM_CLOSE = 0x0010;
     public const int WM_QUIT = 0x0012;
     public const int WM_SIZE = 0x0005;
+    public const int WM_SHOWWINDOW = 0x0018;
   }
 
   public delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);

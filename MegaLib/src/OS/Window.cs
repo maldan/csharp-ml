@@ -14,12 +14,14 @@ namespace MegaLib.OS
     private IntPtr _hInstance;
     private WNDCLASS _wndclass;
 
+    public Action OnShow;
     public Action OnClose;
     public Action OnCreated;
     public Action<float> OnPaint;
     public Action<int, int> OnResize;
 
     public IntPtr CurrentDC => _hdc;
+    public IntPtr CurrentGLRC => _hglrc;
 
     private Stopwatch _timer = new();
     private float _delta = 0.016f;
@@ -56,6 +58,9 @@ namespace MegaLib.OS
       {
         case WinApi.WM_CREATE:
           OnCreated?.Invoke();
+          return IntPtr.Zero;
+        case WinApi.WM_SHOWWINDOW:
+          OnShow?.Invoke();
           return IntPtr.Zero;
         case WinApi.WM_PAINT:
           _timer.Start();

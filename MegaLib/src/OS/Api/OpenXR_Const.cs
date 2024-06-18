@@ -5,10 +5,20 @@ namespace MegaLib.OS.Api
 {
   using XrFlags64 = System.UInt64;
   using XrInstanceCreateFlags = System.UInt64;
+  using XrSessionCreateFlags = System.UInt64;
+  using XrViewStateFlags = System.UInt64;
   using XrVersion = System.UInt64;
   using XrInstance = IntPtr;
+  using XrSpace = IntPtr;
+  using XrSwapchain = IntPtr;
   using XrSystemId = System.UInt64;
+  using XrSession = System.IntPtr;
   using XrBool32 = System.UInt32;
+  using XrTime = System.Int64;
+  using XrDuration = System.Int64;
+  using XrSwapchainCreateFlags = System.UInt64;
+
+  //using XrSwapchainUsageFlags = System.UInt64;
 
   public enum XrResult
   {
@@ -1083,10 +1093,32 @@ namespace MegaLib.OS.Api
     public IntPtr Next;
     public XrInstanceCreateFlags CreateFlags;
     public XrApplicationInfo ApplicationInfo;
+
     public uint EnabledApiLayerCount;
-    public string EnabledApiLayerNames;
+    public IntPtr EnabledApiLayerNames;
     public uint EnabledExtensionCount;
-    public string EnabledExtensionNames;
+    public IntPtr EnabledExtensionNames;
+
+    public void EnableExtensions(string[] ext)
+    {
+      EnabledExtensionNames = MarshalStringArray(ext);
+      EnabledExtensionCount = (uint)ext.Length;
+    }
+
+    // Метод для преобразования массива строк в IntPtr
+    private static IntPtr MarshalStringArray(string[] strings)
+    {
+      var ptr = IntPtr.Zero;
+      if (strings is { Length: > 0 })
+      {
+        var size = IntPtr.Size;
+        ptr = Marshal.AllocHGlobal(strings.Length * size);
+        for (var i = 0; i < strings.Length; i++)
+          Marshal.WriteIntPtr(ptr, i * size, Marshal.StringToHGlobalAnsi(strings[i]));
+      }
+
+      return ptr;
+    }
   }
 
   [StructLayout(LayoutKind.Sequential)]
@@ -1160,6 +1192,411 @@ namespace MegaLib.OS.Api
     public XrBool32 PositionTracking;
   };
 
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrSessionCreateInfo
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+    public XrSessionCreateFlags CreateFlags;
+    public XrSystemId SystemId;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrGraphicsBindingOpenGLWin32KHR
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+    public IntPtr hDC;
+    public IntPtr hGLRC;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrGraphicsRequirementsOpenGLKHR
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+    public XrVersion MinApiVersionSupported;
+    public XrVersion MaxApiVersionSupported;
+
+    public void PrintVersion()
+    {
+      var min =
+        $"{OpenXR.XR_VERSION_MAJOR(MinApiVersionSupported)}.{OpenXR.XR_VERSION_MINOR(MinApiVersionSupported)}.{OpenXR.XR_VERSION_PATCH(MinApiVersionSupported)}";
+      var max =
+        $"{OpenXR.XR_VERSION_MAJOR(MaxApiVersionSupported)}.{OpenXR.XR_VERSION_MINOR(MaxApiVersionSupported)}.{OpenXR.XR_VERSION_PATCH(MaxApiVersionSupported)}";
+      Console.WriteLine($"Min API - {min}. Max API - {max}");
+    }
+  }
+
+  public enum XrSessionState
+  {
+    XR_SESSION_STATE_UNKNOWN = 0,
+    XR_SESSION_STATE_IDLE = 1,
+    XR_SESSION_STATE_READY = 2,
+    XR_SESSION_STATE_SYNCHRONIZED = 3,
+    XR_SESSION_STATE_VISIBLE = 4,
+    XR_SESSION_STATE_FOCUSED = 5,
+    XR_SESSION_STATE_STOPPING = 6,
+    XR_SESSION_STATE_LOSS_PENDING = 7,
+    XR_SESSION_STATE_EXITING = 8,
+    XR_SESSION_STATE_MAX_ENUM = 0x7FFFFFFF
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrEventDataBuffer
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4000)]
+    public byte[] Varying;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrEventDataSessionStateChanged
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+    public XrSession Session;
+    public XrSessionState State;
+    public XrTime Time;
+  }
+
+  public enum XrViewConfigurationType
+  {
+    XR_VIEW_CONFIGURATION_TYPE_PRIMARY_MONO = 1,
+    XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO = 2,
+
+    // Provided by XR_VARJO_quad_views
+    XR_VIEW_CONFIGURATION_TYPE_PRIMARY_QUAD_VARJO = 1000037000,
+
+    // Provided by XR_MSFT_first_person_observer
+    XR_VIEW_CONFIGURATION_TYPE_SECONDARY_MONO_FIRST_PERSON_OBSERVER_MSFT = 1000054000,
+    XR_VIEW_CONFIGURATION_TYPE_MAX_ENUM = 0x7FFFFFFF
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrSessionBeginInfo
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+    public XrViewConfigurationType PrimaryViewConfigurationType;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrSwapchainCreateInfo
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+    public XrSwapchainCreateFlags CreateFlags;
+    public XrSwapchainUsageFlags UsageFlags;
+    public Int64 Format;
+    public uint SampleCount;
+    public uint Width;
+    public uint Height;
+    public uint FaceCount;
+    public uint ArraySize;
+    public uint MipCount;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrViewConfigurationView
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+    public uint RecommendedImageRectWidth;
+    public uint MaxImageRectWidth;
+    public uint RecommendedImageRectHeight;
+    public uint MaxImageRectHeight;
+    public uint RecommendedSwapchainSampleCount;
+    public uint MaxSwapchainSampleCount;
+
+    public void PrintInfo()
+    {
+      var rw = RecommendedImageRectWidth;
+      var rh = RecommendedImageRectHeight;
+      var mw = MaxImageRectWidth;
+      var mh = MaxImageRectHeight;
+      Console.WriteLine($"Recommended Res {rw}x{rh}. Max Res {mw}x{mh}");
+    }
+  }
+
+  [Flags]
+  public enum XrSwapchainUsageFlags : ulong
+  {
+    XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT = 0x00000001,
+    XR_SWAPCHAIN_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT = 0x00000002,
+    XR_SWAPCHAIN_USAGE_UNORDERED_ACCESS_BIT = 0x00000004,
+    XR_SWAPCHAIN_USAGE_TRANSFER_SRC_BIT = 0x00000008,
+    XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT = 0x00000010,
+    XR_SWAPCHAIN_USAGE_SAMPLED_BIT = 0x00000020,
+    XR_SWAPCHAIN_USAGE_MUTABLE_FORMAT_BIT = 0x00000040,
+    XR_SWAPCHAIN_USAGE_INPUT_ATTACHMENT_BIT_MND = 0x00000080,
+    XR_SWAPCHAIN_USAGE_INPUT_ATTACHMENT_BIT_KHR = 0x00000080,
+  }
+
+  [Flags]
+  public enum XrSwapchainFormatGL : ulong
+  {
+    GL_RGBA8 = 0x8058,
+    GL_DEPTH_COMPONENT16 = 0x81a5,
+    GL_RGB16F = 0x881b,
+    GL_DEPTH24_STENCIL8 = 0x88f0,
+    GL_R11F_G11F_B10F = 0x8c3a,
+    GL_SRGB8_ALPHA8 = 0x8c43,
+    GL_DEPTH_COMPONENT32F = 0x8cac,
+    GL_DEPTH32F_STENCIL8 = 0x8cad,
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrSwapchainImageBaseHeader
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrSwapchainImageOpenGLKHR
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+    public uint Image;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrFrameState
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+    public XrTime PredictedDisplayTime;
+    public XrDuration PredictedDisplayPeriod;
+    public XrBool32 ShouldRender;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrFrameBeginInfo
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrFrameEndInfo
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+    public XrTime DisplayTime;
+    public XrEnvironmentBlendMode EnvironmentBlendMode;
+    public uint LayerCount;
+    //public XrCompositionLayerBaseHeader[] Layers;
+    public IntPtr Layers;
+  }
+  
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrCompositionLayerBaseHeader
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+    public XrCompositionLayerFlags LayerFlags;
+    public XrSpace Space;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrFrameWaitInfo
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+  }
+
+  public enum XrEnvironmentBlendMode
+  {
+    XR_ENVIRONMENT_BLEND_MODE_OPAQUE = 1,
+    XR_ENVIRONMENT_BLEND_MODE_ADDITIVE = 2,
+    XR_ENVIRONMENT_BLEND_MODE_ALPHA_BLEND = 3,
+    XR_ENVIRONMENT_BLEND_MODE_MAX_ENUM = 0x7FFFFFFF
+  }
+
+  [Flags]
+  public enum XrCompositionLayerFlags : ulong
+  {
+    XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT = 0x00000001,
+    XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT = 0x00000002,
+    sXR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT = 0x00000004,
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrCompositionLayerProjection
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+    public XrCompositionLayerFlags LayerFlags;
+    public XrSpace Space;
+    public uint ViewCount;
+    public XrCompositionLayerProjectionView[] Views;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrCompositionLayerProjectionView
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+    public XrPosef Pose;
+    public XrFovf Fov;
+    public XrSwapchainSubImage SubImage;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrPosef
+  {
+    public XrQuaternionf Orientation;
+    public XrVector3f Position;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrVector3f
+  {
+    public float X;
+    public float Y;
+    public float Z;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrQuaternionf
+  {
+    public float X;
+    public float Y;
+    public float Z;
+    public float W;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrFovf
+  {
+    public float AngleLeft;
+    public float AngleRight;
+    public float AngleUp;
+    public float AngleDown;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrSwapchainSubImage
+  {
+    public XrSwapchain Swapchain;
+    public XrRect2Di ImageRect;
+    public uint ImageArrayIndex;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrRect2Di
+  {
+    public XrOffset2Di Offset;
+    public XrExtent2Di Extent;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrOffset2Di
+  {
+    public int X;
+    public int Y;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrExtent2Di
+  {
+    public int Width;
+    public int Height;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrReferenceSpaceCreateInfo
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+    public XrReferenceSpaceType ReferenceSpaceType;
+    public XrPosef PoseInReferenceSpace;
+  }
+
+  public enum XrReferenceSpaceType
+  {
+    XR_REFERENCE_SPACE_TYPE_VIEW = 1,
+    XR_REFERENCE_SPACE_TYPE_LOCAL = 2,
+    XR_REFERENCE_SPACE_TYPE_STAGE = 3,
+
+    // Provided by XR_MSFT_unbounded_reference_space
+    XR_REFERENCE_SPACE_TYPE_UNBOUNDED_MSFT = 1000038000,
+
+    // Provided by XR_VARJO_foveated_rendering
+    XR_REFERENCE_SPACE_TYPE_COMBINED_EYE_VARJO = 1000121000,
+
+    // Provided by XR_ML_localization_map
+    XR_REFERENCE_SPACE_TYPE_LOCALIZATION_MAP_ML = 1000139000,
+
+    // Provided by XR_EXT_local_floor
+    XR_REFERENCE_SPACE_TYPE_LOCAL_FLOOR_EXT = 1000426000,
+    XR_REFERENCE_SPACE_TYPE_MAX_ENUM = 0x7FFFFFFF
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrExtensionProperties
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)OpenXR.XR_MAX_EXTENSION_NAME_SIZE)]
+    public string ExtensionName;
+
+    public uint ExtensionVersion;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrSwapchainImageAcquireInfo
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrSwapchainImageWaitInfo
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+    public XrDuration Timeout;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrSwapchainImageReleaseInfo
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrView
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+    public XrPosef Pose;
+    public XrFovf Fov;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrViewState
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+    public XrViewStateFlags ViewStateFlags;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrViewLocateInfo
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+    public XrViewConfigurationType ViewConfigurationType;
+    public XrTime DisplayTime;
+    public XrSpace Space;
+  }
+
   public static partial class OpenXR
   {
     public const uint XR_TRUE = 1;
@@ -1178,6 +1615,7 @@ namespace MegaLib.OS.Api
     public const uint XR_MAX_LOCALIZED_ACTION_SET_NAME_SIZE = 128;
     public const uint XR_MAX_ACTION_NAME_SIZE = 64;
     public const uint XR_MAX_LOCALIZED_ACTION_NAME_SIZE = 128;
+    public const ulong XR_INFINITE_DURATION = 0x7fffffffffffffffL;
 
     public static XrVersion XR_MAKE_VERSION(ulong major, ulong minor, ulong patch)
     {
@@ -1189,5 +1627,37 @@ namespace MegaLib.OS.Api
     public static ushort XR_VERSION_MAJOR(ulong version) => (ushort)((version >> 48) & 0xffff);
     public static ushort XR_VERSION_MINOR(ulong version) => (ushort)((version >> 32) & 0xffff);
     public static uint XR_VERSION_PATCH(ulong version) => (uint)(version & 0xffffffff);
+
+    public static XrResult xrGetOpenGLGraphicsRequirementsKHR(XrInstance instance, ulong systemId,
+      ref XrGraphicsRequirementsOpenGLKHR graphicsRequirements)
+    {
+      var namePtr = Marshal.StringToHGlobalAnsi("xrGetOpenGLGraphicsRequirementsKHR");
+
+
+      // Get procedure
+      var fnPtr = IntPtr.Zero;
+      var r = xrGetInstanceProcAddr(instance, namePtr, ref fnPtr);
+      //Console.WriteLine("xrGetOpenGLGraphicsRequirementsKHR = " + r);
+
+      var rr = Marshal.GetDelegateForFunctionPointer<xrGetOpenGLGraphicsRequirementsKHRDelegate>(fnPtr)(instance,
+        systemId, ref graphicsRequirements);
+
+      Marshal.FreeHGlobal(namePtr);
+      return rr;
+    }
+
+    public delegate XrResult xrGetOpenGLGraphicsRequirementsKHRDelegate(XrInstance instance, ulong systemId,
+      ref XrGraphicsRequirementsOpenGLKHR graphicsRequirements);
+
+    // Return result
+    public static (XrResult status, XrEventDataBuffer data) xrPollEvents(XrInstance xrInstance)
+    {
+      var eventData = new XrEventDataBuffer
+      {
+        Type = XrStructureType.XR_TYPE_EVENT_DATA_BUFFER,
+      };
+      var status = xrPollEvent(xrInstance, ref eventData);
+      return (status, eventData);
+    }
   }
 }
