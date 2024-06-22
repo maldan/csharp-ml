@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 
@@ -264,12 +265,20 @@ namespace MegaLib.OS.Api
     public struct RenderLayerInfo
     {
       public XrTime PredictedDisplayTime;
-      public XrCompositionLayerBaseHeader[] Layers;
+      public XrCompositionLayerProjection [] Layers;
       public IntPtr[] LayersPointers;
       public XrCompositionLayerProjection LayerProjection;
       public XrCompositionLayerProjectionView[] LayerProjectionViews;
       public SwapchainInfo[] SwapchainList;
 
+      public void Init()
+      {
+        Layers = Array.Empty<XrCompositionLayerProjection >();
+        LayersPointers = Array.Empty<IntPtr>();
+        LayerProjectionViews = Array.Empty<XrCompositionLayerProjectionView>();
+        SwapchainList = Array.Empty<SwapchainInfo>();
+      }
+      
       public void Gas(XrSession sessionId, XrViewConfigurationType m_viewConfiguration, XrSpace space, Action OnRock)
       {
         // Prepare views
@@ -298,8 +307,8 @@ namespace MegaLib.OS.Api
             ref viewLocateInfo,
             ref viewState,
             (uint)views.Length,
-            out viewCount,
-            views
+            ref viewCount,
+            viewsPtr
           )
         );
         LayerProjectionViews = new XrCompositionLayerProjectionView[SwapchainList.Length];
@@ -307,7 +316,9 @@ namespace MegaLib.OS.Api
         // Per swapchain
         for (var i = 0; i < SwapchainList.Length; i++)
         {
-          SwapchainList[i].AcquireSwapchainImage();
+          Console.WriteLine($"VIEW: {views[i].Pose} {views[i].Fov}");
+          
+          var swapchainImage = SwapchainList[i].AcquireSwapchainImage();
           
           // Set views
           LayerProjectionViews[i].Type = XrStructureType.XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW;
@@ -322,29 +333,38 @@ namespace MegaLib.OS.Api
             (int)SwapchainList[i].View.RecommendedImageRectHeight;
           LayerProjectionViews[i].SubImage.ImageArrayIndex = 0;
           
+          // Bind
+          OpenGL32.glBindFramebuffer(
+            OpenGL32.GL_FRAMEBUFFER, 
+            SwapchainList[i].FrameBuffer[swapchainImage]
+            );
+          
+          Console.WriteLine($"GL BIND {OpenGL32.glCheckFramebufferStatus(OpenGL32.GL_FRAMEBUFFER)}");
+          
           OnRock?.Invoke();
+          
+          // Unbind
+          OpenGL32.glBindFramebuffer(OpenGL32.GL_FRAMEBUFFER, 0);
           
           SwapchainList[i].ReleaseSwapchainImage();
         }
 
         // Fuck
+        LayerProjection.Type = XrStructureType.XR_TYPE_COMPOSITION_LAYER_PROJECTION;
         LayerProjection.LayerFlags = XrCompositionLayerFlags.XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT |
                                      XrCompositionLayerFlags.XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT;
         LayerProjection.Space = space;
         LayerProjection.ViewCount = (uint)LayerProjectionViews.Length;
-        LayerProjection.Views = LayerProjectionViews;
+        LayerProjection.Views = Marshal.UnsafeAddrOfPinnedArrayElement(LayerProjectionViews, 0);
         
         // Layers
-        Layers = new[]
+        Layers = new[] { LayerProjection };
+        LayersPointers = new IntPtr[Layers.Length];
+        for (var i = 0; i < Layers.Length; i++)
         {
-          new XrCompositionLayerBaseHeader
-          {
-            Type = LayerProjection.Type,
-            LayerFlags = LayerProjection.LayerFlags,
-            Space = LayerProjection.Space,
-          }
-        };
-        LayersPointers = new[] { Marshal.UnsafeAddrOfPinnedArrayElement(Layers, 0) };
+          LayersPointers[i] = Marshal.UnsafeAddrOfPinnedArrayElement(Layers, i);
+        }
+        // LayersPointer = new[] { Marshal.UnsafeAddrOfPinnedArrayElement(Layers, 0) };
       }
     }
 
@@ -357,14 +377,13 @@ namespace MegaLib.OS.Api
 
       // public IntPtr ImageViews;
       public XrSwapchainImageOpenGLKHR[] OpenGL_Images;
-      public uint[] FrameBuffers;
-
-
+      public uint[] FrameBuffer;
+      
       public void GenerateFrameBuffers()
       {
-        FrameBuffers = new uint[OpenGL_Images.Length];
+        FrameBuffer = new uint[OpenGL_Images.Length];
 
-        for (var i = 0; i < FrameBuffers.Length; i++)
+        for (var i = 0; i < OpenGL_Images.Length; i++)
         {
           // Generate
           uint framebuffer = 0;
@@ -391,11 +410,11 @@ namespace MegaLib.OS.Api
           OpenGL32.glBindFramebuffer(OpenGL32.GL_FRAMEBUFFER, 0);
 
           // Set
-          FrameBuffers[i] = framebuffer;
+          FrameBuffer[i] = framebuffer;
         }
       }
 
-      public void AcquireSwapchainImage()
+      public uint AcquireSwapchainImage()
       {
         Console.WriteLine($"ACUIR SWAPCHAIN {Swapchain}");
         
@@ -420,6 +439,8 @@ namespace MegaLib.OS.Api
         };
         Check(xrWaitSwapchainImage(Swapchain, ref waitInfo),
           "Failed to wait for Image from the Swapchain");
+
+        return imageIndex;
       }
 
       public void ReleaseSwapchainImage()
@@ -429,6 +450,42 @@ namespace MegaLib.OS.Api
           { Type = XrStructureType.XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
         Check(xrReleaseSwapchainImage(Swapchain, ref releaseInfo),
           "Failed to release Image back to the Color Swapchain");
+      }
+      
+      public void PrintInfo()
+      {
+        Console.WriteLine("Swapchain {");
+        Console.WriteLine($"  ID {Swapchain}");
+        Console.WriteLine($"  Format {Format}");
+        View.PrintInfo();
+
+        if (OpenGL_Images != null)
+        {
+          Console.WriteLine("OpenGL Image {");
+          for (var i = 0; i < OpenGL_Images.Length; i++)
+          {
+            Console.WriteLine($"  Image: {OpenGL_Images[i].Image}. Type: {OpenGL_Images[i].Type}");
+          }
+          Console.WriteLine("}");
+        }
+        else
+        {
+          Console.WriteLine("OpenGL Images null");
+        }
+
+        if (OpenGL_Images != null)
+        {
+          Console.WriteLine("Frame Buffers {");
+          foreach (var framebuffer in FrameBuffer)
+          {
+            Console.WriteLine($"  {framebuffer}");
+          }
+          Console.WriteLine("}");
+        } else {
+          Console.WriteLine("Framebuffer null");
+        }
+        
+        Console.WriteLine("}");
       }
     }
 
@@ -484,6 +541,39 @@ namespace MegaLib.OS.Api
       return images;
     }
 
+    public static XrEnvironmentBlendMode[] EnumerateEnvironmentBlendModes(
+      XrInstance instance, 
+      XrSystemId systemId,
+      XrViewConfigurationType viewConfiguration
+      )
+    {
+      uint count = 0;
+      Check(
+        xrEnumerateEnvironmentBlendModes(
+          instance, 
+          systemId, 
+          viewConfiguration, 
+          0, 
+          ref count,
+          IntPtr.Zero
+        )
+      );
+      var list = new XrEnvironmentBlendMode[count];
+      var ptr = Marshal.UnsafeAddrOfPinnedArrayElement(list, 0);
+      Check(
+        xrEnumerateEnvironmentBlendModes(
+          instance, 
+          systemId, 
+          viewConfiguration, 
+          count, 
+          ref count,
+          ptr
+        )
+      );
+      
+      return list;
+    }
+    
     public static XrSpace CreateReferenceSpace(XrSession sessionId)
     {
       var createInfo = new XrReferenceSpaceCreateInfo
@@ -492,7 +582,8 @@ namespace MegaLib.OS.Api
         ReferenceSpaceType = XrReferenceSpaceType.XR_REFERENCE_SPACE_TYPE_LOCAL,
         PoseInReferenceSpace = new XrPosef
         {
-          Orientation = new XrQuaternionf { W = 1.0f },
+          Orientation = new XrQuaternionf { X = 0, Y = 0, Z = 0, W = 1.0f },
+          Position = new XrVector3f { X = 0, Y = 0, Z = 0 },
         }
       };
       var space = IntPtr.Zero;

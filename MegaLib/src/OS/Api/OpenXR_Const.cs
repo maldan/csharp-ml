@@ -17,6 +17,7 @@ namespace MegaLib.OS.Api
   using XrTime = System.Int64;
   using XrDuration = System.Int64;
   using XrSwapchainCreateFlags = System.UInt64;
+  using XrSpaceLocationFlags = System.UInt64;
 
   //using XrSwapchainUsageFlags = System.UInt64;
 
@@ -1317,7 +1318,7 @@ namespace MegaLib.OS.Api
       var rh = RecommendedImageRectHeight;
       var mw = MaxImageRectWidth;
       var mh = MaxImageRectHeight;
-      Console.WriteLine($"Recommended Res {rw}x{rh}. Max Res {mw}x{mh}");
+      Console.WriteLine($"Recommended Res {rw}x{rh}. Max Res {mw}x{mh}. Sample count {RecommendedSwapchainSampleCount}/{MaxSwapchainSampleCount}");
     }
   }
 
@@ -1346,6 +1347,11 @@ namespace MegaLib.OS.Api
     GL_SRGB8_ALPHA8 = 0x8c43,
     GL_DEPTH_COMPONENT32F = 0x8cac,
     GL_DEPTH32F_STENCIL8 = 0x8cad,
+    
+    GL_RGBA16 = 0x805b,
+    GL_RGBA16F = 0x881a,
+    GL_SRGB8 = 0x8c41,
+    GL_DEPTH_COMPONENT24 = 0x81a6,
   }
 
   [StructLayout(LayoutKind.Sequential)]
@@ -1387,11 +1393,13 @@ namespace MegaLib.OS.Api
     public IntPtr Next;
     public XrTime DisplayTime;
     public XrEnvironmentBlendMode EnvironmentBlendMode;
+
     public uint LayerCount;
+
     //public XrCompositionLayerBaseHeader[] Layers;
     public IntPtr Layers;
   }
-  
+
   [StructLayout(LayoutKind.Sequential)]
   public struct XrCompositionLayerBaseHeader
   {
@@ -1432,7 +1440,7 @@ namespace MegaLib.OS.Api
     public XrCompositionLayerFlags LayerFlags;
     public XrSpace Space;
     public uint ViewCount;
-    public XrCompositionLayerProjectionView[] Views;
+    public IntPtr Views;
   }
 
   [StructLayout(LayoutKind.Sequential)]
@@ -1450,6 +1458,11 @@ namespace MegaLib.OS.Api
   {
     public XrQuaternionf Orientation;
     public XrVector3f Position;
+    
+    public override string ToString()
+    {
+      return $"Position: {Position}. Orientation: {Orientation}";
+    }
   }
 
   [StructLayout(LayoutKind.Sequential)]
@@ -1458,6 +1471,11 @@ namespace MegaLib.OS.Api
     public float X;
     public float Y;
     public float Z;
+
+    public override string ToString()
+    {
+      return $"Vector3f({X}, {Y}, {Z})";
+    }
   }
 
   [StructLayout(LayoutKind.Sequential)]
@@ -1467,6 +1485,11 @@ namespace MegaLib.OS.Api
     public float Y;
     public float Z;
     public float W;
+    
+    public override string ToString()
+    {
+      return $"Quaternionf({X}, {Y}, {Z}, {W})";
+    }
   }
 
   [StructLayout(LayoutKind.Sequential)]
@@ -1476,6 +1499,11 @@ namespace MegaLib.OS.Api
     public float AngleRight;
     public float AngleUp;
     public float AngleDown;
+    
+    public override string ToString()
+    {
+      return $"L {AngleLeft} R {AngleRight} U {AngleUp} D {AngleDown}";
+    }
   }
 
   [StructLayout(LayoutKind.Sequential)]
@@ -1597,6 +1625,15 @@ namespace MegaLib.OS.Api
     public XrSpace Space;
   }
 
+  [StructLayout(LayoutKind.Sequential)]
+  public struct XrSpaceLocation
+  {
+    public XrStructureType Type;
+    public IntPtr Next;
+    public XrSpaceLocationFlags LocationFlags;
+    public XrPosef Pose;
+  };
+
   public static partial class OpenXR
   {
     public const uint XR_TRUE = 1;
@@ -1659,5 +1696,10 @@ namespace MegaLib.OS.Api
       var status = xrPollEvent(xrInstance, ref eventData);
       return (status, eventData);
     }
+
+    /*[DllImport("D:/csharp_lib/MegaLib/MegaLib/lib/openxr_loader.dll", CharSet = CharSet.Ansi,
+      CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
+    public static extern XrResult xrLocateViews(XrSession session, ref XrViewLocateInfo viewLocateInfo,
+      ref XrViewState viewState, uint viewCapacityInput, out uint viewCountOutput, [In, Out] XrView[] views);*/
   }
 }
