@@ -35,6 +35,50 @@ namespace MegaLib.Render.Camera
         CalculateProjection();
       }
     }
+    
+    public Vector4 XrFOV
+    {
+      set
+      {
+        var tanLeft = MathF.Tan(value.X);
+        var tanUp = MathF.Tan(value.Y);
+        var tanRight = MathF.Tan(value.Z);
+        var tanDown = MathF.Tan(value.W);
+
+        var tanWidth = tanRight - tanLeft;
+        var tanHeight = tanUp - tanDown;
+
+        var a = 2.0f / tanWidth;
+        var b = 2.0f / tanHeight;
+        var c = (tanRight + tanLeft) / tanWidth;
+        var d = (tanUp + tanDown) / tanHeight;
+        var q = -(_far + _near) / (_far - _near);
+        var qn = -2.0f * (_far * _near) / (_far - _near);
+
+        _projectionMatrix = new Matrix4x4
+        {
+          M00 = a,
+          M01 = 0.0f,
+          M02 = 0.0f,
+          M03 = 0.0f,
+
+          M10 = 0.0f,
+          M11 = b,
+          M12 = 0.0f,
+          M13 = 0.0f,
+
+          M20 = c,
+          M21 = d,
+          M22 = q,
+          M23 = -1.0f,
+
+          M30 = 0.0f,
+          M31 = 0.0f,
+          M32 = qn,
+          M33 = 0.0f
+        };
+      }
+    }
 
     public float AspectRatio
     {

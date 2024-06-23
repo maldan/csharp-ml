@@ -14,6 +14,10 @@ namespace MegaLib.Render.Camera
     private Vector3 _position;
     private Quaternion _rotation = Quaternion.Identity;
 
+    public bool IsXInverted = true;
+    public bool IsYInverted = true;
+    public bool IsZInverted = true;
+    
     public Vector3 Position
     {
       get => _position;
@@ -38,8 +42,9 @@ namespace MegaLib.Render.Camera
     {
       _viewMatrix = Matrix4x4.Identity;
       var p = _position;
-      p.X *= -1;
-      p.Y *= -1;
+      if (IsXInverted) p.X *= -1;
+      if (IsYInverted) p.Y *= -1;
+      if (IsZInverted) p.Z *= -1;
       // p.Z *= -1;
 
       _viewMatrix = _viewMatrix.Rotate(_rotation);

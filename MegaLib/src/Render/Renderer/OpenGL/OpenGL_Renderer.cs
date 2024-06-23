@@ -47,6 +47,7 @@ namespace MegaLib.Render.Renderer.OpenGL
     public void Clear()
     {
       OpenGL32.glClear(OpenGL32.GL_COLOR_BUFFER_BIT | OpenGL32.GL_DEPTH_BUFFER_BIT);
+      // OpenGL32.glClearDepth(1.0f);
       OpenGL32.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     }
 

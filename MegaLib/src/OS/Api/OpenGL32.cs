@@ -100,6 +100,11 @@ namespace MegaLib.OS.Api
       var dataPtr = Marshal.UnsafeAddrOfPinnedArrayElement(data, 0);
       glBufferData(target, (IntPtr)sizeInBytes, dataPtr, usage);
     }
+    
+    /*public static void glDeleteFramebuffers(GLsizei n, uint[] framebuffers) {
+      var dataPtr = Marshal.UnsafeAddrOfPinnedArrayElement(framebuffers, 0); 
+      glDeleteFramebuffers(n, dataPtr);
+    }*/
 
     public static void PrintGlError()
     {

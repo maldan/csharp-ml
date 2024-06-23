@@ -130,6 +130,10 @@ public static extern void glClear(GLbitfield mask);
 
 // 
 [DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
+public static extern void glClearDepth(GLfloat depth);
+
+// 
+[DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
 public static extern void glClearColor(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
 
 // 
@@ -563,6 +567,18 @@ public static void glGenFramebuffers(GLsizei n, ref GLuint ids) {
 GetProcedure<glGenFramebuffersDelegate>("glGenFramebuffers")(n, ref ids);
 }
 private delegate void glGenFramebuffersDelegate(GLsizei n, ref GLuint ids);
+
+// 
+public static void glDeleteFramebuffers(GLsizei n, GLuint[] framebuffers) {
+GetProcedure<glDeleteFramebuffersDelegate>("glDeleteFramebuffers")(n, framebuffers);
+}
+private delegate void glDeleteFramebuffersDelegate(GLsizei n, GLuint[] framebuffers);
+
+// 
+public static void glGenTextures(GLsizei n, ref GLuint textures) {
+GetProcedure<glGenTexturesDelegate>("glGenTextures")(n, ref textures);
+}
+private delegate void glGenTexturesDelegate(GLsizei n, ref GLuint textures);
 
 // 
 public static void glFramebufferTexture2D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) {

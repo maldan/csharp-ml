@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using GLint = System.Int32;
+using GLsizei = System.Int32;
 
 namespace MegaLib.OS.Api
 {
@@ -269,20 +271,27 @@ namespace MegaLib.OS.Api
       public IntPtr[] LayersPointers;
       public XrCompositionLayerProjection LayerProjection;
       public XrCompositionLayerProjectionView[] LayerProjectionViews;
-      public SwapchainInfo[] SwapchainList;
+      public SwapchainInfo[] ColorSwapchainList;
+      public SwapchainInfo[] DepthSwapchainList;
 
       public void Init()
       {
         Layers = Array.Empty<XrCompositionLayerProjection >();
         LayersPointers = Array.Empty<IntPtr>();
         LayerProjectionViews = Array.Empty<XrCompositionLayerProjectionView>();
-        SwapchainList = Array.Empty<SwapchainInfo>();
+        ColorSwapchainList = Array.Empty<SwapchainInfo>();
+        DepthSwapchainList = Array.Empty<SwapchainInfo>();
       }
       
-      public void Gas(XrSession sessionId, XrViewConfigurationType m_viewConfiguration, XrSpace space, Action OnRock)
+      public void Render(
+        XrSession sessionId, 
+        XrViewConfigurationType m_viewConfiguration, 
+        XrSpace space, 
+        Action<XrPosef, XrFovf> OnRender
+      )
       {
         // Prepare views
-        var views = new XrView[SwapchainList.Length];
+        var views = new XrView[ColorSwapchainList.Length];
         for (var i = 0; i < views.Length; i++)
         {
           views[i].Type = XrStructureType.XR_TYPE_VIEW;
@@ -311,42 +320,111 @@ namespace MegaLib.OS.Api
             viewsPtr
           )
         );
-        LayerProjectionViews = new XrCompositionLayerProjectionView[SwapchainList.Length];
+        LayerProjectionViews = new XrCompositionLayerProjectionView[ColorSwapchainList.Length];
 
         // Per swapchain
-        for (var i = 0; i < SwapchainList.Length; i++)
+        for (var i = 0; i < ColorSwapchainList.Length; i++)
         {
           Console.WriteLine($"VIEW: {views[i].Pose} {views[i].Fov}");
           
-          var swapchainImage = SwapchainList[i].AcquireSwapchainImage();
+          var colorSwapchainImageId = ColorSwapchainList[i].AcquireSwapchainImage();
+          var depthSwapchainImageId = DepthSwapchainList[i].AcquireSwapchainImage();
           
           // Set views
           LayerProjectionViews[i].Type = XrStructureType.XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW;
           LayerProjectionViews[i].Pose = views[i].Pose;
           LayerProjectionViews[i].Fov = views[i].Fov;
-          LayerProjectionViews[i].SubImage.Swapchain = SwapchainList[i].Swapchain;
+          LayerProjectionViews[i].SubImage.Swapchain = ColorSwapchainList[i].Swapchain;
           LayerProjectionViews[i].SubImage.ImageRect.Offset.X = 0;
           LayerProjectionViews[i].SubImage.ImageRect.Offset.Y = 0;
           LayerProjectionViews[i].SubImage.ImageRect.Extent.Width =
-            (int)SwapchainList[i].View.RecommendedImageRectWidth;
+            (int)ColorSwapchainList[i].View.RecommendedImageRectWidth;
           LayerProjectionViews[i].SubImage.ImageRect.Extent.Height =
-            (int)SwapchainList[i].View.RecommendedImageRectHeight;
+            (int)ColorSwapchainList[i].View.RecommendedImageRectHeight;
           LayerProjectionViews[i].SubImage.ImageArrayIndex = 0;
           
-          // Bind
-          OpenGL32.glBindFramebuffer(
-            OpenGL32.GL_FRAMEBUFFER, 
-            SwapchainList[i].FrameBuffer[swapchainImage]
-            );
+          // Set viewport
+          var width = ColorSwapchainList[i].View.RecommendedImageRectWidth;
+          var height = ColorSwapchainList[i].View.RecommendedImageRectHeight;
+          OpenGL32.glViewport(
+            0, 0, 
+            (int)ColorSwapchainList[i].View.RecommendedImageRectWidth,
+            (int)ColorSwapchainList[i].View.RecommendedImageRectHeight);
           
-          Console.WriteLine($"GL BIND {OpenGL32.glCheckFramebufferStatus(OpenGL32.GL_FRAMEBUFFER)}");
-          
-          OnRock?.Invoke();
-          
-          // Unbind
+          // Clear color
+          /*OpenGL32.glBindFramebuffer(OpenGL32.GL_FRAMEBUFFER, ColorSwapchainList[i].FrameBuffer[colorSwapchainImageId]);
+          OpenGL32.glClearColor(0, 0, 0, 1.0f);
+          OpenGL32.glClear(OpenGL32.GL_DEPTH_BUFFER_BIT);
           OpenGL32.glBindFramebuffer(OpenGL32.GL_FRAMEBUFFER, 0);
           
-          SwapchainList[i].ReleaseSwapchainImage();
+          // Clear depth
+          OpenGL32.glBindFramebuffer(OpenGL32.GL_FRAMEBUFFER, DepthSwapchainList[i].FrameBuffer[depthSwapchainImageId]);
+          OpenGL32.glClearDepth(1.0f);
+          OpenGL32.glClear(OpenGL32.GL_DEPTH_BUFFER_BIT);
+          OpenGL32.glBindFramebuffer(OpenGL32.GL_FRAMEBUFFER, 0);*/
+          
+          // Console.WriteLine($"GL BIND {OpenGL32.glCheckFramebufferStatus(OpenGL32.GL_FRAMEBUFFER)}");
+          
+          // Bind image
+          uint setFramebuffer = 0;
+          OpenGL32.glGenFramebuffers(1, ref setFramebuffer);
+          OpenGL32.glBindFramebuffer(OpenGL32.GL_FRAMEBUFFER, setFramebuffer);
+          
+          OpenGL32.glFramebufferTexture2D(
+            OpenGL32.GL_FRAMEBUFFER,
+            OpenGL32.GL_COLOR_ATTACHMENT0,
+            OpenGL32.GL_TEXTURE_2D,
+            ColorSwapchainList[i].OpenGL_Images[colorSwapchainImageId].Image,
+            0
+          );
+          
+          // Генерация и настройка глубинного буфера
+          /*uint depthTexture = 0;
+          OpenGL32.glGenTextures(1, ref depthTexture);
+          OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, depthTexture);
+          OpenGL32.glTexImage2D(OpenGL32.GL_TEXTURE_2D, 0, (GLint)OpenGL32.GL_DEPTH_COMPONENT, (GLsizei)width, (GLsizei)height, 0, OpenGL32.GL_DEPTH_COMPONENT, OpenGL32.GL_FLOAT, IntPtr.Zero);
+          OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_MIN_FILTER, (GLint)OpenGL32.GL_NEAREST);
+          OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_MAG_FILTER, (GLint)OpenGL32.GL_NEAREST);
+          OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_WRAP_S, (GLint)OpenGL32.GL_CLAMP_TO_EDGE);
+          OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_WRAP_T, (GLint)OpenGL32.GL_CLAMP_TO_EDGE);
+
+          // Привязка глубинного буфера
+          OpenGL32.glFramebufferTexture2D(
+            OpenGL32.GL_FRAMEBUFFER,
+            OpenGL32.GL_DEPTH_ATTACHMENT,
+            OpenGL32.GL_TEXTURE_2D,
+            depthTexture,
+            0
+          );*/
+          
+          OpenGL32.glFramebufferTexture2D(
+            OpenGL32.GL_FRAMEBUFFER,
+            OpenGL32.GL_DEPTH_ATTACHMENT,
+            OpenGL32.GL_TEXTURE_2D,
+            DepthSwapchainList[i].OpenGL_Images[depthSwapchainImageId].Image,
+            0
+          );
+          
+          //OpenGL32.glClearDepth(1.0f);
+          //OpenGL32.glClear(OpenGL32.GL_DEPTH_BUFFER_BIT);
+          
+          //OpenGL32.glClear(OpenGL32.GL_DEPTH_BUFFER_BIT);
+          //OpenGL32.glClearColor(0, 0, 0, 1.0f);
+          
+          // Check
+          var result = OpenGL32.glCheckFramebufferStatus(OpenGL32.GL_DRAW_FRAMEBUFFER);
+          if (result != OpenGL32.GL_FRAMEBUFFER_COMPLETE)
+            throw new Exception($"ERROR: OPENGL: Framebuffer is not complete. {result}");
+          
+          OnRender?.Invoke(views[i].Pose, views[i].Fov);
+          
+          // Unbind
+         
+          OpenGL32.glBindFramebuffer(OpenGL32.GL_FRAMEBUFFER, 0);
+          OpenGL32.glDeleteFramebuffers(1, new []{setFramebuffer});
+          
+          ColorSwapchainList[i].ReleaseSwapchainImage();
+          DepthSwapchainList[i].ReleaseSwapchainImage();
         }
 
         // Fuck
@@ -378,6 +456,8 @@ namespace MegaLib.OS.Api
       // public IntPtr ImageViews;
       public XrSwapchainImageOpenGLKHR[] OpenGL_Images;
       public uint[] FrameBuffer;
+
+      public SwapchainType Type;
       
       public void GenerateFrameBuffers()
       {
@@ -393,13 +473,26 @@ namespace MegaLib.OS.Api
           OpenGL32.glBindFramebuffer(OpenGL32.GL_FRAMEBUFFER, framebuffer);
 
           // Create
-          OpenGL32.glFramebufferTexture2D(
-            OpenGL32.GL_DRAW_FRAMEBUFFER,
-            OpenGL32.GL_COLOR_ATTACHMENT0,
-            OpenGL32.GL_TEXTURE_2D,
-            OpenGL_Images[i].Image,
-            0
-          );
+          if (Type == SwapchainType.Color)
+          {
+            OpenGL32.glFramebufferTexture2D(
+              OpenGL32.GL_DRAW_FRAMEBUFFER,
+              OpenGL32.GL_COLOR_ATTACHMENT0,
+              OpenGL32.GL_TEXTURE_2D,
+              OpenGL_Images[i].Image,
+              0
+            );
+          }
+          else
+          {
+            OpenGL32.glFramebufferTexture2D(
+              OpenGL32.GL_DRAW_FRAMEBUFFER,
+              OpenGL32.GL_DEPTH_ATTACHMENT,
+              OpenGL32.GL_TEXTURE_2D,
+              OpenGL_Images[i].Image,
+              0
+            );
+          }
 
           // Check
           var result = OpenGL32.glCheckFramebufferStatus(OpenGL32.GL_DRAW_FRAMEBUFFER);
@@ -473,7 +566,7 @@ namespace MegaLib.OS.Api
           Console.WriteLine("OpenGL Images null");
         }
 
-        if (OpenGL_Images != null)
+        if (FrameBuffer != null)
         {
           Console.WriteLine("Frame Buffers {");
           foreach (var framebuffer in FrameBuffer)
@@ -489,25 +582,40 @@ namespace MegaLib.OS.Api
       }
     }
 
+    public enum SwapchainType
+    {
+      Color,
+      Depth
+    }
+    
     public static SwapchainInfo CreateSwapchain(
       XrSession sessionId,
       XrViewConfigurationView view,
       XrSwapchainFormatGL format,
-      uint sampleCount
+      uint sampleCount,
+      SwapchainType type
     )
     {
       var swapchainInfo = new SwapchainInfo
       {
         Format = (long)format,
         View = view,
+        Type = type,
       };
 
+      var usageFlags = XrSwapchainUsageFlags.XR_SWAPCHAIN_USAGE_SAMPLED_BIT |
+                       XrSwapchainUsageFlags.XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
+      if (type == SwapchainType.Depth)
+      {
+        usageFlags = XrSwapchainUsageFlags.XR_SWAPCHAIN_USAGE_SAMPLED_BIT |
+                     XrSwapchainUsageFlags.XR_SWAPCHAIN_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+      }
+      
       var swapchainCreateInfo = new XrSwapchainCreateInfo
       {
         Type = XrStructureType.XR_TYPE_SWAPCHAIN_CREATE_INFO,
         CreateFlags = 0,
-        UsageFlags = XrSwapchainUsageFlags.XR_SWAPCHAIN_USAGE_SAMPLED_BIT |
-                     XrSwapchainUsageFlags.XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT,
+        UsageFlags = usageFlags,
         Format = (long)format,
         SampleCount = sampleCount,
         Width = view.RecommendedImageRectWidth,
