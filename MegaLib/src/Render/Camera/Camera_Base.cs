@@ -16,7 +16,7 @@ namespace MegaLib.Render.Camera
 
     public bool IsXInverted = true;
     public bool IsYInverted = true;
-    public bool IsZInverted = true;
+    public bool IsZInverted = false;
     
     public Vector3 Position
     {

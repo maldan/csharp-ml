@@ -1,12 +1,15 @@
 using MegaLib.Render.Core;
+using MegaLib.VR;
 
-namespace MegaLib.Render.Renderer
+namespace MegaLib.Render.Renderer;
+
+public interface IRenderer
 {
-  public interface IRenderer
-  {
-    public void SetScene(Render_Scene scene);
-    public void Render();
-    public void Clear();
-    public byte[] GetScreen();
-  }
+  public byte[] GetScreen();
+
+  public void Tick(float delta, int updateIteration);
+
+  public VrRuntime StartVrSession();
+
+  public Render_Scene Scene { get; set; }
 }
