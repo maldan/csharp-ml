@@ -1,0 +1,148 @@
+using System;
+using MegaLib.OS.Api;
+using MegaLib.Render.Core;
+using MegaLib.Render.Core.Layer;
+using MegaLib.Render.RenderObject;
+
+namespace MegaLib.Render.Renderer.OpenGL.Layer;
+
+public class LR_Sprite : LR_Base
+{
+  public LR_Sprite(OpenGL_Context context, RL_Base layer, Render_Scene scene) : base(context, layer, scene)
+  {
+  }
+
+  public override void Init()
+  {
+    # region vertex
+
+    // language=glsl
+    var vertex = @"#version 330 core
+        precision highp float;
+        precision highp int;
+        precision highp usampler2D;
+        precision highp sampler2D;
+
+        layout (location = 0) in vec3 aPosition;
+        layout (location = 2) in vec2 aUV;
+        
+        uniform mat4 uProjectionMatrix;
+        uniform mat4 uViewMatrix;
+        uniform mat4 uModelMatrix;
+
+        out vec3 vo_Position;
+        out vec2 vo_UV;
+        
+        void main() {
+            gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPosition.xyz, 1.0);
+            
+            vo_Position = (uModelMatrix * vec4(aPosition.xyz, 1.0)).xyz;
+            vo_UV = aUV;
+        }";
+
+    #endregion
+
+    #region fragment
+
+    // language=glsl
+    var fragment = @"
+        #version 330 core
+        precision highp float;
+        precision highp int;
+        precision highp sampler2D;
+
+        in vec3 vo_Position;
+        in vec2 vo_UV;
+        
+        out vec4 color;
+        
+        uniform sampler2D uTexture;
+        
+        const float PI = 3.141592653589793;
+        
+        float remap(float value, float fromMin, float fromMax, float toMin, float toMax) {
+            float normalizedValue = (value - fromMin) / (fromMax - fromMin);
+            return mix(toMin, toMax, normalizedValue);
+        }
+        
+        vec3 linearToSRGB(vec3 colorLinear) {
+            vec3 colorSRGB;
+            for (int i = 0; i < 3; ++i) {
+                if (colorLinear[i] <= 0.0031308) {
+                    colorSRGB[i] = 12.92 * colorLinear[i];
+                } else {
+                    colorSRGB[i] = 1.055 * pow(colorLinear[i], 1.0 / 2.4) - 0.055;
+                }
+            }
+            return colorSRGB;
+        }
+            
+        vec3 sRGBToLinear(vec3 colorSRGB) {
+            vec3 colorLinear;
+            for (int i = 0; i < 3; ++i) {
+                if (colorSRGB[i] <= 0.04045) {
+                    colorLinear[i] = colorSRGB[i] / 12.92;
+                } else {
+                    colorLinear[i] = pow((colorSRGB[i] + 0.055) / 1.055, 2.4);
+                }
+            }
+            return colorLinear;
+        }
+        
+        void main()
+        {
+            vec4 texelColor = texture(uTexture, vo_UV);
+            if (texelColor.a <= 0.01) discard;
+            color = texelColor;
+        }";
+
+    #endregion
+
+    Shader.ShaderCode["vertex"] = vertex;
+    Shader.ShaderCode["fragment"] = fragment;
+    Shader.Compile();
+  }
+
+  public override void Render()
+  {
+    var layer = (RL_Sprite)Layer;
+
+    Shader.Use();
+    Shader.Enable(OpenGL32.GL_BLEND);
+    Shader.Enable(OpenGL32.GL_DEPTH_TEST);
+
+    var cp = Scene.Camera.Position;
+    cp.Z *= -1;
+    // cp.Y *= -1;
+    // Shader.SetUniform("uCameraPosition", cp);
+    Shader.SetUniform("uProjectionMatrix", Scene.Camera.ProjectionMatrix);
+    Shader.SetUniform("uViewMatrix", Scene.Camera.ViewMatrix);
+
+    // Draw each mesh
+    layer.ForEach<RO_Sprite>(mesh =>
+    {
+      Context.MapObject(mesh);
+
+      // Bind vao
+      OpenGL32.glBindVertexArray(Context.GetVaoId(mesh));
+
+      // Buffer
+      Shader.EnableAttribute(mesh.VertexList, "aPosition");
+      Shader.EnableAttribute(mesh.UV0List, "aUV");
+
+      // Texture
+      Shader.ActivateTexture(mesh.Texture, "uTexture", 0);
+
+      Shader.SetUniform("uModelMatrix", mesh.Transform.Matrix);
+
+      // Bind indices
+      OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(mesh.IndexList));
+
+      // Draw
+      OpenGL32.glDrawElements(OpenGL32.GL_TRIANGLES, mesh.IndexList.Count, OpenGL32.GL_UNSIGNED_INT, IntPtr.Zero);
+
+      // Unbind vao
+      OpenGL32.glBindVertexArray(0);
+    });
+  }
+}

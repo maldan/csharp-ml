@@ -154,7 +154,7 @@ public static partial class OpenXR
     {
       Type = XrStructureType.XR_TYPE_GRAPHICS_BINDING_OPENGL_WIN32_KHR,
       Next = IntPtr.Zero,
-      hDC = window.CurrentDC,
+      hDC = window.CurrentDeviceContext,
       hGLRC = window.CurrentGLRC
     };
     var ptr = Marshal.AllocHGlobal(Marshal.SizeOf<XrGraphicsBindingOpenGLWin32KHR>());
