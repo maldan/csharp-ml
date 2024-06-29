@@ -12,6 +12,7 @@ public interface ILayerRenderer
 
 public class RL_Sprite : RL_Base
 {
+  public bool IsYInverted = false;
 }
 
 public class RL_StaticMesh : RL_Base

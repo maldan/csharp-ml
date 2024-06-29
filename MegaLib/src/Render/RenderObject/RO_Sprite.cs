@@ -49,11 +49,32 @@ public class RO_Sprite : RO_Base
     };
   }
 
+  public void Repeat(int x, int y)
+  {
+    SetUVRect(0, 0, Width * x, Height * y, Width, Height);
+  }
+
+  public void SetUVRect(float x, float y, float width, float height, float maxWidth, float maxHeight)
+  {
+    var uMin = x / maxWidth;
+    var vMin = y / maxHeight;
+    var uMax = (x + width) / maxWidth;
+    var vMax = (y + height) / maxHeight;
+
+    UV0List[0] = new Vector2(uMin, vMin);
+    UV0List[1] = new Vector2(uMin, vMax);
+    UV0List[2] = new Vector2(uMax, vMax);
+    UV0List[3] = new Vector2(uMax, vMin);
+
+    Width = width;
+    Height = height;
+  }
+
   public override void Update(float delta)
   {
-    VertexList[0] = new Vector3(-0.5f * Width, -0.5f * Height, 0);
-    VertexList[1] = new Vector3(-0.5f * Width, 0.5f * Height, 0);
-    VertexList[2] = new Vector3(0.5f * Width, 0.5f * Height, 0);
-    VertexList[3] = new Vector3(0.5f * Width, -0.5f * Height, 0);
+    VertexList[0] = new Vector3(0 * Width, 0 * Height, 0);
+    VertexList[1] = new Vector3(0 * Width, 1 * Height, 0);
+    VertexList[2] = new Vector3(1 * Width, 1 * Height, 0);
+    VertexList[3] = new Vector3(1 * Width, 0 * Height, 0);
   }
 }

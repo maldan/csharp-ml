@@ -89,7 +89,7 @@ public class OpenGL_Renderer : IRenderer
       {
         layer.LayerRenderer = layer switch
         {
-          RL_StaticLine => new LR_Line(_context, layer, _scene),
+          RL_Line => new LR_Line(_context, layer, _scene),
           RL_StaticMesh => new LR_Mesh(_context, layer, _scene),
           RL_Sprite => new LR_Sprite(_context, layer, _scene),
           RL_SkinnedMesh => new LR_Skin(_context, layer, _scene),

@@ -3,40 +3,57 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 
-namespace MegaLib.Mathematics.LinearAlgebra
+namespace MegaLib.Mathematics.LinearAlgebra;
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct Vector2
 {
-  [StructLayout(LayoutKind.Sequential, Pack = 1)]
-  public struct Vector2
+  [JsonInclude] [JsonPropertyName("x")] public float X;
+  [JsonInclude] [JsonPropertyName("y")] public float Y;
+
+  public Vector2(float x, float y)
   {
-    [JsonInclude] [JsonPropertyName("x")] public float X;
-    [JsonInclude] [JsonPropertyName("y")] public float Y;
+    X = x;
+    Y = y;
+  }
 
-    public Vector2(float x, float y)
+  public static float Distance(Vector2 from, Vector2 to)
+  {
+    var a = from.X - to.X;
+    var b = from.Y - to.Y;
+
+    return (float)Math.Sqrt(a * a + b * b);
+  }
+
+  public static Vector2 operator *(Vector2 a, Vector2 b)
+  {
+    return new Vector2
     {
-      X = x;
-      Y = y;
-    }
+      X = a.X * b.X,
+      Y = a.Y * b.Y
+    };
+  }
 
-    public static float Distance(Vector2 from, Vector2 to)
+  public static Vector2 operator +(Vector2 a, Vector2 b)
+  {
+    return new Vector2
     {
-      var a = from.X - to.X;
-      var b = from.Y - to.Y;
+      X = a.X + b.X,
+      Y = a.Y + b.Y
+    };
+  }
 
-      return (float)Math.Sqrt(a * a + b * b);
-    }
-
-    public static Vector2 operator -(Vector2 a, Vector2 b)
+  public static Vector2 operator -(Vector2 a, Vector2 b)
+  {
+    return new Vector2
     {
-      return new Vector2
-      {
-        X = a.X - b.X,
-        Y = a.Y - b.Y,
-      };
-    }
+      X = a.X - b.X,
+      Y = a.Y - b.Y
+    };
+  }
 
-    public override string ToString()
-    {
-      return $"Vector2({X}, {Y})";
-    }
+  public override string ToString()
+  {
+    return $"Vector2({X}, {Y})";
   }
 }

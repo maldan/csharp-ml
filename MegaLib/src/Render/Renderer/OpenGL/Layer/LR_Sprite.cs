@@ -1,4 +1,5 @@
 using System;
+using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Core;
 using MegaLib.Render.Core.Layer;
@@ -29,7 +30,7 @@ public class LR_Sprite : LR_Base
         uniform mat4 uProjectionMatrix;
         uniform mat4 uViewMatrix;
         uniform mat4 uModelMatrix;
-
+        
         out vec3 vo_Position;
         out vec2 vo_UV;
         
@@ -115,6 +116,7 @@ public class LR_Sprite : LR_Base
     cp.Z *= -1;
     // cp.Y *= -1;
     // Shader.SetUniform("uCameraPosition", cp);
+
     Shader.SetUniform("uProjectionMatrix", Scene.Camera.ProjectionMatrix);
     Shader.SetUniform("uViewMatrix", Scene.Camera.ViewMatrix);
 
@@ -133,7 +135,9 @@ public class LR_Sprite : LR_Base
       // Texture
       Shader.ActivateTexture(mesh.Texture, "uTexture", 0);
 
+      if (layer.IsYInverted) mesh.Transform.Position *= new Vector3(1, -1, 1);
       Shader.SetUniform("uModelMatrix", mesh.Transform.Matrix);
+      if (layer.IsYInverted) mesh.Transform.Position *= new Vector3(1, -1, 1);
 
       // Bind indices
       OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(mesh.IndexList));

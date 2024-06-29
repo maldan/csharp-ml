@@ -23,6 +23,14 @@ public class Render_Scene
     _mutex.ReleaseMutex();
   }
 
+  public T GetLayer<T>(string name) where T : RL_Base
+  {
+    _mutex.WaitOne();
+    var layer = Pipeline.Find(x => x.Name == name);
+    _mutex.ReleaseMutex();
+    return (T)layer;
+  }
+
   public bool Add(string layerName, RO_Base obj)
   {
     var added = true;
