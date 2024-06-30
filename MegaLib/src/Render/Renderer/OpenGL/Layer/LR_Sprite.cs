@@ -58,6 +58,7 @@ public class LR_Sprite : LR_Base
         out vec4 color;
         
         uniform sampler2D uTexture;
+        uniform vec4 uTint;
         
         const float PI = 3.141592653589793;
         
@@ -92,7 +93,7 @@ public class LR_Sprite : LR_Base
         
         void main()
         {
-            vec4 texelColor = texture(uTexture, vo_UV);
+            vec4 texelColor = texture(uTexture, vo_UV) * uTint;
             if (texelColor.a <= 0.01) discard;
             color = texelColor;
         }";
@@ -121,29 +122,31 @@ public class LR_Sprite : LR_Base
     Shader.SetUniform("uViewMatrix", Scene.Camera.ViewMatrix);
 
     // Draw each mesh
-    layer.ForEach<RO_Sprite>(mesh =>
+    layer.ForEach<RO_Sprite>(sprite =>
     {
-      Context.MapObject(mesh);
+      Context.MapObject(sprite);
 
       // Bind vao
-      OpenGL32.glBindVertexArray(Context.GetVaoId(mesh));
+      OpenGL32.glBindVertexArray(Context.GetVaoId(sprite));
 
       // Buffer
-      Shader.EnableAttribute(mesh.VertexList, "aPosition");
-      Shader.EnableAttribute(mesh.UV0List, "aUV");
+      Shader.EnableAttribute(sprite.VertexList, "aPosition");
+      Shader.EnableAttribute(sprite.UV0List, "aUV");
 
       // Texture
-      Shader.ActivateTexture(mesh.Texture, "uTexture", 0);
+      Shader.ActivateTexture(sprite.Texture, "uTexture", 0);
 
-      if (layer.IsYInverted) mesh.Transform.Position *= new Vector3(1, -1, 1);
-      Shader.SetUniform("uModelMatrix", mesh.Transform.Matrix);
-      if (layer.IsYInverted) mesh.Transform.Position *= new Vector3(1, -1, 1);
+      if (layer.IsYInverted) sprite.Transform.Position *= new Vector3(1, -1, 1);
+      Shader.SetUniform("uModelMatrix", sprite.Transform.Matrix);
+      if (layer.IsYInverted) sprite.Transform.Position *= new Vector3(1, -1, 1);
+
+      Shader.SetUniform("uTint", new Vector4(sprite.Tint.R, sprite.Tint.G, sprite.Tint.B, sprite.Tint.A));
 
       // Bind indices
-      OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(mesh.IndexList));
+      OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(sprite.IndexList));
 
       // Draw
-      OpenGL32.glDrawElements(OpenGL32.GL_TRIANGLES, mesh.IndexList.Count, OpenGL32.GL_UNSIGNED_INT, IntPtr.Zero);
+      OpenGL32.glDrawElements(OpenGL32.GL_TRIANGLES, sprite.IndexList.Count, OpenGL32.GL_UNSIGNED_INT, IntPtr.Zero);
 
       // Unbind vao
       OpenGL32.glBindVertexArray(0);

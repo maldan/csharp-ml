@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using MegaLib.Ext;
 
 namespace MegaLib.Mathematics.LinearAlgebra;
 
@@ -23,6 +24,8 @@ public struct Vector3
   public Vector3 Inverted => new(-X, -Y, -Z);
   public Vector3 ToDegrees => new(X.RadToDeg(), Y.RadToDeg(), Z.RadToDeg());
   public Vector3 ToRadians => new(X.DegToRad(), Y.DegToRad(), Z.DegToRad());
+
+  public Vector2 XY => new(X, Y);
 
   public Vector3 Normalized
   {
@@ -78,6 +81,11 @@ public struct Vector3
     return dir.Normalized;
   }
 
+  public static Vector3 Random(Random r, float x, float y, float z)
+  {
+    return new Vector3(r.Range(-x, x), r.Range(-y, y), r.Range(-z, z));
+  }
+
   #endregion
 
   #region Operators
@@ -112,6 +120,16 @@ public struct Vector3
       X = a.X * s,
       Y = a.Y * s,
       Z = a.Z * s
+    };
+  }
+
+  public static Vector3 operator /(Vector3 a, float s)
+  {
+    return new Vector3
+    {
+      X = a.X / s,
+      Y = a.Y / s,
+      Z = a.Z / s
     };
   }
 

@@ -19,6 +19,10 @@ public class RO_Sprite : RO_Base
 
   public Texture_2D<RGBA<byte>> Texture;
 
+  public RGBA<float> Tint = new(1, 1, 1, 1);
+
+  public Vector3 Pivot = new();
+
   public float Width;
   public float Height;
 
@@ -72,9 +76,9 @@ public class RO_Sprite : RO_Base
 
   public override void Update(float delta)
   {
-    VertexList[0] = new Vector3(0 * Width, 0 * Height, 0);
-    VertexList[1] = new Vector3(0 * Width, 1 * Height, 0);
-    VertexList[2] = new Vector3(1 * Width, 1 * Height, 0);
-    VertexList[3] = new Vector3(1 * Width, 0 * Height, 0);
+    VertexList[0] = (new Vector3(0, 0, 0) + Pivot) * new Vector3(Width, Height, 1);
+    VertexList[1] = (new Vector3(0, 1, 0) + Pivot) * new Vector3(Width, Height, 1);
+    VertexList[2] = (new Vector3(1, 1, 0) + Pivot) * new Vector3(Width, Height, 1);
+    VertexList[3] = (new Vector3(1, 0, 0) + Pivot) * new Vector3(Width, Height, 1);
   }
 }

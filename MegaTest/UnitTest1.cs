@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using MegaLib.Asm;
+using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.Render.Texture;
 using NUnit.Framework;
@@ -139,5 +140,14 @@ public class Tests
 
     Console.WriteLine(string.Join(", ", code1));
     Console.WriteLine(string.Join(", ", code2));
+  }
+
+  [Test]
+  public void TestRectangle()
+  {
+    var rect1 = new Rectangle(0, 0, -5, -5);
+    var rect2 = new Rectangle(-1, -1, -10, -10);
+
+    Console.WriteLine(rect1.IsCollide(rect2)); // True
   }
 }
