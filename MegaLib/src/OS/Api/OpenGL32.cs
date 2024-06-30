@@ -107,15 +107,27 @@ public static partial class OpenGL32
     glDeleteTextures(list.Length, ref list);
   }
 
+  public static void glDeleteTexture(GLuint id)
+  {
+    // var dataPtr = Marshal.UnsafeAddrOfPinnedArrayElement(list, 0);
+    glDeleteTextures([id]);
+  }
+
+  public static void glDeleteBuffer(GLuint id)
+  {
+    // var dataPtr = Marshal.UnsafeAddrOfPinnedArrayElement(list, 0);
+    glDeleteBuffers(1, [id]);
+  }
+
   /*public static void glDeleteFramebuffers(GLsizei n, uint[] framebuffers) {
     var dataPtr = Marshal.UnsafeAddrOfPinnedArrayElement(framebuffers, 0);
     glDeleteFramebuffers(n, dataPtr);
   }*/
 
-  public static void PrintGlError()
+  public static void PrintGlError(string fn = "")
   {
     var error = glGetError();
-    Console.WriteLine(error);
+    // Console.WriteLine(error);
 
     // Проверка наличия ошибки
     if (error != GL_NO_ERROR)
@@ -123,19 +135,19 @@ public static partial class OpenGL32
       switch (error)
       {
         case GL_INVALID_ENUM:
-          Console.WriteLine("OpenGL error: GL_INVALID_ENUM");
+          Console.WriteLine($"{fn} OpenGL error: GL_INVALID_ENUM");
           break;
         case GL_INVALID_VALUE:
-          Console.WriteLine("OpenGL error: GL_INVALID_VALUE");
+          Console.WriteLine($"{fn} OpenGL error: GL_INVALID_VALUE");
           break;
         case GL_INVALID_OPERATION:
-          Console.WriteLine("OpenGL error: GL_INVALID_OPERATION");
+          Console.WriteLine($"{fn} OpenGL error: GL_INVALID_OPERATION");
           break;
         case GL_OUT_OF_MEMORY:
-          Console.WriteLine("OpenGL error: GL_OUT_OF_MEMORY");
+          Console.WriteLine($"{fn} OpenGL error: GL_OUT_OF_MEMORY");
           break;
         default:
-          Console.WriteLine("OpenGL error: " + error);
+          Console.WriteLine($"{fn} OpenGL error: " + error);
           break;
       }
   }

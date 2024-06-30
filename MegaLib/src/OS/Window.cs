@@ -200,9 +200,12 @@ public class Window
 
     // Create olf contenxt
     var oldContextPtr = OpenGL32.wglCreateContext(_handleDeviceContext);
+    OpenGL32.PrintGlError("wglCreateContext");
+
     if (oldContextPtr == IntPtr.Zero) throw new Exception("Failed to create OpenGL context.");
     if (!OpenGL32.wglMakeCurrent(_handleDeviceContext, oldContextPtr))
       throw new Exception("Failed to make OpenGL context current.");
+    OpenGL32.PrintGlError("wglMakeCurrent oldContextPtr");
 
     // Create new context
     var attribs = new[]
@@ -216,9 +219,13 @@ public class Window
     };
     _hglrc = OpenGL32.wglCreateContextAttribsARB(_handleDeviceContext, IntPtr.Zero, attribs);
     if (_hglrc == IntPtr.Zero) throw new Exception("Failed to create OpenGL context.");
+    OpenGL32.PrintGlError("wglCreateContextAttribsARB");
 
     OpenGL32.wglMakeCurrent(IntPtr.Zero, IntPtr.Zero);
+    OpenGL32.PrintGlError("wglMakeCurrent");
+
     OpenGL32.wglDeleteContext(oldContextPtr);
+    OpenGL32.PrintGlError("wglDeleteContext");
 
     if (!OpenGL32.wglMakeCurrent(_handleDeviceContext, _hglrc))
       throw new Exception("Failed to make OpenGL context current.");

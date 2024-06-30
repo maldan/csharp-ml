@@ -47,6 +47,8 @@ public class OpenGlTest
   {
     var win = new Window();
     win.InitOpenGL();
+    OpenGL32.glEnable(OpenGL32.GL_DEBUG_OUTPUT);
+    OpenGL32.PrintGlError("OpenGL32.GL_DEBUG_OUTPUT");
 
     var scene = new Render_Scene();
     scene.AddLayer("main", new RL_Sprite());

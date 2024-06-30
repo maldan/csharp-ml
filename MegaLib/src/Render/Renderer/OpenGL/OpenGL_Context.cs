@@ -215,8 +215,8 @@ public class OpenGL_Context
       //OpenGL32.glDeleteTextures([textureId]);
       //_textureList.Remove(id);
       _mutex.WaitOne();
-      _removeTextureQueue.Add(textureId);
-      _textureList.Remove(id);
+      _removeTextureQueue.Add(_textureList[id]);
+      // _textureList.Remove(id);
       _mutex.ReleaseMutex();
     };
 
@@ -269,8 +269,8 @@ public class OpenGL_Context
       //_bufferList.Remove(id);
 
       _mutex.WaitOne();
-      _removeBufferQueue.Add(bufferId);
-      _bufferList.Remove(id);
+      _removeBufferQueue.Add(_bufferList[id]);
+      // _bufferList.Remove(id);
       _mutex.ReleaseMutex();
     };
 
@@ -380,14 +380,16 @@ public class OpenGL_Context
 
     if (_removeBufferQueue.Count > 0)
     {
-      OpenGL32.glDeleteBuffers(_removeBufferQueue.Count, _removeBufferQueue.ToArray());
+      for (var i = 0; i < _removeBufferQueue.Count; i++) OpenGL32.glDeleteBuffer(_removeBufferQueue[i]);
+      OpenGL32.PrintGlError("glDeleteBuffers");
       Console.WriteLine($"Removed buffers {_removeBufferQueue.Count}");
       _removeBufferQueue.Clear();
     }
 
     if (_removeTextureQueue.Count > 0)
     {
-      OpenGL32.glDeleteTextures(_removeTextureQueue.ToArray());
+      for (var i = 0; i < _removeTextureQueue.Count; i++) OpenGL32.glDeleteTexture(_removeTextureQueue[i]);
+      OpenGL32.PrintGlError("glDeleteTextures");
       Console.WriteLine($"Removed textures {_removeTextureQueue.Count}");
       _removeTextureQueue.Clear();
     }
