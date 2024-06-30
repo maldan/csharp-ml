@@ -50,6 +50,14 @@ public class Render_Scene
     _mutex.ReleaseMutex();
   }
 
+  public void DeleteAll(string layerName)
+  {
+    _mutex.WaitOne();
+    var layer = Pipeline.Find(x => x.Name == layerName);
+    layer?.Clear();
+    _mutex.ReleaseMutex();
+  }
+
   public virtual void OnInit()
   {
   }

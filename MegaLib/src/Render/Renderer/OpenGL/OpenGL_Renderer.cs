@@ -25,8 +25,10 @@ public class OpenGL_Renderer : IRenderer
   private void Render()
   {
     _scene.Render();
-
     OpenGL32.wglSwapBuffers(OpenGL32.wglGetCurrentDC());
+
+    // Подчищаем удаленные ресурсы
+    _context.Clean();
   }
 
   public byte[] GetScreen()
@@ -92,6 +94,7 @@ public class OpenGL_Renderer : IRenderer
           RL_Line => new LR_Line(_context, layer, _scene),
           RL_StaticMesh => new LR_Mesh(_context, layer, _scene),
           RL_Sprite => new LR_Sprite(_context, layer, _scene),
+          RL_UI => new LR_UI(_context, layer, _scene),
           RL_SkinnedMesh => new LR_Skin(_context, layer, _scene),
           RL_Skybox => new LR_Skybox(_context, layer, _scene),
           _ => throw new Exception("Unsupported layer type")

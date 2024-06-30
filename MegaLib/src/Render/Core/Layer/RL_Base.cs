@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using MegaLib.Render.Camera;
 using MegaLib.Render.RenderObject;
 
 namespace MegaLib.Render.Core.Layer;
@@ -13,6 +15,11 @@ public interface ILayerRenderer
 public class RL_Sprite : RL_Base
 {
   public bool IsYInverted = false;
+}
+
+public class RL_UI : RL_Base
+{
+  public Camera_Orthographic Camera;
 }
 
 public class RL_StaticMesh : RL_Base
@@ -46,7 +53,7 @@ public class RL_Base
 
   public void ForEach<T>(Action<T> fn) where T : RO_Base
   {
-    foreach (var obj in _objectList) fn((T)obj);
+    foreach (var obj in _objectList.Where(obj => obj.IsVisible)) fn((T)obj);
   }
 
   public void Clear()

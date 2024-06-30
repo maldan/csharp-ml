@@ -1,10 +1,8 @@
 using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using MegaLib.Asm;
 using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
-using MegaLib.Render.Texture;
 using NUnit.Framework;
 
 namespace MegaTest;
@@ -31,7 +29,7 @@ public class Tests
     var v1 = Quaternion.FromEuler(45.0f, 0.0f, 0.0f, "deg");
     var v2 = Quaternion.FromEuler(45.0f, 0.0f, 0.0f, "deg");
     var v3 = v1 * v2;
-    Assert.AreEqual((int)v3.Euler.ToDegrees.X, 90);
+    Assert.Equals((int)v3.Euler.ToDegrees.X, 90);
   }
 
   [Test]
@@ -68,7 +66,7 @@ public class Tests
     var result = a * b;
 
     // Сравниваем результаты
-    Assert.AreEqual(result.Equals(expectedResult), true);
+    Assert.Equals(result.Equals(expectedResult), true);
   }
 
   [Test]
@@ -105,7 +103,7 @@ public class Tests
     var result = a * b;
 
     // Сравниваем результаты
-    Assert.AreEqual(result.Equals(expectedResult), true);
+    Assert.Equals(result.Equals(expectedResult), true);
   }
 
   // Прототип функции, которую будем вызывать

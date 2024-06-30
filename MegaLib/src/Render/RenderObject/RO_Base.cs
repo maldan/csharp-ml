@@ -14,6 +14,7 @@ public class RO_Base
 
   public Transform Transform;
   public ulong Id;
+  public bool IsVisible = true;
 
   protected RO_Base()
   {

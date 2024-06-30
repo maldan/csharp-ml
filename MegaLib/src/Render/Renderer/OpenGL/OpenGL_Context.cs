@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Buffer;
@@ -20,6 +21,10 @@ public class OpenGL_Context
   private readonly Dictionary<ulong, uint> _textureList = new();
   private readonly Dictionary<ulong, uint> _cubeTextureList = new();
   private readonly Dictionary<string, TextureOptions> _textureOptionsList = new();
+
+  private readonly List<uint> _removeBufferQueue = new();
+  private readonly List<uint> _removeTextureQueue = new();
+  private Mutex _mutex = new();
 
   public uint GetBufferId<T>(ListGPU<T> buffer)
   {
@@ -150,7 +155,7 @@ public class OpenGL_Context
     // On destroy
     texture.OnDestroy += (sender, id) =>
     {
-      OpenGL32.glDeleteTextures(1, new[] { textureId });
+      OpenGL32.glDeleteTextures([textureId]);
       _cubeTextureList.Remove(id);
     };
 
@@ -206,8 +211,13 @@ public class OpenGL_Context
     // On destroy
     texture.RAW.OnDestroy += (sender, id) =>
     {
-      OpenGL32.glDeleteTextures(1, new[] { textureId });
+      //Console.WriteLine("Try to destroy texture");
+      //OpenGL32.glDeleteTextures([textureId]);
+      //_textureList.Remove(id);
+      _mutex.WaitOne();
+      _removeTextureQueue.Add(textureId);
       _textureList.Remove(id);
+      _mutex.ReleaseMutex();
     };
 
     // Sync texture
@@ -254,8 +264,14 @@ public class OpenGL_Context
     // On destroy
     buffer.OnDestroy += (sender, id) =>
     {
-      OpenGL32.glDeleteBuffers(1, new[] { bufferId });
+      //Console.WriteLine("Try to destroy buffer");
+      //OpenGL32.glDeleteBuffers(1, new[] { bufferId });
+      //_bufferList.Remove(id);
+
+      _mutex.WaitOne();
+      _removeBufferQueue.Add(bufferId);
       _bufferList.Remove(id);
+      _mutex.ReleaseMutex();
     };
 
     // Sync buffer
@@ -356,5 +372,26 @@ public class OpenGL_Context
 
     // Unbind
     OpenGL32.glBindTexture(target, 0);
+  }
+
+  public void Clean()
+  {
+    _mutex.WaitOne();
+
+    if (_removeBufferQueue.Count > 0)
+    {
+      OpenGL32.glDeleteBuffers(_removeBufferQueue.Count, _removeBufferQueue.ToArray());
+      Console.WriteLine($"Removed buffers {_removeBufferQueue.Count}");
+      _removeBufferQueue.Clear();
+    }
+
+    if (_removeTextureQueue.Count > 0)
+    {
+      OpenGL32.glDeleteTextures(_removeTextureQueue.ToArray());
+      Console.WriteLine($"Removed textures {_removeTextureQueue.Count}");
+      _removeTextureQueue.Clear();
+    }
+
+    _mutex.ReleaseMutex();
   }
 }
