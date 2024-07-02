@@ -13,6 +13,8 @@ public struct Rectangle
   public float Width => ToX - FromX;
   public float Height => ToY - FromY;
 
+  public bool IsEmpty => FromX == 0 && FromY == 0 && ToX == 0 && ToY == 0;
+
   public Rectangle(float x1, float y1, float x2, float y2)
   {
     FromX = x1;
@@ -41,8 +43,23 @@ public struct Rectangle
            Math.Max(FromY, ToY) > Math.Min(other.FromY, other.ToY);
   }
 
-  public static Rectangle FromLeftTopWidthHeight()
+  public Rectangle ToUV(float maxWidth, float maxHeight)
   {
-    return new Rectangle();
+    var uMin = FromX / maxWidth;
+    var vMin = FromY / maxHeight;
+    var uMax = ToX / maxWidth;
+    var vMax = ToY / maxHeight;
+
+    return new Rectangle(uMin, vMin, uMax, vMax);
+  }
+
+  public override string ToString()
+  {
+    return $"Rectangle(FromX: {FromX}, FromY: {FromY}, ToX: {ToX}, ToY: {ToY})";
+  }
+
+  public static Rectangle FromLeftTopWidthHeight(float x, float y, float width, float height)
+  {
+    return new Rectangle(x, y, x + width, y + height);
   }
 }

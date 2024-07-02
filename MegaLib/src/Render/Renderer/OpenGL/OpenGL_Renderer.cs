@@ -97,6 +97,7 @@ public class OpenGL_Renderer : IRenderer
           RL_UI => new LR_UI(_context, layer, _scene),
           RL_SkinnedMesh => new LR_Skin(_context, layer, _scene),
           RL_Skybox => new LR_Skybox(_context, layer, _scene),
+          RL_BitmapText => new GL_Layer_BitmapText(_context, layer, _scene),
           _ => throw new Exception("Unsupported layer type")
         };
 

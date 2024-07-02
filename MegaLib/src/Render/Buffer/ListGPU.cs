@@ -83,6 +83,22 @@ public class ListGPU<T> : IEnumerable<T>
     IsChanged = true;
   }
 
+  public void AddRange(T[] items)
+  {
+    foreach (var item in items)
+    {
+      if (_count == _capacity)
+      {
+        _capacity *= 2;
+        Array.Resize(ref _array, _capacity);
+      }
+
+      _array[_count++] = item;
+    }
+
+    IsChanged = true;
+  }
+
   public T this[int index]
   {
     get

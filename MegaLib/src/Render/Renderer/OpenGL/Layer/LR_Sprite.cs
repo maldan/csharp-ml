@@ -112,6 +112,7 @@ public class LR_Sprite : LR_Base
     Shader.Use();
     Shader.Enable(OpenGL32.GL_BLEND);
     Shader.Enable(OpenGL32.GL_DEPTH_TEST);
+    // OpenGL32.glCullFace(OpenGL32.GL_BACK);
 
     var cp = Scene.Camera.Position;
     cp.Z *= -1;

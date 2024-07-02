@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using MegaLib.Asm;
 using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
+using MegaLib.Render.Text;
 using NUnit.Framework;
 
 namespace MegaTest;
@@ -147,5 +148,20 @@ public class Tests
     var rect2 = new Rectangle(-1, -1, -10, -10);
 
     Console.WriteLine(rect1.IsCollide(rect2)); // True
+  }
+
+  [Test]
+  public void TestRectangleUV()
+  {
+    Console.WriteLine(new Rectangle(0, 0, 256, 256).ToUV(256, 256));
+    Console.WriteLine(new Rectangle(0, 0, 128, 128).ToUV(256, 256));
+    Console.WriteLine(new Rectangle(128, 128, 256, 256).ToUV(256, 256));
+  }
+
+  [Test]
+  public void TestBitmapFont()
+  {
+    var bmp = new BitmapFont();
+    bmp.Load("C:/Users/black/Desktop/font.bin");
   }
 }

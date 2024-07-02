@@ -92,6 +92,25 @@ public class OpenGL_Context
     MapTexture(sprite.Texture);
   }
 
+  public void MapObject(RO_BitmapText text)
+  {
+    // Already mapped
+    if (_vaoList.ContainsKey(text.Id)) return;
+
+    // Create vao
+    uint vaoId = 0;
+    OpenGL32.glGenVertexArrays(1, ref vaoId);
+    _vaoList[text.Id] = vaoId;
+
+    // Map all buffers
+    MapBuffer(text.VertexList);
+    MapBuffer(text.UV0List);
+    MapBuffer(text.IndexList, true);
+
+    // Map all textures
+    MapTexture(text.Font.Texture);
+  }
+
   public void MapTexture(Texture_Cube texture)
   {
     if (texture == null) return;

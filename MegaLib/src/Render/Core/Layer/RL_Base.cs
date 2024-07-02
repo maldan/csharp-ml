@@ -22,6 +22,10 @@ public class RL_UI : RL_Base
   public Camera_Orthographic Camera;
 }
 
+public class RL_BitmapText : RL_Base
+{
+}
+
 public class RL_StaticMesh : RL_Base
 {
 }
