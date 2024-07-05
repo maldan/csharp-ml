@@ -7,10 +7,42 @@ using MegaLib.Render.Texture;
 
 namespace MegaLib.Render.Text;
 
+public class AsciiEscapeCode
+{
+  public const string Reset = "\x1B[0m";
+  public const string Bold = "\x1B[1m";
+  public const string Italic = "\x1B[3m";
+
+  public const string FontSize6 = "\x1B[6s";
+  public const string FontSize8 = "\x1B[8s";
+  public const string FontSize12 = "\x1B[12s";
+  public const string FontSize14 = "\x1B[14s";
+  public const string FontSize16 = "\x1B[16s";
+
+  public const string White = "\x1B[38;2;255;255;255m";
+  public const string Red = "\x1B[38;2;255;0;0m";
+  public const string Blue = "\x1B[38;2;0;0;255m";
+  public const string Green = "\x1B[38;2;0;255;0m";
+  public const string Yellow = "\x1B[38;2;255;210;0m";
+}
+
 public struct BitmapSymbol
 {
   public Rectangle Area;
   public int Width;
+}
+
+public struct BitmapFontStyle
+{
+  public BitmapFontStyleType Style;
+  public int Size;
+}
+
+public enum BitmapFontStyleType
+{
+  Normal = 0,
+  Bold = 1,
+  Italic = 2
 }
 
 public class BitmapFont
@@ -20,11 +52,27 @@ public class BitmapFont
   public int Width => Texture.RAW.Width;
   public int Height => Texture.RAW.Height;
 
-  private Dictionary<string, BitmapSymbol> _symbolMap = new();
+  private BitmapFontStyle _currentStyle;
+  public BitmapFontStyle DefaultStyle { get; private set; }
+
+  private Dictionary<BitmapFontStyle, Dictionary<char, BitmapSymbol>> _symbolMap = new();
 
   public BitmapSymbol GetSymbol(char chr)
   {
-    return _symbolMap.TryGetValue(chr + "", out var value) ? value : new BitmapSymbol();
+    if (_symbolMap.ContainsKey(_currentStyle))
+      if (_symbolMap[_currentStyle].ContainsKey(chr))
+        return _symbolMap[_currentStyle][chr];
+    return new BitmapSymbol();
+  }
+
+  public BitmapFontStyleType FontStyle
+  {
+    set => _currentStyle.Style = value;
+  }
+
+  public int FontSize
+  {
+    set => _currentStyle.Size = value;
   }
 
   public void Load(string path)
@@ -35,25 +83,38 @@ public class BitmapFont
 
     var version = r.ReadByte();
     var symbolByteSize = r.ReadByte();
-    var totalChars = r.ReadUInt16();
-    Console.WriteLine(version);
-    Console.WriteLine(symbolByteSize);
-    Console.WriteLine(totalChars);
+    var totalStyles = r.ReadByte();
 
-    for (var i = 0; i < totalChars; i++)
+    for (var i = 0; i < totalStyles; i++)
     {
-      var symbolCode = r.ReadUInt32();
-      var x = r.ReadUInt16();
-      var y = r.ReadUInt16();
-      var width = r.ReadUInt16();
-      var height = r.ReadUInt16();
-      var character = char.ConvertFromUtf32((int)symbolCode)[0] + "";
+      var style = r.ReadByte();
+      var fontSize = r.ReadByte();
+      var totalChars = r.ReadUInt16();
 
-      _symbolMap[character] = new BitmapSymbol
+      // Выбираем первый шрифт по дефолту
+      if (DefaultStyle.Size == 0)
+        DefaultStyle = new BitmapFontStyle { Style = (BitmapFontStyleType)style, Size = fontSize };
+
+      _currentStyle = new BitmapFontStyle { Style = (BitmapFontStyleType)style, Size = fontSize };
+      _symbolMap[_currentStyle] = new Dictionary<char, BitmapSymbol>();
+
+      for (var j = 0; j < totalChars; j++)
       {
-        Area = Rectangle.FromLeftTopWidthHeight(x, y, width, height)
-      };
-      Console.WriteLine($"{symbolCode} {character} - {x} {y} {width} {height}");
+        var symbolCode = r.ReadUInt16();
+        var x = r.ReadUInt16();
+        var y = r.ReadUInt16();
+        var width = r.ReadByte();
+        var height = r.ReadByte();
+        var symbolWidth = r.ReadByte();
+        var character = char.ConvertFromUtf32(symbolCode)[0];
+
+        _symbolMap[_currentStyle][character] = new BitmapSymbol
+        {
+          Area = Rectangle.FromLeftTopWidthHeight(x, y, width, height),
+          Width = symbolWidth
+        };
+        Console.WriteLine($"{symbolCode} {character} - {x} {y} {width} {height}");
+      }
     }
 
     var bitmapWidth = r.ReadUInt16();
@@ -67,10 +128,12 @@ public class BitmapFont
     for (var x = 0; x < bitmapWidth; x++)
     {
       var pixel = r.ReadByte();
+      // if (pixel < 10) pixel = 10;
       Texture.RAW[p] = new RGBA<byte>(255, 255, 255, pixel);
       p += 1;
     }
 
+    _currentStyle = DefaultStyle;
     // for (var i = 0; i < bitmapWidth * bitmapHeight; i++) Console.WriteLine(r.ReadByte());
   }
 }

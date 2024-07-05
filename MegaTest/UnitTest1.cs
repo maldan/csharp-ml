@@ -1,6 +1,10 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using MegaLib.Asm;
+using MegaLib.Audio;
+using MegaLib.Ext;
 using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.Render.Text;
@@ -163,5 +167,38 @@ public class Tests
   {
     var bmp = new BitmapFont();
     bmp.Load("C:/Users/black/Desktop/font.bin");
+  }
+
+  [Test]
+  public void TestLastList()
+  {
+    var list = new List<int> { 1, 2, 3, 4, 5 };
+    var x = list.Pop(3);
+    for (var i = 0; i < x.Count; i++) Console.WriteLine(x[i]);
+    Console.WriteLine("Last");
+    for (var i = 0; i < list.Count; i++) Console.WriteLine(list[i]);
+  }
+
+  [Test]
+  public void TestWav()
+  {
+    var filePath = "C:/Users/black/Desktop/Battle Cry.wav";
+    var audioFile = new AudioFile();
+    audioFile.ReadWave(filePath);
+    //var wavData = File.ReadAllBytes(filePath);
+    //short[] buffer = Wav.ReadWavFile(wavData, out int sampleRate, out short channels, out short bitsPerSample);
+
+    Console.WriteLine($"Sample Rate: {audioFile.SampleRate}");
+    Console.WriteLine($"Channels: {audioFile.NumberOfChannels}");
+    Console.WriteLine($"Bits Per Sample: {audioFile.BitsPerSample}");
+    Console.WriteLine($"Data Length: {audioFile.Buffer.Length}");
+
+
+    /*// Пример обработки каналов: конвертация моно в стерео
+    if (channels == 1)
+    {
+      buffer = MonoToStereo(buffer);
+      channels = 2;
+    }*/
   }
 }

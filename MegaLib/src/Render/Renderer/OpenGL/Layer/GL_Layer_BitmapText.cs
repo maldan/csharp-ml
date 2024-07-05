@@ -25,7 +25,8 @@ public class GL_Layer_BitmapText : LR_Base
         precision highp sampler2D;
 
         layout (location = 0) in vec3 aPosition;
-        layout (location = 2) in vec2 aUV;
+        layout (location = 1) in vec2 aUV;
+        layout (location = 2) in vec4 aColor;
         
         uniform mat4 uProjectionMatrix;
         uniform mat4 uViewMatrix;
@@ -33,12 +34,14 @@ public class GL_Layer_BitmapText : LR_Base
         
         out vec3 vo_Position;
         out vec2 vo_UV;
+        out vec4 vo_Color;
         
         void main() {
             gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPosition.xyz, 1.0);
             
             vo_Position = (uModelMatrix * vec4(aPosition.xyz, 1.0)).xyz;
             vo_UV = aUV;
+            vo_Color = aColor;
         }";
 
     #endregion
@@ -54,6 +57,7 @@ public class GL_Layer_BitmapText : LR_Base
 
         in vec3 vo_Position;
         in vec2 vo_UV;
+        in vec4 vo_Color;
         
         out vec4 color;
         
@@ -61,7 +65,7 @@ public class GL_Layer_BitmapText : LR_Base
         
         void main()
         {
-            vec4 texelColor = texture(uTexture, vo_UV);
+            vec4 texelColor = texture(uTexture, vo_UV) * vo_Color;
             if (texelColor.a <= 0.01) discard;
             color = texelColor;
         }";
@@ -98,6 +102,7 @@ public class GL_Layer_BitmapText : LR_Base
       text.VertexList.Sync();
       text.UV0List.Sync();
       text.IndexList.Sync();
+      text.ColorList.Sync();
 
       Context.MapObject(text);
 
@@ -107,6 +112,7 @@ public class GL_Layer_BitmapText : LR_Base
       // Buffer
       Shader.EnableAttribute(text.VertexList, "aPosition");
       Shader.EnableAttribute(text.UV0List, "aUV");
+      Shader.EnableAttribute(text.ColorList, "aColor");
 
       // Texture
       Shader.ActivateTexture(text.Font.Texture, "uTexture", 0);

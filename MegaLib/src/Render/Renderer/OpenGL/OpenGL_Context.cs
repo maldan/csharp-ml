@@ -105,6 +105,7 @@ public class OpenGL_Context
     // Map all buffers
     MapBuffer(text.VertexList);
     MapBuffer(text.UV0List);
+    MapBuffer(text.ColorList);
     MapBuffer(text.IndexList, true);
 
     // Map all textures

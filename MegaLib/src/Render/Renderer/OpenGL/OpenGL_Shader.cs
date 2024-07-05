@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Buffer;
+using MegaLib.Render.Color;
 using MegaLib.Render.Texture;
 
 namespace MegaLib.Render.Renderer.OpenGL;
@@ -136,6 +137,7 @@ public class OpenGL_Shader
       ListGPU<Vector2> => "vec2",
       ListGPU<Vector3> => "vec3",
       ListGPU<Vector4> => "vec4",
+      ListGPU<RGBA<float>> => "vec4",
       ListGPU<Vector4Int> => "ivec4",
       _ => ""
     };
