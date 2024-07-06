@@ -83,7 +83,7 @@ public struct Vector3
 
   public static Vector3 Random(Random r, float x, float y, float z)
   {
-    return new Vector3(r.Range(-x, x), r.Range(-y, y), r.Range(-z, z));
+    return new Vector3(r.RangeFloat(-x, x), r.RangeFloat(-y, y), r.RangeFloat(-z, z));
   }
 
   #endregion

@@ -10,6 +10,7 @@ using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.Render.Text;
 using NUnit.Framework;
+using Random = MegaLib.Mathematics.Random;
 
 namespace MegaTest;
 
@@ -217,5 +218,35 @@ public class Tests
     Thread.Sleep(20000);
 
     for (var i = 0; i < am.Sex.Count; i++) Console.WriteLine(am.Sex[i]);
+  }
+
+  [Test]
+  public void TestPlayShortSound()
+  {
+    Console.WriteLine("XXX");
+    var filePath = "D:/csharp/Mazel Game/Mazel Game/asset/audio/punch.wav";
+    var am = new AudioManager(48000 / 32, 48000, true);
+    am.LoadSample(filePath, "music");
+    am.Mixer.CreateChannel("bgm");
+    am.PlaySample("music", "bgm");
+    Console.WriteLine("X");
+    am.Run();
+    Thread.Sleep(1000);
+
+    for (var i = 0; i < am.Sex.Count; i++) Console.WriteLine(am.Sex[i]);
+  }
+
+  [Test]
+  public void TestRandom()
+  {
+    var rnd = new Random();
+    for (var i = 0; i < 100; i++) Console.WriteLine(rnd.RangeInt(0, 1));
+  }
+
+  [Test]
+  public void TestRandomFloat()
+  {
+    var rnd = new Random();
+    for (var i = 0; i < 100; i++) Console.WriteLine(rnd.RangeFloat(0, 1f));
   }
 }

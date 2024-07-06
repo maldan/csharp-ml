@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using MegaLib.Ext;
 
 namespace MegaLib.Audio;
 
@@ -57,6 +58,11 @@ public class AudioSample
     // Заполняем финальный буффер значениями от -1 до 1
     Buffer = new float[buffer.Length];
     for (var i = 0; i < buffer.Length; i++) Buffer[i] = buffer[i] / 32768.0f;
+  }
+
+  public void Align(int step)
+  {
+    Buffer = Buffer.Align(step);
   }
 
   /*static short[] MonoToStereo(short[] monoBuffer)

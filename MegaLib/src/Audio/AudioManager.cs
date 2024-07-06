@@ -36,6 +36,7 @@ public class AudioManager
   {
     var sample = new AudioSample();
     sample.FromFile(path);
+    sample.Align(BufferSize);
     _samples[name] = sample;
 
     Console.WriteLine($"Sample Rate: {sample.SampleRate}");
@@ -49,49 +50,38 @@ public class AudioManager
     var sample = _samples[name];
     var channel = Mixer.GetChannel(channelName);
     channel.Queue(sample);
+    Console.WriteLine($"Queue sample {name} -> {channelName}");
   }
 
   public void Run()
   {
-    /*_audioOutput.Tick();
-    _audioOutput.OnSex = () =>
-    {
-      Mixer.Tick();
-      _audioOutput.Fill(Mixer.Buffer);
-      _audioOutput.Tick();
-    };*/
-
-    /*Task.Run(() =>
-    {
-      for (var i = 0; i < 32; i++)
-      {
-        Mixer.Tick();
-        _audioOutput.Fill(Mixer.Buffer);
-        _audioOutput.Tick();
-      }
-    }).Wait();*/
-
-
     Task.Run(() =>
     {
       while (true)
       {
-        var tt = Stopwatch.StartNew();
+        // var tt = Stopwatch.StartNew();
         Mixer.Tick();
         _audioOutput.Fill(Mixer.Buffer);
 
         var ms = (int)(_audioOutput.BufferSize / (float)_audioOutput.SampleRate * 500f);
         var stopwatch = Stopwatch.StartNew();
         while (stopwatch.ElapsedMilliseconds < ms) Thread.SpinWait(1);
-        Sex.Add((int)tt.ElapsedMilliseconds);
+        // Sex.Add((int)tt.ElapsedMilliseconds);
+        // Console.WriteLine($"Ticker {ms}");
       }
+
+      // throw new Exception("Ticker DIE");
     });
 
-    Thread.Sleep(48);
+    Thread.Sleep(16);
 
     Task.Run(() =>
     {
-      while (true) _audioOutput.Tick();
+      while (true)
+      {
+        _audioOutput.Tick();
+        // Console.WriteLine($"Audio");
+      }
     });
 
 

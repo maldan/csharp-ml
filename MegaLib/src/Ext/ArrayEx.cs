@@ -15,6 +15,20 @@ public static class ArrayExtensions
     return array[index];
   }
 
+  public static T[] Align<T>(this T[] array, int step) where T : struct
+  {
+    // Вычисляем новый размер массива, кратный step
+    var newSize = (array.Length + step - 1) / step * step;
+
+    // Создаем новый массив нужного размера и заполняем его нулями
+    var newArray = new T[newSize];
+
+    // Копируем элементы из исходного массива в новый массив
+    Array.Copy(array, newArray, array.Length);
+
+    return newArray;
+  }
+
   public static List<T> Pop<T>(this List<T> list, int n)
   {
     var count = list.Count;
