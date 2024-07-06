@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
 using MegaLib.Asm;
 using MegaLib.Audio;
 using MegaLib.Ext;
@@ -183,16 +184,16 @@ public class Tests
   public void TestWav()
   {
     var filePath = "C:/Users/black/Desktop/Battle Cry.wav";
-    var audioFile = new AudioFile();
-    audioFile.ReadWave(filePath);
-    //var wavData = File.ReadAllBytes(filePath);
-    //short[] buffer = Wav.ReadWavFile(wavData, out int sampleRate, out short channels, out short bitsPerSample);
+    var audioFile = new AudioSample();
+    audioFile.FromFile(filePath);
+
+    // var wavData = File.ReadAllBytes(filePath);
+    // short[] buffer = Wav.ReadWavFile(wavData, out int sampleRate, out short channels, out short bitsPerSample);
 
     Console.WriteLine($"Sample Rate: {audioFile.SampleRate}");
     Console.WriteLine($"Channels: {audioFile.NumberOfChannels}");
     Console.WriteLine($"Bits Per Sample: {audioFile.BitsPerSample}");
     Console.WriteLine($"Data Length: {audioFile.Buffer.Length}");
-
 
     /*// Пример обработки каналов: конвертация моно в стерео
     if (channels == 1)
@@ -200,5 +201,21 @@ public class Tests
       buffer = MonoToStereo(buffer);
       channels = 2;
     }*/
+  }
+
+  [Test]
+  public void TestPlaySound()
+  {
+    Console.WriteLine("XXX");
+    var filePath = "C:/Users/black/Desktop/Battle Cry.wav";
+    var am = new AudioManager(48000 / 32, 48000, true);
+    am.LoadSample(filePath, "music");
+    am.Mixer.CreateChannel("bgm");
+    am.PlaySample("music", "bgm");
+    Console.WriteLine("X");
+    am.Run();
+    Thread.Sleep(20000);
+
+    for (var i = 0; i < am.Sex.Count; i++) Console.WriteLine(am.Sex[i]);
   }
 }

@@ -3,14 +3,14 @@ using System.IO;
 
 namespace MegaLib.Audio;
 
-public class AudioFile
+public class AudioSample
 {
   public int NumberOfChannels { get; private set; }
   public int SampleRate { get; private set; }
   public int BitsPerSample { get; private set; }
   public float[] Buffer { get; private set; }
 
-  public void ReadWave(string path)
+  public void FromFile(string path)
   {
     var wavData = File.ReadAllBytes(path);
 
