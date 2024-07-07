@@ -19,7 +19,7 @@ public class AudioManager
   public bool IsStereo { get; private set; }
   public int BufferSize { get; private set; }
 
-  public List<int> Sex = new();
+  private Mutex _mu = new();
 
   public AudioManager(int bufferSize, int sampleRate, bool isStereo)
   {
@@ -47,10 +47,12 @@ public class AudioManager
 
   public void PlaySample(string name, string channelName)
   {
+    _mu.WaitOne();
     var sample = _samples[name];
     var channel = Mixer.GetChannel(channelName);
     channel.Queue(sample);
     Console.WriteLine($"Queue sample {name} -> {channelName}");
+    _mu.ReleaseMutex();
   }
 
   public void Run()
@@ -59,70 +61,22 @@ public class AudioManager
     {
       while (true)
       {
-        // var tt = Stopwatch.StartNew();
+        _mu.WaitOne();
         Mixer.Tick();
         _audioOutput.Fill(Mixer.Buffer);
+        _mu.ReleaseMutex();
 
         var ms = (int)(_audioOutput.BufferSize / (float)_audioOutput.SampleRate * 500f);
         var stopwatch = Stopwatch.StartNew();
         while (stopwatch.ElapsedMilliseconds < ms) Thread.SpinWait(1);
-        // Sex.Add((int)tt.ElapsedMilliseconds);
-        // Console.WriteLine($"Ticker {ms}");
       }
-
-      // throw new Exception("Ticker DIE");
     });
 
-    Thread.Sleep(16);
+    Thread.Sleep(32);
 
     Task.Run(() =>
     {
-      while (true)
-      {
-        _audioOutput.Tick();
-        // Console.WriteLine($"Audio");
-      }
-    });
-
-
-    /*for (var i = 0; i < 8; i++)
-    {
-      Mixer.Tick();
-      _audioOutput.Fill(Mixer.Buffer);
-    }*/
-
-    /*_audioOutput.OnDoneBuffer = () =>
-    {
-
-
-
-      Mixer.Tick();
-      _audioOutput.Fuck2(Mixer.Buffer);
-    };*/
-
-    /*// Запускаем в фоне вывод звука
-    /*Task.Run(() =>
-    {
       while (true) _audioOutput.Tick();
-    });#1#
-
-    while (true)
-    {
-      Mixer.Tick();
-      _audioOutput.Fuck(Mixer.Buffer);
-
-      /*Array.Copy(Mixer.Buffer, _audioOutput.Buffer, Mixer.Buffer.Length);
-
-      // Записываем
-      for (var i = 0; i < _audioOutput.BufferOut.Length; i++)
-        _audioOutput.BufferOut[i] = (short)(_audioOutput.Buffer[i] * 32768);
-
-      _audioOutput.Tick();
-      Console.WriteLine("GAS");#1#
-    }*/
+    });
   }
-  /*public void Tick()
-  {
-
-  }*/
 }

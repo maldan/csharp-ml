@@ -215,25 +215,31 @@ public class Tests
     am.PlaySample("music", "bgm");
     Console.WriteLine("X");
     am.Run();
-    Thread.Sleep(20000);
+    Thread.Sleep(4000);
 
-    for (var i = 0; i < am.Sex.Count; i++) Console.WriteLine(am.Sex[i]);
+    // for (var i = 0; i < am.Sex.Count; i++) Console.WriteLine(am.Sex[i]);
   }
 
   [Test]
   public void TestPlayShortSound()
   {
     Console.WriteLine("XXX");
-    var filePath = "D:/csharp/Mazel Game/Mazel Game/asset/audio/punch.wav";
+    var filePath = "D:/csharp/Mazel Game/Mazel Game/asset/audio/punch_1.wav";
     var am = new AudioManager(48000 / 32, 48000, true);
     am.LoadSample(filePath, "music");
     am.Mixer.CreateChannel("bgm");
-    am.PlaySample("music", "bgm");
-    Console.WriteLine("X");
     am.Run();
-    Thread.Sleep(1000);
 
-    for (var i = 0; i < am.Sex.Count; i++) Console.WriteLine(am.Sex[i]);
+    for (var i = 0; i < 120; i++)
+    {
+      am.PlaySample("music", "bgm");
+      Console.WriteLine("X");
+      Thread.Sleep(10);
+      GC.Collect();
+    }
+
+
+    // for (var i = 0; i < am.Sex.Count; i++) Console.WriteLine(am.Sex[i]);
   }
 
   [Test]

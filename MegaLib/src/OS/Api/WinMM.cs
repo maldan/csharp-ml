@@ -48,19 +48,23 @@ public static class WinMM
   public const int WAVE_ALLOWSYNC = 0x0002;
   public const int WHDR_BEGINLOOP = 0x00000004; // Начало цикла
   public const int WHDR_ENDLOOP = 0x00000008; // Конец цикла
+  public const uint WHDR_DONE = 0x00000001;
 
   [DllImport("winmm.dll", SetLastError = true, EntryPoint = "waveOutOpen")]
   public static extern int WaveOutOpen(out IntPtr hWaveOut, uint uDeviceID, ref WAVEFORMATEX lpFormat,
     WaveOutProc dwCallback, IntPtr dwInstance, uint fdwOpen);
 
   [DllImport("winmm.dll", SetLastError = true, EntryPoint = "waveOutPrepareHeader")]
+  // public static extern int WaveOutPrepareHeader(IntPtr hWaveOut, IntPtr lpWaveHdr, uint uSize);
   public static extern int WaveOutPrepareHeader(IntPtr hWaveOut, ref WAVEHDR lpWaveHdr, uint uSize);
 
   [DllImport("winmm.dll", SetLastError = true, EntryPoint = "waveOutWrite")]
   public static extern int WaveOutWrite(IntPtr hWaveOut, ref WAVEHDR lpWaveHdr, uint uSize);
+  // public static extern int WaveOutWrite(IntPtr hWaveOut, IntPtr lpWaveHdr, uint uSize);
 
   [DllImport("winmm.dll", SetLastError = true, EntryPoint = "waveOutUnprepareHeader")]
   public static extern int WaveOutUnprepareHeader(IntPtr hWaveOut, ref WAVEHDR lpWaveHdr, uint uSize);
+  // public static extern int WaveOutUnprepareHeader(IntPtr hWaveOut, IntPtr lpWaveHdr, uint uSize);
 
   [DllImport("winmm.dll", SetLastError = true, EntryPoint = "waveOutClose")]
   public static extern int WaveOutClose(IntPtr hWaveOut);
