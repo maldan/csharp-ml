@@ -62,21 +62,34 @@ public class AudioManager
       while (true)
       {
         _mu.WaitOne();
+        var t = Stopwatch.StartNew();
+        var isStart = _audioOutput.IsFirstBuffer;
+
         Mixer.Tick();
         _audioOutput.Fill(Mixer.Buffer);
+        if (isStart) _audioOutput.Fuck();
         _mu.ReleaseMutex();
 
-        var ms = (int)(_audioOutput.BufferSize / (float)_audioOutput.SampleRate * 500f);
+        // if (isStart) _audioOutput.Tick();
+        if (_audioOutput.IsLastBuffer) _audioOutput.SwitchBuffer();
+
+        // Ждем правильно задержки
+        var ms = _audioOutput.BufferPlayTimeMS - t.ElapsedMilliseconds;
         var stopwatch = Stopwatch.StartNew();
         while (stopwatch.ElapsedMilliseconds < ms) Thread.SpinWait(1);
       }
     });
 
-    Thread.Sleep(32);
+    Thread.Sleep(48);
 
     Task.Run(() =>
     {
-      while (true) _audioOutput.Tick();
+      while (true)
+        if (_audioOutput.CanFuck())
+        {
+          _audioOutput.Tick();
+          _audioOutput.UnFuck();
+        }
     });
   }
 }

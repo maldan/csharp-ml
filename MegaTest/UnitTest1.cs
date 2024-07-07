@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using MegaLib.Asm;
 using MegaLib.Audio;
 using MegaLib.Ext;
@@ -209,13 +210,13 @@ public class Tests
   {
     Console.WriteLine("XXX");
     var filePath = "C:/Users/black/Desktop/Battle Cry.wav";
-    var am = new AudioManager(48000 / 32, 48000, true);
+    var am = new AudioManager(48000 / 16, 48000, true);
     am.LoadSample(filePath, "music");
     am.Mixer.CreateChannel("bgm");
     am.PlaySample("music", "bgm");
     Console.WriteLine("X");
     am.Run();
-    Thread.Sleep(4000);
+    Thread.Sleep(20000);
 
     // for (var i = 0; i < am.Sex.Count; i++) Console.WriteLine(am.Sex[i]);
   }
@@ -225,19 +226,35 @@ public class Tests
   {
     Console.WriteLine("XXX");
     var filePath = "D:/csharp/Mazel Game/Mazel Game/asset/audio/punch_1.wav";
-    var am = new AudioManager(48000 / 32, 48000, true);
+    var am = new AudioManager(48000 / 16, 48000, true);
     am.LoadSample(filePath, "music");
-    am.Mixer.CreateChannel("bgm");
+    am.Mixer.CreateChannel("sfx0");
+    am.Mixer.CreateChannel("sfx1");
+    am.Mixer.CreateChannel("sfx2");
     am.Run();
 
-    for (var i = 0; i < 120; i++)
-    {
-      am.PlaySample("music", "bgm");
-      Console.WriteLine("X");
-      Thread.Sleep(10);
-      GC.Collect();
-    }
+    var rnd = new Random();
 
+    Task.Run(() =>
+    {
+      for (var i = 0; i < 1000; i++)
+      {
+        Thread.Sleep(10);
+        GC.Collect();
+      }
+    });
+
+    Task.Run(() =>
+    {
+      for (var i = 0; i < 120; i++)
+      {
+        am.PlaySample("music", $"sfx{rnd.RangeInt(0, 2)}");
+        Console.WriteLine("X");
+        Thread.Sleep(100);
+        GC.Collect();
+        GC.WaitForPendingFinalizers(); // Ожидает завершения финализации всех объектов
+      }
+    }).Wait();
 
     // for (var i = 0; i < am.Sex.Count; i++) Console.WriteLine(am.Sex[i]);
   }
