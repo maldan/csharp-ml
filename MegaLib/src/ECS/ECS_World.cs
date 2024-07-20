@@ -19,6 +19,13 @@ public class ECS_World
     return (List<T>)EntityList[tag];
   }*/
 
+  public T FirstEntity<T>(int tag)
+  {
+    var entityList = EntityList.ContainsKey(tag) ? EntityList[tag] : [];
+    if (entityList.Count == 0) return default;
+    return (T)entityList[0];
+  }
+
   public void EachEntity<T>(int tag, Func<T, T> fn)
   {
     var entityList = EntityList.ContainsKey(tag) ? EntityList[tag] : [];

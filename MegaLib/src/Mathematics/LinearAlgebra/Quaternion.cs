@@ -269,6 +269,23 @@ public struct Quaternion
     return ans;
   }
 
+  public static Quaternion FromDirection(Vector3 direction)
+  {
+    // Нормализуем направление
+    direction = direction.Normalized;
+
+    // Вычисляем угол поворота вокруг оси Y
+    var yaw = (float)Math.Atan2(direction.X, direction.Z);
+
+    // Вычисляем угол поворота вокруг оси X
+    var pitch = (float)Math.Asin(-direction.Y);
+
+    // Создаем кватернион из углов Эйлера (в радианах)
+    var rotation = FromEuler(yaw, pitch, 0, "rad");
+
+    return rotation;
+  }
+
   #endregion
 
   #region Operators

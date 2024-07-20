@@ -152,6 +152,16 @@ public struct Vector3
     return result;
   }
 
+  public static bool operator ==(Vector3 v1, Vector3 v2)
+  {
+    return Math.Abs(v1.X - v2.X) < 0.0001f && Math.Abs(v1.Y - v2.Y) < 0.0001f && Math.Abs(v1.Z - v2.Z) < 0.0001f;
+  }
+
+  public static bool operator !=(Vector3 v1, Vector3 v2)
+  {
+    return !(v1 == v2);
+  }
+
   #endregion
 
   #region Set

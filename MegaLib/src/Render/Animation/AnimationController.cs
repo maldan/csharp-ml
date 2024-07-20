@@ -42,12 +42,14 @@ public class AnimationController
 
   public void AddTransition(string fromState, string toState, string condition)
   {
-    _transitions.Add(new AnimationTransition
-    {
-      From = fromState,
-      To = toState,
-      Condition = RuntimeExpression.Compile(condition, Vars)
-    });
+    var fromList = fromState.Split(",");
+    foreach (var from in fromList)
+      _transitions.Add(new AnimationTransition
+      {
+        From = from,
+        To = toState,
+        Condition = RuntimeExpression.Compile(condition, Vars)
+      });
   }
 
   public void Tick(float delta)
@@ -73,7 +75,7 @@ public class AnimationController
         // Если да то устанавливаем другую анимацию
         // Если есть переход, то сначала создаем переход, а по его завершению включаем уже нужную анимацию
         _isTransitionTime = true;
-        CurrentAnimation = CurrentAnimation.CreateBlendToAnimation(Animations[trans[i].To], 0.1f);
+        CurrentAnimation = CurrentAnimation.CreateBlendToAnimation(Animations[trans[i].To], 0.075f);
         CurrentAnimation.OnEnd = (o) =>
         {
           CurrentAnimation = Animations[trans[i].To];

@@ -106,6 +106,11 @@ namespace MegaLib.AssetLoader.GLTF
     public const string MAT3 = "MAT3";
     public const string MAT4 = "MAT4";
 
+    public GLTF_Animation GetAnimationByName(string name)
+    {
+      return AnimationList.FirstOrDefault(t => t.Name == name);
+    }
+
     /*public byte[] ParseAccessor(int id)
     {
       var accessor = AccessorList[id];
