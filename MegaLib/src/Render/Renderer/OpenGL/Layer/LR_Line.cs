@@ -98,6 +98,9 @@ public class LR_Line : LR_Base
         to.Y *= -1;
       }
 
+      from.Z *= -1;
+      to.Z *= -1;
+
       if (line.Transform != null)
       {
         from = line.From * line.Transform.Matrix;

@@ -10,7 +10,7 @@ namespace MegaLib.Render.RenderObject;
 public class RO_Skin : RO_Base
 {
   public Skeleton Skeleton;
-  public List<RO_Mesh> MeshList = new();
+  public List<RO_Mesh> MeshList = [];
   public Texture_2D<float> BoneTexture;
 
   public RO_Skin()
@@ -21,6 +21,20 @@ public class RO_Skin : RO_Base
     BoneTexture.Options.WrapMode = TextureWrapMode.Clamp;
     BoneTexture.Options.Format = TextureFormat.R32F;
     BoneTexture.Options.UseMipMaps = false;
+  }
+
+  public RO_Skin Clone()
+  {
+    var s = new RO_Skin();
+    s.Skeleton = Skeleton.Clone();
+    if (Transform != null) s.Transform = Transform.Clone();
+    foreach (var mesh in MeshList)
+    {
+      mesh.Transform = mesh.Transform.Clone();
+      s.MeshList.Add(mesh);
+    }
+
+    return s;
   }
 
   public void Update()

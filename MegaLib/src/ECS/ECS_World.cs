@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MegaLib.ECS;
 
@@ -33,6 +34,12 @@ public class ECS_World
     {
       entityList[i] = fn((T)entityList[i]);
     }
+  }
+
+  public void ClearEntitiesBy<T>(int tag, Func<T, bool> fn)
+  {
+    var entityList = EntityList.ContainsKey(tag) ? EntityList[tag] : [];
+    EntityList[tag] = entityList.Where(x => fn((T)x)).ToList();
   }
 
   public void AddEntity(int tag, object value)

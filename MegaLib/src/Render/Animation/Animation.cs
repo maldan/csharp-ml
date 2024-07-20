@@ -37,6 +37,18 @@ public class AnimationSequence
   public int PrevFrame;
   public int NextFrame;
 
+  public AnimationSequence Clone()
+  {
+    return new AnimationSequence
+    {
+      Key = Key,
+      Type = Type,
+      TimeList = TimeList.ToArray().ToList(),
+      ValueList = ValueList.ToArray().ToList(),
+      Interpolation = Interpolation.ToArray().ToList()
+    };
+  }
+
   // Вычисляем текущий и следующий фрейм в зависимости от текущего времени
   public void CalculateFrames(float time)
   {
@@ -99,6 +111,21 @@ public class Animation
   public void Reset()
   {
     CurrentTime = 0;
+  }
+
+  public Animation Clone()
+  {
+    var a = new Animation
+    {
+      Name = Name,
+      Duration = Duration,
+      IsLoop = IsLoop
+    };
+
+    foreach (var sequence in SequenceList)
+      a.SequenceList.Add(sequence.Clone());
+
+    return a;
   }
 
   public void Tick(float delta)

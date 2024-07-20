@@ -18,6 +18,18 @@ public class Skeleton : IAnimatable
 
   public Bone Root => BoneList[0];
 
+  public Skeleton Clone()
+  {
+    var s = new Skeleton
+    {
+      Position = Position,
+      Rotation = Rotation
+    };
+    foreach (var b in BoneList) s.BoneList.Add(b.Clone());
+
+    return s;
+  }
+
   public Bone GetBone(string name)
   {
     if (_boneMap.ContainsKey(name)) return _boneMap[name];

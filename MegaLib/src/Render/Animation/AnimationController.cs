@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using MegaLib.Runtime;
 
 namespace MegaLib.Render.Animation;
@@ -7,6 +8,7 @@ public struct AnimationTransition
 {
   public string From;
   public string To;
+  public string ConditionString;
   public RuntimeExpression Condition;
 }
 
@@ -16,8 +18,18 @@ public class AnimationController
   public Dictionary<string, Animation> Animations = new();
   public Animation CurrentAnimation { get; private set; }
   private string _defaultAnimationName = "";
-  private List<AnimationTransition> _transitions = [];
+  public List<AnimationTransition> Transitions { get; private set; } = [];
   private bool _isTransitionTime;
+
+  public AnimationController Clone()
+  {
+    var ac = new AnimationController();
+    foreach (var (k, v) in Vars) ac.AddVar(k, v);
+    foreach (var (k, v) in Animations) ac.AddAnimation(k, v.Clone());
+    foreach (var t in ac.Transitions) ac.AddTransition(t.From, t.To, t.ConditionString);
+    ac.SetDefaultAnimation(_defaultAnimationName);
+    return ac;
+  }
 
   public void AddVar(string name, object value)
   {
@@ -44,10 +56,11 @@ public class AnimationController
   {
     var fromList = fromState.Split(",");
     foreach (var from in fromList)
-      _transitions.Add(new AnimationTransition
+      Transitions.Add(new AnimationTransition
       {
         From = from,
         To = toState,
+        ConditionString = condition,
         Condition = RuntimeExpression.Compile(condition, Vars)
       });
   }
@@ -67,7 +80,7 @@ public class AnimationController
     if (_isTransitionTime) return;
 
     // Чекаем транзишены для выхода из нашей анимации в какие-нибудь другие анимации
-    var trans = _transitions.FindAll(x => x.From == CurrentAnimation.Name);
+    var trans = Transitions.FindAll(x => x.From == CurrentAnimation.Name);
     for (var i = 0; i < trans.Count; i++)
       // Чекаем срабатывает ли условие перехода в другую анимацию
       if (trans[i].Condition.Invoke(Vars) is true)
