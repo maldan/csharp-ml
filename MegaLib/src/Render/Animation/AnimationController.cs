@@ -10,6 +10,7 @@ public struct AnimationTransition
   public string To;
   public string ConditionString;
   public RuntimeExpression Condition;
+  public float BlendTime;
 }
 
 public class AnimationController
@@ -52,7 +53,7 @@ public class AnimationController
     animation.Name = name;
   }
 
-  public void AddTransition(string fromState, string toState, string condition)
+  public void AddTransition(string fromState, string toState, string condition, float blendTime = 0)
   {
     var fromList = fromState.Split(",");
     foreach (var from in fromList)
@@ -61,7 +62,8 @@ public class AnimationController
         From = from,
         To = toState,
         ConditionString = condition,
-        Condition = RuntimeExpression.Compile(condition, Vars)
+        Condition = RuntimeExpression.Compile(condition, Vars),
+        BlendTime = blendTime
       });
   }
 
@@ -86,15 +88,26 @@ public class AnimationController
       if (trans[i].Condition.Invoke(Vars) is true)
       {
         // Если да то устанавливаем другую анимацию
-        // Если есть переход, то сначала создаем переход, а по его завершению включаем уже нужную анимацию
-        _isTransitionTime = true;
-        CurrentAnimation = CurrentAnimation.CreateBlendToAnimation(Animations[trans[i].To], 0.075f);
-        CurrentAnimation.OnEnd = (o) =>
+
+        if (trans[i].BlendTime > 0)
         {
+          // Если есть переход, то сначала создаем переход, а по его завершению включаем уже нужную анимацию
+          _isTransitionTime = true;
+          CurrentAnimation = CurrentAnimation.CreateBlendToAnimation(Animations[trans[i].To], trans[i].BlendTime);
+          CurrentAnimation.OnEnd = (o) =>
+          {
+            CurrentAnimation = Animations[trans[i].To];
+            CurrentAnimation.Reset();
+            _isTransitionTime = false;
+          };
+        }
+        else
+        {
+          // Если нет то сразу устанавливаем анимацию
           CurrentAnimation = Animations[trans[i].To];
           CurrentAnimation.Reset();
-          _isTransitionTime = false;
-        };
+        }
+
         break;
       }
   }
