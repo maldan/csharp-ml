@@ -23,7 +23,7 @@ namespace MegaLib.Render.RenderObject
     public ListGPU<uint> BoneIndexList;
 
     public Texture_2D<RGBA<byte>> AlbedoTexture;
-    public Texture_2D<RGB<byte>> NormalTexture;
+    public Texture_2D<RGBA<byte>> NormalTexture;
     public Texture_2D<RGBA<byte>> RoughnessTexture;
     public Texture_2D<RGBA<byte>> MetallicTexture;
 

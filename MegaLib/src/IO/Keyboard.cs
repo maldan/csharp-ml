@@ -1,3 +1,4 @@
+using System;
 using MegaLib.OS.Api;
 
 namespace MegaLib.IO;
@@ -129,7 +130,7 @@ public enum KeyboardKey
 
 public static class Keyboard
 {
-  private static byte[] _array =
+  private static byte[] _state =
   [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -146,20 +147,37 @@ public static class Keyboard
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   ];
 
+  private static byte[] _previousState = new byte[_state.Length];
+
   public static bool IsKeyDown(KeyboardKey key)
   {
-    return _array[(int)key] == 1;
+    return _state[(int)key] == 1;
   }
 
   public static bool IsKeyUp(KeyboardKey key)
   {
-    return _array[(int)key] == 0;
+    return _state[(int)key] == 0;
+  }
+
+  public static bool IsKeyPressed(KeyboardKey key)
+  {
+    /*var isKeyDown = IsKeyDown(key);
+    var wasKeyDown = _previousState[(int)key];
+
+    _previousState[(int)key] = isKeyDown;
+
+    return isKeyDown && !wasKeyDown;*/
+    return IsKeyDown(key) && _previousState[(int)key] == 0;
   }
 
   public static void Update()
   {
-    for (var i = 0; i < _array.Length; i++)
-      if ((User32.GetAsyncKeyState(i) & 0x8000) != 0) _array[i] = 1;
-      else _array[i] = 0;
+    // Предыдущее состояние клавиш
+    for (var i = 0; i < _state.Length; i++) _previousState[i] = _state[i];
+
+    // Обновляем состояние клавиш
+    for (var i = 0; i < _state.Length; i++)
+      if ((User32.GetAsyncKeyState(i) & 0x8000) != 0) _state[i] = 1;
+      else _state[i] = 0;
   }
 }

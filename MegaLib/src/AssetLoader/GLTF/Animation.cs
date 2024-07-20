@@ -3,178 +3,170 @@ using System.Linq;
 using System.Text.Json;
 using MegaLib.Mathematics.LinearAlgebra;
 
-namespace MegaLib.AssetLoader.GLTF
+namespace MegaLib.AssetLoader.GLTF;
+
+public struct GLTF_AnimationSampler
 {
-  public struct GLTF_AnimationSampler
+  public int Input;
+  public string Interpolation;
+  public int Output;
+}
+
+public class GLTF_AnimationSequence
+{
+  public string Key;
+  public string Type;
+  public List<float> TimeList = [];
+  public List<Vector4> ValueList = [];
+
+  public int PrevFrame;
+  public int NextFrame;
+
+  public void CalculateFrames(float time)
   {
-    public int Input;
-    public string Interpolation;
-    public int Output;
+    PrevFrame = TimeList.Count - 1;
+    NextFrame = 0;
+
+    for (var i = 0; i < TimeList.Count - 1; i++)
+      if (time >= TimeList[i] && time <= TimeList[i + 1])
+      {
+        PrevFrame = i;
+        NextFrame = i + 1;
+      }
   }
 
-  public class GLTF_AnimationSequence
+  public Vector4 CalculateFrameValue(float time)
   {
-    public string Key;
-    public string Type;
-    public List<float> TimeList = new();
-    public List<Vector4> ValueList = new();
+    if (ValueList.Count == 0) return Vector4.Zero;
 
-    public int PrevFrame;
-    public int NextFrame;
+    var t =
+      (time - TimeList[PrevFrame]) /
+      (TimeList[NextFrame] - TimeList[PrevFrame]);
 
-    public void CalculateFrames(float time)
+    if (PrevFrame < 0)
+      return ValueList[0];
+
+    if (NextFrame > ValueList.Count - 1)
+      return ValueList.Last();
+
+    return Type switch
     {
-      PrevFrame = TimeList.Count - 1;
-      NextFrame = 0;
+      "translation" or "scale" => Vector3.Lerp(
+        ValueList[PrevFrame].DropW(),
+        ValueList[NextFrame].DropW(),
+        t).AddW(0.0f),
+      "rotation" => Quaternion.Slerp(
+        ValueList[PrevFrame].ToQuaternion(),
+        ValueList[NextFrame].ToQuaternion(),
+        t).ToVector4(),
+      _ => Vector4.Zero
+    };
+  }
+}
 
-      for (var i = 0; i < TimeList.Count - 1; i++)
+public struct GLTF_AnimationFrame
+{
+  public string Key;
+  public string Type;
+  public Vector4 Value;
+}
+
+public class GLTF_Animation
+{
+  public GLTF Gltf;
+  public string Name;
+  public float Duration;
+  public float CurrentTime;
+  public List<GLTF_AnimationFrame> CurrentFrame = [];
+  public List<GLTF_AnimationSampler> SamplerList = [];
+  public List<GLTF_AnimationSequence> SequenceList = [];
+
+  public GLTF_Animation(GLTF gltf, JsonElement element)
+  {
+    Gltf = gltf;
+    Name = element.GetProperty("name").GetString();
+
+    // Parse samplers
+    foreach (var samplers in element.GetProperty("samplers").EnumerateArray())
+      SamplerList.Add(new GLTF_AnimationSampler
       {
-        if (time >= TimeList[i] && time <= TimeList[i + 1])
-        {
-          PrevFrame = i;
-          NextFrame = i + 1;
-        }
-      }
-    }
+        Input = samplers.GetProperty("input").GetInt32(),
+        Interpolation = samplers.GetProperty("interpolation").GetString(),
+        Output = samplers.GetProperty("output").GetInt32()
+      });
 
-    public Vector4 CalculateFrameValue(float time)
+    // Channels
+    foreach (var channel in element.GetProperty("channels").EnumerateArray())
     {
-      if (ValueList.Count == 0) return Vector4.Zero;
+      var node = Gltf.NodeList[channel.GetProperty("target").GetProperty("node").GetInt32()];
+      var path = channel.GetProperty("target").GetProperty("path").GetString();
+      var samplerId = channel.GetProperty("sampler").GetInt32();
+      var sampler = SamplerList[samplerId];
 
-      var t =
-        (time - TimeList[PrevFrame]) /
-        (TimeList[NextFrame] - TimeList[PrevFrame]);
+      var keyframes = Gltf.AccessorList[sampler.Input].ScalarFloat();
+      Duration = keyframes.Max();
 
-      if (PrevFrame < 0)
-        return ValueList[0];
-
-      if (NextFrame > ValueList.Count - 1)
-        return ValueList.Last();
-
-      return Type switch
+      var sequence = new GLTF_AnimationSequence
       {
-        "translation" or "scale" => Vector3.Lerp(
-          ValueList[PrevFrame].DropW(),
-          ValueList[NextFrame].DropW(),
-          t).AddW(0.0f),
-        "rotation" => Quaternion.Slerp(
-          ValueList[PrevFrame].ToQuaternion(),
-          ValueList[NextFrame].ToQuaternion(),
-          t).ToVector4(),
-        _ => Vector4.Zero
+        Key = node.Name,
+        Type = path,
+        TimeList = keyframes
       };
+
+      if (sequence.Type == "translation")
+      {
+        var values = Gltf.AccessorList[sampler.Output].Vec3();
+        foreach (var value in values)
+          sequence.ValueList.Add(new Vector4(value.X, value.Y, value.Z, 0.0f));
+      }
+
+      if (sequence.Type == "rotation")
+      {
+        var values = Gltf.AccessorList[sampler.Output].Vec4();
+        foreach (var value in values)
+          sequence.ValueList.Add(new Vector4(value.X, value.Y, value.Z, value.W));
+      }
+
+      SequenceList.Add(sequence);
     }
   }
 
-  public struct GLTF_AnimationFrame
+  public void Tick(float delta)
   {
-    public string Key;
-    public string Type;
-    public Vector4 Value;
-  }
+    CurrentTime += delta;
+    if (CurrentTime > Duration) CurrentTime %= Duration;
 
-  public class GLTF_Animation
-  {
-    public GLTF Gltf;
-    public string Name;
-    public float Duration;
-    public float CurrentTime;
-    public List<GLTF_AnimationFrame> CurrentFrame = new();
-    public List<GLTF_AnimationSampler> SamplerList = new();
-    public List<GLTF_AnimationSequence> SequenceList = new();
-
-    public GLTF_Animation(GLTF gltf, JsonElement element)
+    CurrentFrame.Clear();
+    for (var i = 0; i < SequenceList.Count; i++)
     {
-      Gltf = gltf;
-      Name = element.GetProperty("name").GetString();
+      SequenceList[i].CalculateFrames(CurrentTime);
 
-      // Parse samplers
-      foreach (var samplers in element.GetProperty("samplers").EnumerateArray())
+      var key = SequenceList[i].Key;
+      var value = SequenceList[i].CalculateFrameValue(CurrentTime);
+      var type = SequenceList[i].Type;
+
+      if (type == "translation")
       {
-        SamplerList.Add(new GLTF_AnimationSampler
-        {
-          Input = samplers.GetProperty("input").GetInt32(),
-          Interpolation = samplers.GetProperty("interpolation").GetString(),
-          Output = samplers.GetProperty("output").GetInt32(),
-        });
+        /*const retarget = this.retargetTranslation[this.sequenceList[i].key];
+        if (retarget) {
+          (value as Vector3).add_(retarget);
+        }*/
       }
 
-      // Channels
-      foreach (var channel in element.GetProperty("channels").EnumerateArray())
+      if (type == "rotation")
       {
-        var node = Gltf.NodeList[channel.GetProperty("target").GetProperty("node").GetInt32()];
-        var path = channel.GetProperty("target").GetProperty("path").GetString();
-        var samplerId = channel.GetProperty("sampler").GetInt32();
-        var sampler = SamplerList[samplerId];
-
-        var keyframes = Gltf.AccessorList[sampler.Input].ScalarFloat();
-        Duration = keyframes.Max();
-
-        var sequence = new GLTF_AnimationSequence
-        {
-          Key = node.Name,
-          Type = path,
-          TimeList = keyframes
-        };
-
-        if (sequence.Type == "translation")
-        {
-          var values = Gltf.AccessorList[sampler.Output].Vec3();
-          foreach (var value in values)
-            sequence.ValueList.Add(new Vector4(value.X, value.Y, value.Z, 0.0f));
-        }
-
-        if (sequence.Type == "rotation")
-        {
-          var values = Gltf.AccessorList[sampler.Output].Vec4();
-          foreach (var value in values)
-            sequence.ValueList.Add(new Vector4(value.X, value.Y, value.Z, value.W));
-        }
-
-        SequenceList.Add(sequence);
-      }
-    }
-
-    public void Tick(float delta)
-    {
-      CurrentTime += delta;
-      if (CurrentTime > Duration)
-      {
-        CurrentTime %= Duration;
+        /*const retarget = this.retargetRotation[this.sequenceList[i].key];
+        if (retarget) {
+          (value as Quaternion).mul_(retarget);
+        }*/
       }
 
-      CurrentFrame.Clear();
-      for (var i = 0; i < SequenceList.Count; i++)
+      CurrentFrame.Add(new GLTF_AnimationFrame
       {
-        SequenceList[i].CalculateFrames(CurrentTime);
-
-        var key = SequenceList[i].Key;
-        var value = SequenceList[i].CalculateFrameValue(CurrentTime);
-        var type = SequenceList[i].Type;
-
-        if (type == "translation")
-        {
-          /*const retarget = this.retargetTranslation[this.sequenceList[i].key];
-          if (retarget) {
-            (value as Vector3).add_(retarget);
-          }*/
-        }
-
-        if (type == "rotation")
-        {
-          /*const retarget = this.retargetRotation[this.sequenceList[i].key];
-          if (retarget) {
-            (value as Quaternion).mul_(retarget);
-          }*/
-        }
-
-        CurrentFrame.Add(new GLTF_AnimationFrame
-        {
-          Key = key,
-          Type = type,
-          Value = value,
-        });
-      }
+        Key = key,
+        Type = type,
+        Value = value
+      });
     }
   }
 }

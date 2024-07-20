@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using MegaLib.IO;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Camera;
@@ -56,16 +58,19 @@ public class OpenGL_Renderer : IRenderer
     }
   }
 
-  public VrRuntime StartVrSession()
+  public VrRuntime StartVrSession(Dictionary<string, object> args)
   {
     _vrRuntime = new VrRuntime();
-    _vrRuntime.InitSession(IntPtr.Zero, IntPtr.Zero);
+    _vrRuntime.InitSession((IntPtr)args["dc"], (IntPtr)args["glrc"]);
     _vrRuntime.OnRender = (pose, fov) =>
     {
       Clear();
 
       _scene.Camera.IsZInverted = true;
       _scene.Camera.Position = new Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);
+      _scene.Camera.Position += new Vector3(VrInput.Headset.PositionOffset.X, VrInput.Headset.PositionOffset.Y,
+        -VrInput.Headset.PositionOffset.Z);
+
       _scene.Camera.Rotation = new Quaternion(
         pose.Orientation.X, pose.Orientation.Y, pose.Orientation.Z, pose.Orientation.W
       ).Inverted;

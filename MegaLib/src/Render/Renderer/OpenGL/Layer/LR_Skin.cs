@@ -4,18 +4,18 @@ using MegaLib.Render.Core;
 using MegaLib.Render.Core.Layer;
 using MegaLib.Render.RenderObject;
 
-namespace MegaLib.Render.Renderer.OpenGL.Layer
-{
-  public class LR_Skin : LR_Base
-  {
-    public LR_Skin(OpenGL_Context context, RL_Base layer, Render_Scene scene) : base(context, layer, scene)
-    {
-    }
+namespace MegaLib.Render.Renderer.OpenGL.Layer;
 
-    public override void Init()
-    {
-      // language=glsl
-      var vertex = @"#version 330 core
+public class LR_Skin : LR_Base
+{
+  public LR_Skin(OpenGL_Context context, RL_Base layer, Render_Scene scene) : base(context, layer, scene)
+  {
+  }
+
+  public override void Init()
+  {
+    // language=glsl
+    var vertex = @"#version 330 core
         precision highp float;
         precision highp int;
         precision highp usampler2D;
@@ -116,8 +116,8 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             vo_CameraPosition = (inverse(uViewMatrix) * cameraPosition).xyz;
         }";
 
-      // language=glsl
-      var fragment = @"#version 330 core
+    // language=glsl
+    var fragment = @"#version 330 core
         precision highp float;
         precision highp int;
         precision highp sampler2D;
@@ -374,69 +374,68 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             // color = vec4(texture(uBoneMatrix, vUV).r, 0.0, 0.0, 1.0);
         }";
 
-      Shader.ShaderCode["vertex"] = vertex;
-      Shader.ShaderCode["fragment"] = fragment;
-      Shader.Compile();
-    }
+    Shader.ShaderCode["vertex"] = vertex;
+    Shader.ShaderCode["fragment"] = fragment;
+    Shader.Compile();
+  }
 
-    public override void Render()
+  public override void Render()
+  {
+    var layer = (RL_SkinnedMesh)Layer;
+
+    Shader.Use();
+    Shader.Enable(OpenGL32.GL_BLEND);
+    Shader.Enable(OpenGL32.GL_DEPTH_TEST);
+
+    var cp = Scene.Camera.Position;
+    cp.Z *= -1;
+    // cp.Y *= -1;
+    // Shader.SetUniform("uCameraPosition", cp);
+    Shader.SetUniform("uProjectionMatrix", Scene.Camera.ProjectionMatrix);
+    Shader.SetUniform("uViewMatrix", Scene.Camera.ViewMatrix);
+    if (Scene.Skybox != null) Shader.ActivateTexture(Scene.Skybox, "uSkybox", 10);
+
+    // Draw each mesh
+    layer.ForEach<RO_Skin>(skin =>
     {
-      var layer = (RL_SkinnedMesh)Layer;
+      skin.Update();
 
-      Shader.Use();
-      Shader.Enable(OpenGL32.GL_BLEND);
-      Shader.Enable(OpenGL32.GL_DEPTH_TEST);
+      Context.MapTexture(skin.BoneTexture);
+      Shader.ActivateTexture(skin.BoneTexture, "uBoneMatrix", 11);
 
-      var cp = Scene.Camera.Position;
-      cp.Z *= -1;
-      // cp.Y *= -1;
-      // Shader.SetUniform("uCameraPosition", cp);
-      Shader.SetUniform("uProjectionMatrix", Scene.Camera.ProjectionMatrix);
-      Shader.SetUniform("uViewMatrix", Scene.Camera.ViewMatrix);
-      Shader.ActivateTexture(Scene.Skybox, "uSkybox", 10);
-
-      // Draw each mesh
-      layer.ForEach<RO_Skin>(skin =>
+      skin.MeshList.ForEach(mesh =>
       {
-        skin.Update();
+        Context.MapObject(mesh);
 
-        Context.MapTexture(skin.BoneTexture);
-        Shader.ActivateTexture(skin.BoneTexture, "uBoneMatrix", 11);
+        // Bind vao
+        OpenGL32.glBindVertexArray(Context.GetVaoId(mesh));
 
-        skin.MeshList.ForEach(mesh =>
-        {
-          Context.MapObject(mesh);
+        // Buffer
+        Shader.EnableAttribute(mesh.VertexList, "aPosition");
+        Shader.EnableAttribute(mesh.NormalList, "aNormal");
+        Shader.EnableAttribute(mesh.UV0List, "aUV");
+        Shader.EnableAttribute(mesh.TangentList, "aTangent");
+        Shader.EnableAttribute(mesh.BiTangentList, "aBiTangent");
+        Shader.EnableAttribute(mesh.BoneWeightList, "aBoneWeight");
+        Shader.EnableAttribute(mesh.BoneIndexList, "aBoneIndex");
 
-          // Bind vao
-          OpenGL32.glBindVertexArray(Context.GetVaoId(mesh));
+        // Texture
+        Shader.ActivateTexture(mesh.AlbedoTexture, "uAlbedoTexture", 0);
+        Shader.ActivateTexture(mesh.NormalTexture, "uNormalTexture", 1);
+        Shader.ActivateTexture(mesh.RoughnessTexture, "uRoughnessTexture", 2);
+        Shader.ActivateTexture(mesh.MetallicTexture, "uMetallicTexture", 3);
 
-          // Buffer
-          Shader.EnableAttribute(mesh.VertexList, "aPosition");
-          Shader.EnableAttribute(mesh.NormalList, "aNormal");
-          Shader.EnableAttribute(mesh.UV0List, "aUV");
-          Shader.EnableAttribute(mesh.TangentList, "aTangent");
-          Shader.EnableAttribute(mesh.BiTangentList, "aBiTangent");
-          Shader.EnableAttribute(mesh.BoneWeightList, "aBoneWeight");
-          Shader.EnableAttribute(mesh.BoneIndexList, "aBoneIndex");
+        // Shader.SetUniform("uModelMatrix", mesh.Transform.Matrix);
 
-          // Texture
-          Shader.ActivateTexture(mesh.AlbedoTexture, "uAlbedoTexture", 0);
-          Shader.ActivateTexture(mesh.NormalTexture, "uNormalTexture", 1);
-          Shader.ActivateTexture(mesh.RoughnessTexture, "uRoughnessTexture", 2);
-          Shader.ActivateTexture(mesh.MetallicTexture, "uMetallicTexture", 3);
+        // Bind indices
+        OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(mesh.IndexList));
 
-          // Shader.SetUniform("uModelMatrix", mesh.Transform.Matrix);
+        // Draw
+        OpenGL32.glDrawElements(OpenGL32.GL_TRIANGLES, mesh.IndexList.Count, OpenGL32.GL_UNSIGNED_INT, IntPtr.Zero);
 
-          // Bind indices
-          OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(mesh.IndexList));
-
-          // Draw
-          OpenGL32.glDrawElements(OpenGL32.GL_TRIANGLES, mesh.IndexList.Count, OpenGL32.GL_UNSIGNED_INT, IntPtr.Zero);
-
-          // Unbind vao
-          OpenGL32.glBindVertexArray(0);
-        });
+        // Unbind vao
+        OpenGL32.glBindVertexArray(0);
       });
-    }
+    });
   }
 }

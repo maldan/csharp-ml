@@ -1,0 +1,55 @@
+using System;
+using System.Collections.Generic;
+
+namespace MegaLib.ECS;
+
+public class ECS_World
+{
+  public List<ECS_System> SystemList = [];
+  public Dictionary<int, List<object>> EntityList = [];
+
+  public void AddSystem(ECS_System system)
+  {
+    SystemList.Add(system);
+  }
+
+  /*public List<T> GetEntityList<T>(int tag)
+  {
+    if (!EntityList.ContainsKey(tag)) return new List<T>();
+    return (List<T>)EntityList[tag];
+  }*/
+
+  public void EachEntity<T>(int tag, Func<T, T> fn)
+  {
+    var entityList = EntityList.ContainsKey(tag) ? EntityList[tag] : [];
+    for (var i = 0; i < entityList.Count; i++)
+    {
+      entityList[i] = fn((T)entityList[i]);
+    }
+  }
+
+  public void AddEntity(int tag, object value)
+  {
+    if (!EntityList.ContainsKey(tag)) EntityList[tag] = [];
+    EntityList[tag].Add(value);
+  }
+
+  public virtual void Tick(float delta)
+  {
+    SystemList.ForEach(system => { system.Tick(delta); });
+  }
+}
+
+public class ECS_System
+{
+  protected ECS_World World;
+
+  public ECS_System(ECS_World world)
+  {
+    World = world;
+  }
+
+  public virtual void Tick(float delta)
+  {
+  }
+}

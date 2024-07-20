@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using MegaLib.Render.Core;
 using MegaLib.VR;
 
@@ -9,7 +10,7 @@ public interface IRenderer
 
   public void Tick(float delta, int updateIteration);
 
-  public VrRuntime StartVrSession();
+  public VrRuntime StartVrSession(Dictionary<string, object> args);
 
   public Render_Scene Scene { get; set; }
 }

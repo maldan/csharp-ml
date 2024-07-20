@@ -288,6 +288,9 @@ public class AudioOutput
     else
       Console.WriteLine($"CLEAR NIGGA WHAT???");
 
+    Console.WriteLine($"dwFlags {waveHdr.dwFlags} {waveHdr.dwLoops} {waveHdr.dwUser}");
+    Console.WriteLine($"dwBufferLength {waveHdr.dwBufferLength} {waveHdr.dwBytesRecorded}");
+
     var result = WinMM.WaveOutUnprepareHeader(_hWaveOut, ref waveHdr, (uint)Marshal.SizeOf(waveHdr));
     if (result != 0) Console.WriteLine($"WaveOutUnprepareHeader failed with error {result}");
   }
