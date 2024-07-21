@@ -39,7 +39,7 @@ public class ECS_World
   public void ClearEntitiesBy<T>(int tag, Func<T, bool> fn)
   {
     var entityList = EntityList.ContainsKey(tag) ? EntityList[tag] : [];
-    EntityList[tag] = entityList.Where(x => fn((T)x)).ToList();
+    EntityList[tag] = entityList.Where(x => !fn((T)x)).ToList();
   }
 
   public void AddEntity(int tag, object value)
