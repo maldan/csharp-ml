@@ -2,19 +2,23 @@ using System;
 using System.Collections.Generic;
 using MegaLib.AssetLoader.GLTF;
 using MegaLib.Mathematics.LinearAlgebra;
+using MegaLib.Render.Animation;
+using MegaLib.Render.Color;
 using MegaLib.Render.Skin;
 using MegaLib.Render.Texture;
 
 namespace MegaLib.Render.RenderObject;
 
-public class RO_Skin : RO_Base
+public class RO_Skin : RO_Base, IAnimatable
 {
   public Skeleton Skeleton;
   public List<RO_Mesh> MeshList = [];
   public Texture_2D<float> BoneTexture;
+  public RGBA<float> Tint = new(1, 1, 1, 1);
 
   public RO_Skin()
   {
+    Transform = new Transform();
     Skeleton = new Skeleton();
     BoneTexture = new Texture_2D<float>(64, 64);
     BoneTexture.Options.FiltrationMode = TextureFiltrationMode.Nearest;
@@ -23,10 +27,22 @@ public class RO_Skin : RO_Base
     BoneTexture.Options.UseMipMaps = false;
   }
 
-  public RO_Skin Clone()
+  public RO_Skin Instantinate()
+  {
+    var s = new RO_Skin();
+
+    s.Skeleton = Skeleton.Clone();
+    // s.Transform = Transform.Clone();
+    s.MeshList = MeshList;
+
+    return s;
+  }
+
+  /*public RO_Skin Clone()
   {
     var s = new RO_Skin();
     s.Skeleton = Skeleton.Clone();
+
     if (Transform != null) s.Transform = Transform.Clone();
     foreach (var mesh in MeshList)
     {
@@ -35,7 +51,7 @@ public class RO_Skin : RO_Base
     }
 
     return s;
-  }
+  }*/
 
   public void Update()
   {
@@ -47,6 +63,7 @@ public class RO_Skin : RO_Base
       Skeleton.Position.Z = -Transform.Position.Z;
 
       Skeleton.Rotation = Transform.Rotation;
+      Skeleton.Scale = Transform.Scale;
     }
 
     // Update bone texture
@@ -67,6 +84,11 @@ public class RO_Skin : RO_Base
 
     //BoneTexture.SetPixels(pixel);
     //BoneTexture.IsChanged = true;
+  }
+
+  public void Animate(Animation.Animation animation)
+  {
+    Skeleton.Animate(animation);
   }
 }
 
@@ -100,7 +122,6 @@ public static class SkinEx
     for (var i = 0; i < gltfSkin.BoneList.Count; i++)
     {
       var bone = new Bone();
-      // bone.Index = gltfSkin.BoneList[i].NodeId;
       bone.FromGLTFBone(gltfSkin.BoneList[i]);
       boneMap[gltfSkin.BoneList[i].JointId] = bone;
       skeleton.BoneList.Add(bone);
@@ -116,8 +137,6 @@ public static class SkinEx
         boneMap[gBone.JointId].Children.Add(skeleton.BoneList.Find(x => x.Name == child.Name));
       }
     }
-
-    // var rootBone = boneMap[gltfSkin.BoneList[0].Id];
   }
 
   public static void FromGLTFBone(this Bone bone, GLTF_Bone gltfBone)
@@ -127,14 +146,5 @@ public static class SkinEx
     bone.Scale = gltfBone.Scale;
     bone.Name = gltfBone.Name;
     bone.InverseBindMatrix = gltfBone.InverseBindMatrix;
-    // bone.Index = gltfBone.Id;
-
-    /*for (var i = 0; i < gltfBone.Children.Count; i++)
-    {
-      var childBone = gltfBone.GLTF.SkinList[gltfBone.SkinId].BoneList.Find(x => x.Id == gltfBone.Children[i]);
-      var newBone = new Bone();
-      newBone.FromGLTFBone(childBone);
-      bone.Children.Add(newBone);
-    }*/
   }
 }

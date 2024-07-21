@@ -14,7 +14,9 @@ public class Bone
   public Vector3 Scale = Vector3.One;
 
   public Matrix4x4 InverseBindMatrix = Matrix4x4.Identity;
-  public List<Bone> Children = new();
+  public List<Bone> Children = [];
+
+  // Auto
   public Matrix4x4 Matrix = Matrix4x4.Identity;
   public Matrix4x4 ParentMatrix = Matrix4x4.Identity;
   public Bone ParentBone;
@@ -30,7 +32,20 @@ public class Bone
       InverseBindMatrix = InverseBindMatrix,
       Children = Children.Select(x => x.Clone()).ToList()
     };
+
     return b;
+  }
+
+  // Эта функция нужна при клонировании. Когда я делаю клон то я клонирую всю иерархию.
+  // Но дети должны иметь ссылки на кости в самом верхнем массиве, а не просто копии
+  // Эта функция заменяет по имени всех детей на массив в котором лежат кости все
+  public void MapChildren(List<Bone> bones)
+  {
+    for (var i = 0; i < Children.Count; i++)
+    {
+      Children[i] = bones.Find(x => x.Name == Children[i].Name);
+      Children[i].MapChildren(bones);
+    }
   }
 
   public void Update(Matrix4x4 parent)

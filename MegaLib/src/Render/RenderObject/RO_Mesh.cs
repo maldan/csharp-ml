@@ -29,6 +29,8 @@ public class RO_Mesh : RO_Base
   public Texture_2D<RGBA<byte>> RoughnessTexture;
   public Texture_2D<RGBA<byte>> MetallicTexture;
 
+  public RGBA<float> Tint = new(1, 1, 1, 1);
+
   public RO_Mesh()
   {
     Transform = new Transform();

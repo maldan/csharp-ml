@@ -10,6 +10,7 @@ public class Skeleton : IAnimatable
 {
   public Vector3 Position;
   public Quaternion Rotation = Quaternion.Identity;
+  public Vector3 Scale = Vector3.One;
 
   public readonly List<Bone> BoneList = [];
 
@@ -23,10 +24,17 @@ public class Skeleton : IAnimatable
     var s = new Skeleton
     {
       Position = Position,
-      Rotation = Rotation
+      Rotation = Rotation,
+      Scale = Scale
     };
+
+    // Сначала просто тупое клонирование всего
     foreach (var b in BoneList) s.BoneList.Add(b.Clone());
 
+    // Теперь надо правильно обновить ссылки детей на родителей
+    foreach (var b in s.BoneList) b.MapChildren(s.BoneList);
+
+    s.Update();
     return s;
   }
 
@@ -34,6 +42,7 @@ public class Skeleton : IAnimatable
   {
     if (_boneMap.ContainsKey(name)) return _boneMap[name];
     var bone = BoneList.FirstOrDefault(bone => bone.Name == name);
+    if (bone == null) return null;
     _boneMap.Add(name, bone);
     return bone;
   }
@@ -64,6 +73,7 @@ public class Skeleton : IAnimatable
     var mx = Matrix4x4.Identity;
     mx = mx.Translate(Position);
     mx = mx.Rotate(Rotation);
+    mx = mx.Scale(Scale);
 
     Root.Update(mx);
   }

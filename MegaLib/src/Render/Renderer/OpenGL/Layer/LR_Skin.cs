@@ -1,4 +1,5 @@
 using System;
+using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Core;
 using MegaLib.Render.Core.Layer;
@@ -139,6 +140,8 @@ public class LR_Skin : LR_Base
         uniform sampler2D uBoneMatrix;
         
         uniform samplerCube uSkybox;
+            
+        uniform vec4 uTint;
 
         //const float PI = 3.1415;
         const float PI = 3.141592653589793;
@@ -370,7 +373,7 @@ public class LR_Skin : LR_Base
             //finalColor *= 0.00001;
             //finalColor.r += texture(uBoneMatrix, vUV).r;
             
-            color = vec4(finalColor, mat.alpha);
+            color = vec4(finalColor, mat.alpha) * uTint;
             // color = vec4(texture(uBoneMatrix, vUV).r, 0.0, 0.0, 1.0);
         }";
 
@@ -424,6 +427,8 @@ public class LR_Skin : LR_Base
         Shader.ActivateTexture(mesh.NormalTexture, "uNormalTexture", 1);
         Shader.ActivateTexture(mesh.RoughnessTexture, "uRoughnessTexture", 2);
         Shader.ActivateTexture(mesh.MetallicTexture, "uMetallicTexture", 3);
+
+        Shader.SetUniform("uTint", new Vector4(skin.Tint.R, skin.Tint.G, skin.Tint.B, skin.Tint.A));
 
         // Shader.SetUniform("uModelMatrix", mesh.Transform.Matrix);
 

@@ -1,23 +1,24 @@
 using System;
+using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Core;
 using MegaLib.Render.Core.Layer;
 using MegaLib.Render.RenderObject;
 
-namespace MegaLib.Render.Renderer.OpenGL.Layer
+namespace MegaLib.Render.Renderer.OpenGL.Layer;
+
+public class LR_Mesh : LR_Base
 {
-  public class LR_Mesh : LR_Base
+  public LR_Mesh(OpenGL_Context context, RL_Base layer, Render_Scene scene) : base(context, layer, scene)
   {
-    public LR_Mesh(OpenGL_Context context, RL_Base layer, Render_Scene scene) : base(context, layer, scene)
-    {
-    }
+  }
 
-    public override void Init()
-    {
-      # region vertex
+  public override void Init()
+  {
+    # region vertex
 
-      // language=glsl
-      var vertex = @"#version 330 core
+    // language=glsl
+    var vertex = @"#version 330 core
         precision highp float;
         precision highp int;
         precision highp usampler2D;
@@ -68,12 +69,12 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             vo_TBN = mat3(T, B, N);
         }";
 
-      #endregion
+    #endregion
 
-      #region fragment
+    #region fragment
 
-      // language=glsl
-      var fragment = @"
+    // language=glsl
+    var fragment = @"
         #version 330 core
         precision highp float;
         precision highp int;
@@ -95,6 +96,8 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
         uniform sampler2D uMetallicTexture;
         
         uniform samplerCube uSkybox;
+        
+        uniform vec4 uTint;
 
         //const float PI = 3.1415;
         const float PI = 3.141592653589793;
@@ -326,64 +329,64 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer
             
             // finalColor += uAlbedoTexture;
             
-            color = vec4(finalColor, mat.alpha);
+            color = vec4(finalColor, mat.alpha) * uTint;
         }";
 
-      #endregion
+    #endregion
 
-      Shader.ShaderCode["vertex"] = vertex;
-      Shader.ShaderCode["fragment"] = fragment;
-      Shader.Compile();
-    }
+    Shader.ShaderCode["vertex"] = vertex;
+    Shader.ShaderCode["fragment"] = fragment;
+    Shader.Compile();
+  }
 
-    public override void Render()
+  public override void Render()
+  {
+    var layer = (RL_StaticMesh)Layer;
+
+    Shader.Use();
+    Shader.Enable(OpenGL32.GL_BLEND);
+    Shader.Enable(OpenGL32.GL_DEPTH_TEST);
+
+    var cp = Scene.Camera.Position;
+    cp.Z *= -1;
+    // cp.Y *= -1;
+    // Shader.SetUniform("uCameraPosition", cp);
+    Shader.SetUniform("uProjectionMatrix", Scene.Camera.ProjectionMatrix);
+    Shader.SetUniform("uViewMatrix", Scene.Camera.ViewMatrix);
+    Shader.ActivateTexture(Scene.Skybox, "uSkybox", 10);
+
+    // Draw each mesh
+    layer.ForEach<RO_Mesh>(mesh =>
     {
-      var layer = (RL_StaticMesh)Layer;
+      Context.MapObject(mesh);
 
-      Shader.Use();
-      Shader.Enable(OpenGL32.GL_BLEND);
-      Shader.Enable(OpenGL32.GL_DEPTH_TEST);
+      // Bind vao
+      OpenGL32.glBindVertexArray(Context.GetVaoId(mesh));
 
-      var cp = Scene.Camera.Position;
-      cp.Z *= -1;
-      // cp.Y *= -1;
-      // Shader.SetUniform("uCameraPosition", cp);
-      Shader.SetUniform("uProjectionMatrix", Scene.Camera.ProjectionMatrix);
-      Shader.SetUniform("uViewMatrix", Scene.Camera.ViewMatrix);
-      Shader.ActivateTexture(Scene.Skybox, "uSkybox", 10);
+      // Buffer
+      Shader.EnableAttribute(mesh.VertexList, "aPosition");
+      Shader.EnableAttribute(mesh.NormalList, "aNormal");
+      Shader.EnableAttribute(mesh.UV0List, "aUV");
+      Shader.EnableAttribute(mesh.TangentList, "aTangent");
+      Shader.EnableAttribute(mesh.BiTangentList, "aBiTangent");
 
-      // Draw each mesh
-      layer.ForEach<RO_Mesh>(mesh =>
-      {
-        Context.MapObject(mesh);
+      // Texture
+      Shader.ActivateTexture(mesh.AlbedoTexture, "uAlbedoTexture", 0);
+      Shader.ActivateTexture(mesh.NormalTexture, "uNormalTexture", 1);
+      Shader.ActivateTexture(mesh.RoughnessTexture, "uRoughnessTexture", 2);
+      Shader.ActivateTexture(mesh.MetallicTexture, "uMetallicTexture", 3);
 
-        // Bind vao
-        OpenGL32.glBindVertexArray(Context.GetVaoId(mesh));
+      Shader.SetUniform("uModelMatrix", mesh.Transform.Matrix);
+      Shader.SetUniform("uTint", new Vector4(mesh.Tint.R, mesh.Tint.G, mesh.Tint.B, mesh.Tint.A));
 
-        // Buffer
-        Shader.EnableAttribute(mesh.VertexList, "aPosition");
-        Shader.EnableAttribute(mesh.NormalList, "aNormal");
-        Shader.EnableAttribute(mesh.UV0List, "aUV");
-        Shader.EnableAttribute(mesh.TangentList, "aTangent");
-        Shader.EnableAttribute(mesh.BiTangentList, "aBiTangent");
+      // Bind indices
+      OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(mesh.IndexList));
 
-        // Texture
-        Shader.ActivateTexture(mesh.AlbedoTexture, "uAlbedoTexture", 0);
-        Shader.ActivateTexture(mesh.NormalTexture, "uNormalTexture", 1);
-        Shader.ActivateTexture(mesh.RoughnessTexture, "uRoughnessTexture", 2);
-        Shader.ActivateTexture(mesh.MetallicTexture, "uMetallicTexture", 3);
+      // Draw
+      OpenGL32.glDrawElements(OpenGL32.GL_TRIANGLES, mesh.IndexList.Count, OpenGL32.GL_UNSIGNED_INT, IntPtr.Zero);
 
-        Shader.SetUniform("uModelMatrix", mesh.Transform.Matrix);
-
-        // Bind indices
-        OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(mesh.IndexList));
-
-        // Draw
-        OpenGL32.glDrawElements(OpenGL32.GL_TRIANGLES, mesh.IndexList.Count, OpenGL32.GL_UNSIGNED_INT, IntPtr.Zero);
-
-        // Unbind vao
-        OpenGL32.glBindVertexArray(0);
-      });
-    }
+      // Unbind vao
+      OpenGL32.glBindVertexArray(0);
+    });
   }
 }
