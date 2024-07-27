@@ -10,12 +10,14 @@ namespace MegaLib.Render.Core;
 
 public class Render_Scene
 {
+  // Главная камера
   public Camera_Base Camera = new Camera_Perspective();
-  public readonly List<RL_Base> Pipeline = new();
+
+  public readonly List<Layer_Base> Pipeline = new();
   public Texture_Cube Skybox;
   private Mutex _mutex = new();
 
-  public void AddLayer(string name, RL_Base layer)
+  public void AddLayer(string name, Layer_Base layer)
   {
     _mutex.WaitOne();
     layer.Name = name;
@@ -23,7 +25,7 @@ public class Render_Scene
     _mutex.ReleaseMutex();
   }
 
-  public T GetLayer<T>(string name) where T : RL_Base
+  public T GetLayer<T>(string name) where T : Layer_Base
   {
     _mutex.WaitOne();
     var layer = Pipeline.Find(x => x.Name == name);
@@ -90,6 +92,7 @@ public class Render_Scene
     _mutex.WaitOne();
 
     OnBeforeRender();
+
     foreach (var layer in Pipeline) layer.Render();
 
     _mutex.ReleaseMutex();

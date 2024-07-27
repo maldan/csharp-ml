@@ -15,7 +15,7 @@ public class LR_Point : LR_Base
   private ListGPU<Vector4> _colors;
   private uint _vaoId;
 
-  public LR_Point(OpenGL_Context context, RL_Base layer, Render_Scene scene) : base(context, layer, scene)
+  public LR_Point(OpenGL_Context context, Layer_Base layer, Render_Scene scene) : base(context, layer, scene)
   {
   }
 
@@ -72,7 +72,7 @@ public class LR_Point : LR_Base
 
   public override void Render()
   {
-    var layer = (RL_Point)Layer;
+    var layer = (Layer_Point)Layer;
 
     Shader.Use();
     Shader.Enable(OpenGL32.GL_BLEND);

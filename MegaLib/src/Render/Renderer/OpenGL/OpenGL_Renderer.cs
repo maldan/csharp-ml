@@ -17,6 +17,7 @@ public class OpenGL_Renderer : IRenderer
   private readonly OpenGL_Context _context = new();
   private Render_Scene _scene;
   private VrRuntime _vrRuntime;
+  private RendererConfig _rendererConfig;
 
   private void Clear()
   {
@@ -27,6 +28,7 @@ public class OpenGL_Renderer : IRenderer
   private void Render()
   {
     _scene.Render();
+
     OpenGL32.wglSwapBuffers(OpenGL32.wglGetCurrentDC());
 
     // Подчищаем удаленные ресурсы
@@ -42,6 +44,11 @@ public class OpenGL_Renderer : IRenderer
     OpenGL32.glReadPixels(0, 0, width, height, OpenGL32.GL_RGBA, OpenGL32.GL_UNSIGNED_BYTE, pixelsPtr);
 
     return pixels;
+  }
+
+  public void SetConfig(RendererConfig config)
+  {
+    _rendererConfig = config;
   }
 
   public void Tick(float delta, int updateIteration)
@@ -96,14 +103,14 @@ public class OpenGL_Renderer : IRenderer
       {
         layer.LayerRenderer = layer switch
         {
-          RL_Line => new LR_Line(_context, layer, _scene),
-          RL_Point => new LR_Point(_context, layer, _scene),
-          RL_StaticMesh => new LR_Mesh(_context, layer, _scene),
-          RL_Sprite => new LR_Sprite(_context, layer, _scene),
-          RL_UI => new LR_UI(_context, layer, _scene),
-          RL_SkinnedMesh => new LR_Skin(_context, layer, _scene),
-          RL_Skybox => new LR_Skybox(_context, layer, _scene),
-          RL_BitmapText => new GL_Layer_BitmapText(_context, layer, _scene),
+          Layer_Line => new LR_Line(_context, layer, _scene),
+          Layer_Point => new LR_Point(_context, layer, _scene),
+          Layer_StaticMesh => new LR_Mesh(_context, layer, _scene),
+          Layer_Sprite => new LR_Sprite(_context, layer, _scene),
+          Layer_UI => new LR_UI(_context, layer, _scene),
+          Layer_SkinnedMesh => new LR_Skin(_context, layer, _scene),
+          Layer_Skybox => new LR_Skybox(_context, layer, _scene),
+          Layer_BitmapText => new GL_Layer_BitmapText(_context, layer, _scene),
           _ => throw new Exception("Unsupported layer type")
         };
 

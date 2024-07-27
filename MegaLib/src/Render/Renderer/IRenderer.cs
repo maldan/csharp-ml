@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using MegaLib.Render.Core;
+using MegaLib.Render.Light;
 using MegaLib.VR;
 
 namespace MegaLib.Render.Renderer;
@@ -7,6 +8,8 @@ namespace MegaLib.Render.Renderer;
 public interface IRenderer
 {
   public byte[] GetScreen();
+
+  public void SetConfig(RendererConfig config);
 
   public void Tick(float delta, int updateIteration);
 

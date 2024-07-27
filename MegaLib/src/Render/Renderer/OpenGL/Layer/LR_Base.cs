@@ -3,32 +3,31 @@ using MegaLib.Render.Core;
 using MegaLib.Render.Core.Layer;
 using MegaLib.Render.RenderObject;
 
-namespace MegaLib.Render.Renderer.OpenGL.Layer
+namespace MegaLib.Render.Renderer.OpenGL.Layer;
+
+public class LR_Base : ILayerRenderer
 {
-  public class LR_Base : ILayerRenderer
+  protected readonly OpenGL_Context Context;
+  protected readonly Layer_Base Layer;
+  protected readonly Render_Scene Scene;
+  protected readonly OpenGL_Shader Shader;
+
+  public LR_Base(OpenGL_Context context, Layer_Base layer, Render_Scene scene)
   {
-    protected readonly OpenGL_Context Context;
-    protected readonly RL_Base Layer;
-    protected readonly Render_Scene Scene;
-    protected readonly OpenGL_Shader Shader;
-
-    public LR_Base(OpenGL_Context context, RL_Base layer, Render_Scene scene)
+    Context = context;
+    Layer = layer;
+    Scene = scene;
+    Shader = new OpenGL_Shader
     {
-      Context = context;
-      Layer = layer;
-      Scene = scene;
-      Shader = new OpenGL_Shader
-      {
-        Context = Context
-      };
-    }
+      Context = Context
+    };
+  }
 
-    public virtual void Init()
-    {
-    }
+  public virtual void Init()
+  {
+  }
 
-    public virtual void Render()
-    {
-    }
+  public virtual void Render()
+  {
   }
 }

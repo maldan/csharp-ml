@@ -9,7 +9,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer;
 
 public class LR_UI : LR_Base
 {
-  public LR_UI(OpenGL_Context context, RL_Base layer, Render_Scene scene) : base(context, layer, scene)
+  public LR_UI(OpenGL_Context context, Layer_Base layer, Render_Scene scene) : base(context, layer, scene)
   {
   }
 
@@ -107,7 +107,7 @@ public class LR_UI : LR_Base
 
   public override void Render()
   {
-    var layer = (RL_UI)Layer;
+    var layer = (Layer_UI)Layer;
 
     Shader.Use();
     Shader.Enable(OpenGL32.GL_BLEND);

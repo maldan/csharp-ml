@@ -9,7 +9,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer;
 
 public class LR_Mesh : LR_Base
 {
-  public LR_Mesh(OpenGL_Context context, RL_Base layer, Render_Scene scene) : base(context, layer, scene)
+  public LR_Mesh(OpenGL_Context context, Layer_Base layer, Render_Scene scene) : base(context, layer, scene)
   {
   }
 
@@ -341,7 +341,7 @@ public class LR_Mesh : LR_Base
 
   public override void Render()
   {
-    var layer = (RL_StaticMesh)Layer;
+    var layer = (Layer_StaticMesh)Layer;
 
     Shader.Use();
     Shader.Enable(OpenGL32.GL_BLEND);

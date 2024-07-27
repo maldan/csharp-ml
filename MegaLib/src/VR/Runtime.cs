@@ -59,18 +59,22 @@ public class VrRuntime
 
     XrSwapchainFormatGL depthFormat = 0;
     for (var i = 0; i < swapchainFormats.Length; i++)
-      /*if ((swapchainFormats[i] & XrSwapchainFormatGL.GL_DEPTH_COMPONENT24) ==
-          XrSwapchainFormatGL.GL_DEPTH_COMPONENT24)
-      {
-        depthFormat = swapchainFormats[i];
-        break;
-      }*/
-      if ((swapchainFormats[i] & XrSwapchainFormatGL.GL_DEPTH_COMPONENT16) ==
-          XrSwapchainFormatGL.GL_DEPTH_COMPONENT16)
+    {
+      if ((swapchainFormats[i] & XrSwapchainFormatGL.GL_DEPTH_COMPONENT32F) ==
+          XrSwapchainFormatGL.GL_DEPTH_COMPONENT32F)
       {
         depthFormat = swapchainFormats[i];
         break;
       }
+
+      if ((swapchainFormats[i] & XrSwapchainFormatGL.GL_DEPTH_COMPONENT24) ==
+          XrSwapchainFormatGL.GL_DEPTH_COMPONENT24)
+        depthFormat = swapchainFormats[i];
+
+      if ((swapchainFormats[i] & XrSwapchainFormatGL.GL_DEPTH_COMPONENT16) ==
+          XrSwapchainFormatGL.GL_DEPTH_COMPONENT16)
+        depthFormat = swapchainFormats[i];
+    }
 
     // Create swapchain
     var colorSwapchainList = new OpenXR.SwapchainInfo[viewList.Length];

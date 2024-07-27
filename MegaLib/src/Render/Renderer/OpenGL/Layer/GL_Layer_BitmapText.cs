@@ -9,7 +9,7 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer;
 
 public class GL_Layer_BitmapText : LR_Base
 {
-  public GL_Layer_BitmapText(OpenGL_Context context, RL_Base layer, Render_Scene scene) : base(context, layer, scene)
+  public GL_Layer_BitmapText(OpenGL_Context context, Layer_Base layer, Render_Scene scene) : base(context, layer, scene)
   {
   }
 
@@ -79,7 +79,7 @@ public class GL_Layer_BitmapText : LR_Base
 
   public override void Render()
   {
-    var layer = (RL_BitmapText)Layer;
+    var layer = (Layer_BitmapText)Layer;
 
     Shader.Use();
     Shader.Enable(OpenGL32.GL_BLEND);
