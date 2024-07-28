@@ -113,7 +113,7 @@ public class GLTF_Animation
         TimeList = keyframes
       };
 
-      if (sequence.Type == "translation")
+      if (sequence.Type == "translation" || sequence.Type == "scale")
       {
         var values = Gltf.AccessorList[sampler.Output].Vec3();
         foreach (var value in values)
@@ -144,22 +144,6 @@ public class GLTF_Animation
       var key = SequenceList[i].Key;
       var value = SequenceList[i].CalculateFrameValue(CurrentTime);
       var type = SequenceList[i].Type;
-
-      if (type == "translation")
-      {
-        /*const retarget = this.retargetTranslation[this.sequenceList[i].key];
-        if (retarget) {
-          (value as Vector3).add_(retarget);
-        }*/
-      }
-
-      if (type == "rotation")
-      {
-        /*const retarget = this.retargetRotation[this.sequenceList[i].key];
-        if (retarget) {
-          (value as Quaternion).mul_(retarget);
-        }*/
-      }
 
       CurrentFrame.Add(new GLTF_AnimationFrame
       {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using MegaLib.Render.Camera;
 using MegaLib.Render.Core.Layer;
+using MegaLib.Render.Light;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Texture;
 
@@ -13,8 +14,9 @@ public class Render_Scene
   // Главная камера
   public Camera_Base Camera = new Camera_Perspective();
 
-  public readonly List<Layer_Base> Pipeline = new();
+  public readonly List<Layer_Base> Pipeline = [];
   public Texture_Cube Skybox;
+  public List<LightBase> Lights = [];
   private Mutex _mutex = new();
 
   public void AddLayer(string name, Layer_Base layer)
@@ -31,6 +33,15 @@ public class Render_Scene
     var layer = Pipeline.Find(x => x.Name == name);
     _mutex.ReleaseMutex();
     return (T)layer;
+  }
+
+  public T GetLayer<T>() where T : Layer_Base
+  {
+    _mutex.WaitOne();
+    var layerIndex = Pipeline.FindIndex(x => x is T);
+    _mutex.ReleaseMutex();
+    if (layerIndex == -1) return null;
+    return (T)Pipeline[layerIndex];
   }
 
   public bool Add(string layerName, RO_Base obj)

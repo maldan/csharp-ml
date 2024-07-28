@@ -53,6 +53,7 @@ public class Bone
     Matrix = Matrix4x4.Identity;
     Matrix = Matrix.Translate(Position);
     Matrix = Matrix.Rotate(Rotation);
+    Matrix = Matrix.Scale(Scale);
     Matrix *= parent;
 
     ParentMatrix = parent;

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using MegaLib.IO;
+using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Camera;
@@ -18,6 +19,7 @@ public class OpenGL_Renderer : IRenderer
   private Render_Scene _scene;
   private VrRuntime _vrRuntime;
   private RendererConfig _rendererConfig;
+  private Rectangle _viewport = new(0, 0, 800, 600);
 
   private void Clear()
   {
@@ -90,6 +92,11 @@ public class OpenGL_Renderer : IRenderer
     return _vrRuntime;
   }
 
+  public void SetViewport(ushort x, ushort y, ushort width, ushort height)
+  {
+    _viewport = Rectangle.FromLeftTopWidthHeight(x, y, width, height);
+  }
+
   public Render_Scene Scene
   {
     get => _scene;
@@ -111,6 +118,8 @@ public class OpenGL_Renderer : IRenderer
           Layer_SkinnedMesh => new LR_Skin(_context, layer, _scene),
           Layer_Skybox => new LR_Skybox(_context, layer, _scene),
           Layer_BitmapText => new GL_Layer_BitmapText(_context, layer, _scene),
+          Layer_Capture => new LR_Capture(_context, layer, _scene),
+          Layer_PostProcess => new LR_PostProcess(_context, layer, _scene),
           _ => throw new Exception("Unsupported layer type")
         };
 

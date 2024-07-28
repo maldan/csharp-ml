@@ -5,5 +5,4 @@ namespace MegaLib.Render.Renderer;
 
 public class RendererConfig
 {
-  public List<LightBase> Lights = [];
 }

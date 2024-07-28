@@ -15,5 +15,7 @@ public interface IRenderer
 
   public VrRuntime StartVrSession(Dictionary<string, object> args);
 
+  public void SetViewport(ushort x, ushort y, ushort width, ushort height);
+
   public Render_Scene Scene { get; set; }
 }

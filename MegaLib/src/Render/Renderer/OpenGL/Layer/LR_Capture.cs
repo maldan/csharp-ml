@@ -1,16 +1,72 @@
 using System;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
+using MegaLib.Render.Color;
 using MegaLib.Render.Core;
 using MegaLib.Render.Core.Layer;
 using MegaLib.Render.RenderObject;
+using MegaLib.Render.Texture;
+using GLint = int;
 
 namespace MegaLib.Render.Renderer.OpenGL.Layer;
 
-public class LR_Skin : LR_Base
+public class LR_Capture : LR_Base
 {
-  public LR_Skin(OpenGL_Context context, Layer_Base layer, Render_Scene scene) : base(context, layer, scene)
+  public OpenGL_Framebuffer Framebuffer;
+
+  public LR_Capture(OpenGL_Context context, Layer_Base layer, Render_Scene scene) : base(context, layer, scene)
   {
+    Framebuffer = context.CreateFrameBuffer();
+
+    //OpenGL32.glGenFramebuffers(1, ref fbo);
+    //OpenGL32.glBindFramebuffer(OpenGL32.GL_FRAMEBUFFER, fbo);
+
+    // Создаем текстуру для цветного буфера
+    /*uint textureColorbuffer = 0;
+    OpenGL32.glGenTextures(1, ref textureColorbuffer);
+    OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, textureColorbuffer);
+    OpenGL32.glTexImage2D(OpenGL32.GL_TEXTURE_2D,
+      0, (GLint)OpenGL32.GL_RGB, 1280, 720, 0, OpenGL32.GL_RGB, OpenGL32.GL_UNSIGNED_BYTE, 0);
+    OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_MIN_FILTER, (GLint)OpenGL32.GL_LINEAR);
+    OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_MAG_FILTER, (GLint)OpenGL32.GL_LINEAR);
+    OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, 0);
+
+    Console.WriteLine(textureColorbuffer);*/
+
+    /*var ll = layer as Layer_Capture;
+
+    ll.Texture = new Texture_2D<RGB<byte>>(1280, 720);
+    Context.MapRenderTexture(ll.Texture);
+
+    // Прикрепляем текстуру к фреймбуферу
+    var tid = Context.GetTextureId(ll.Texture);
+    Console.WriteLine(tid);
+    OpenGL32.glFramebufferTexture2D(
+      OpenGL32.GL_FRAMEBUFFER,
+      OpenGL32.GL_COLOR_ATTACHMENT0, OpenGL32.GL_TEXTURE_2D, tid, 0);
+
+    OpenGL32.PrintGlError();
+
+    // Создаем рендербуфер для глубины и трафарета
+    uint rbo = 0;
+    OpenGL32.glGenRenderbuffers(1, ref rbo);
+    OpenGL32.glBindRenderbuffer(OpenGL32.GL_RENDERBUFFER, rbo);
+    OpenGL32.glRenderbufferStorage(OpenGL32.GL_RENDERBUFFER, OpenGL32.GL_DEPTH24_STENCIL8, 1280, 720);
+    OpenGL32.glBindRenderbuffer(OpenGL32.GL_RENDERBUFFER, 0);
+
+    OpenGL32.PrintGlError();
+
+    // Прикрепляем рендербуфер к фреймбуферу
+    OpenGL32.glFramebufferRenderbuffer(OpenGL32.GL_FRAMEBUFFER, OpenGL32.GL_DEPTH_STENCIL_ATTACHMENT,
+      OpenGL32.GL_RENDERBUFFER, rbo);
+    OpenGL32.PrintGlError();
+
+    // Проверяем фреймбуфер на корректность
+    var status = OpenGL32.glCheckFramebufferStatus(OpenGL32.GL_FRAMEBUFFER);
+    if (OpenGL32.glCheckFramebufferStatus(OpenGL32.GL_FRAMEBUFFER) != OpenGL32.GL_FRAMEBUFFER_COMPLETE)
+      throw new Exception($"ERROR::FRAMEBUFFER:: Framebuffer is not complete! {status}");
+
+    OpenGL32.glBindFramebuffer(OpenGL32.GL_FRAMEBUFFER, 0);*/
   }
 
   public override void Init()
@@ -38,6 +94,7 @@ public class LR_Skin : LR_Base
         out vec3 vo_CameraPosition;
         out vec2 vo_UV;
         out mat3 vo_TBN;
+        out float vo_Depth;
         
         ivec2 getBoneTexelById(uint id, int ch) {
             int pixel = (int(id) * 16 + ch);
@@ -115,6 +172,9 @@ public class LR_Skin : LR_Base
             // Camera position
             vec4 cameraPosition = vec4(0.0, 0.0, 0.0, 1.0);
             vo_CameraPosition = (inverse(uViewMatrix) * cameraPosition).xyz;
+            
+            // Нормализованное значение глубины
+            vo_Depth = gl_Position.z / gl_Position.w;
         }";
 
     // language=glsl
@@ -127,6 +187,7 @@ public class LR_Skin : LR_Base
         in vec3 vo_CameraPosition;
         in vec2 vo_UV;
         in mat3 vo_TBN;
+        in float vo_Depth;
         
         out vec4 color;
 
@@ -138,7 +199,6 @@ public class LR_Skin : LR_Base
         uniform sampler2D uRoughnessTexture;
         uniform sampler2D uMetallicTexture;
         uniform sampler2D uBoneMatrix;
-        uniform sampler2D uCaptureTexture;
         
         uniform samplerCube uSkybox;
             
@@ -417,6 +477,13 @@ public class LR_Skin : LR_Base
             return light;
         }
         
+        float LinearizeDepth(float depth) {
+            float near = 0.01;
+            float far = 1.0;
+            float z = depth * 2.0 - 1.0; // Обратно преобразуем в NDC
+            return (2.0 * near * far) / (far + near - z * (far - near));    
+        }
+
         void main()
         {
             Material mat = getMaterial();
@@ -445,12 +512,8 @@ public class LR_Skin : LR_Base
             //finalColor *= 0.00001;
             //finalColor.r += texture(uBoneMatrix, vUV).r;
             
-            // Получаем нормализованные экранные координаты
-            vec2 screenUV = gl_FragCoord.xy / vec2(1280.0, 720.0);
-            // Читаем из текстуры по нормализованным экранным координатам
-            vec4 capture = texture(uCaptureTexture, screenUV);
-            
-            color = vec4(finalColor, mat.alpha) * uTint;
+            float linearDepth = LinearizeDepth(vo_Depth) / 1.0;
+            color = vec4(finalColor, mat.alpha) * uTint * 0.00001 + vec4(linearDepth, linearDepth, linearDepth, 1.0);
             // color = vec4(texture(uBoneMatrix, vUV).r, 0.0, 0.0, 1.0);
         }";
 
@@ -461,16 +524,15 @@ public class LR_Skin : LR_Base
 
   public override void Render()
   {
-    var layer = (Layer_SkinnedMesh)Layer;
-    //var captureLayer = Scene.GetLayer<Layer_Capture>("capture");
-    // var ppLayer = Scene.GetLayer<Layer_PostProcess>("postProcess");
+    // OpenGL32.glBindFramebuffer(OpenGL32.GL_FRAMEBUFFER, fbo);
+    // OpenGL32.glViewport(0, 0, 1280, 720);
+    // OpenGL32.glClear(OpenGL32.GL_COLOR_BUFFER_BIT | OpenGL32.GL_DEPTH_BUFFER_BIT);
+    // OpenGL32.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-    // ppLayer.FrameBufferId;
-    // OpenGL32.glBindFramebuffer(OpenGL32.GL_FRAMEBUFFER, ppLayer.FrameBufferId);
+    Framebuffer.Bind();
+    Framebuffer.Clear();
 
-    OpenGL32.glViewport(0, 0, 1280, 720);
-    OpenGL32.glClear(OpenGL32.GL_COLOR_BUFFER_BIT | OpenGL32.GL_DEPTH_BUFFER_BIT);
-    OpenGL32.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    var layer = (Layer_Capture)Layer;
 
     Shader.Use();
     Shader.Enable(OpenGL32.GL_BLEND);
@@ -478,20 +540,28 @@ public class LR_Skin : LR_Base
 
     var cp = Scene.Camera.Position;
     cp.Z *= -1;
-    // cp.Y *= -1;
-    // Shader.SetUniform("uCameraPosition", cp);
+
     Shader.SetUniform("uProjectionMatrix", Scene.Camera.ProjectionMatrix);
     Shader.SetUniform("uViewMatrix", Scene.Camera.ViewMatrix);
-    if (Scene.Skybox != null) Shader.ActivateTexture(Scene.Skybox, "uSkybox", 10);
 
-    // Draw each mesh
+    layer.LayerNames.ForEach(name =>
+    {
+      var l = Scene.GetLayer<Layer_Base>(name);
+      if (l is Layer_SkinnedMesh ls) Render_SkinnedMesh(ls);
+    });
+
+    Framebuffer.Unbind();
+  }
+
+  private void Render_SkinnedMesh(Layer_SkinnedMesh layer)
+  {
+    // Draw each skinned mesh
     layer.ForEach<RO_Skin>(skin =>
     {
       skin.Update();
 
       Context.MapTexture(skin.BoneTexture);
       Shader.ActivateTexture(skin.BoneTexture, "uBoneMatrix", 11);
-      // Shader.ActivateTexture(captureLayer.Texture, "uCaptureTexture", 15);
 
       skin.MeshList.ForEach(mesh =>
       {
@@ -517,8 +587,6 @@ public class LR_Skin : LR_Base
 
         Shader.SetUniform("uTint", new Vector4(skin.Tint.R, skin.Tint.G, skin.Tint.B, skin.Tint.A));
 
-        // Shader.SetUniform("uModelMatrix", mesh.Transform.Matrix);
-
         // Bind indices
         OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(mesh.IndexList));
 
@@ -529,7 +597,5 @@ public class LR_Skin : LR_Base
         OpenGL32.glBindVertexArray(0);
       });
     });
-
-    // OpenGL32.glBindFramebuffer(OpenGL32.GL_FRAMEBUFFER, 0);
   }
 }

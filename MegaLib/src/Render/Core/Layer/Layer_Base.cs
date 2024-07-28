@@ -6,6 +6,7 @@ using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.Render.Camera;
 using MegaLib.Render.Color;
 using MegaLib.Render.RenderObject;
+using MegaLib.Render.Texture;
 
 namespace MegaLib.Render.Core.Layer;
 
@@ -106,6 +107,15 @@ public class Layer_Line : Layer_Base
   {
     DrawAABB(aabb.Center, aabb.Size, color);
   }
+}
+
+public class Layer_Capture : Layer_Base
+{
+  public List<string> LayerNames = [];
+}
+
+public class Layer_PostProcess : Layer_Base
+{
 }
 
 public class Layer_Base

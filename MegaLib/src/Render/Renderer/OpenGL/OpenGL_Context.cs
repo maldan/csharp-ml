@@ -6,8 +6,10 @@ using System.Threading;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Buffer;
+using MegaLib.Render.Color;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Texture;
+using GLint = int;
 
 namespace MegaLib.Render.Renderer.OpenGL;
 
@@ -188,6 +190,51 @@ public class OpenGL_Context
     _cubeTextureList[texture.Id] = textureId;
   }
 
+  public void MapRenderTexture(Texture_2D<RGB<byte>> texture)
+  {
+    if (texture?.RAW == null) return;
+    if (_textureList.ContainsKey(texture.RAW.Id)) return;
+
+    // Create gl texture
+    uint textureId = 0;
+    OpenGL32.glGenTextures(1, ref textureId);
+    if (textureId == 0) throw new Exception("Can't create texture");
+
+    // Bind
+    OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, textureId);
+
+    // Fill texture
+    OpenGL32.glTexImage2D(
+      OpenGL32.GL_TEXTURE_2D,
+      0,
+      (GLint)OpenGL32.GL_RGB,
+      texture.RAW.Width,
+      texture.RAW.Height,
+      0,
+      OpenGL32.GL_RGB, OpenGL32.GL_UNSIGNED_BYTE,
+      0
+    );
+
+    OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_MIN_FILTER, (GLint)OpenGL32.GL_LINEAR);
+    OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_MAG_FILTER, (GLint)OpenGL32.GL_LINEAR);
+    OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_WRAP_S, (GLint)OpenGL32.GL_CLAMP_TO_EDGE);
+    OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_WRAP_T, (GLint)OpenGL32.GL_CLAMP_TO_EDGE);
+
+    // Unbind
+    OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, 0);
+
+    // On destroy
+    texture.RAW.OnDestroy += (sender, id) =>
+    {
+      _mutex.WaitOne();
+      _removeTextureQueue.Add(_textureList[id]);
+      _mutex.ReleaseMutex();
+    };
+
+    // Save to buffer
+    _textureList[texture.RAW.Id] = textureId;
+  }
+
   public void MapTexture<T>(Texture_2D<T> texture)
   {
     if (texture?.RAW == null) return;
@@ -246,7 +293,9 @@ public class OpenGL_Context
     // Do shit
     SetTextureFiltrationMode(OpenGL32.GL_TEXTURE_2D, textureId, texture.Options.FiltrationMode,
       texture.Options.UseMipMaps);
-    SetTextureWrapMode(OpenGL32.GL_TEXTURE_2D, textureId, texture.Options.WrapMode);
+
+    if (texture.Options.WrapMode != TextureWrapMode.None)
+      SetTextureWrapMode(OpenGL32.GL_TEXTURE_2D, textureId, texture.Options.WrapMode);
 
     // Save to buffer
     _textureList[texture.RAW.Id] = textureId;
@@ -392,6 +441,12 @@ public class OpenGL_Context
 
     // Unbind
     OpenGL32.glBindTexture(target, 0);
+  }
+
+  public OpenGL_Framebuffer CreateFrameBuffer()
+  {
+    var fb = new OpenGL_Framebuffer(this);
+    return fb;
   }
 
   public void Clean()
