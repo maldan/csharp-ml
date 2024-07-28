@@ -83,18 +83,29 @@ public class LR_PostProcess : LR_Base
     Shader.Compile();
   }
 
+  public override void BeforeRender()
+  {
+    Framebuffer.Bind();
+    Framebuffer.Clear();
+  }
+
+  public override void AfterRender()
+  {
+    Framebuffer.Unbind();
+  }
+
   public override void Render()
   {
     var layer = (Layer_PostProcess)Layer;
-    var ppl = Scene.GetLayer<Layer_Capture>();
-    var ppl2 = (LR_Capture)ppl.LayerRenderer;
+    //var ppl = Scene.GetLayer<Layer_Capture>();
+    //var ppl2 = (LR_Capture)ppl.LayerRenderer;
     // Console.WriteLine(ppl2.Framebuffer.Id);
 
     Shader.Use();
     Shader.Disable(OpenGL32.GL_BLEND);
     Shader.Disable(OpenGL32.GL_DEPTH_TEST);
 
-    Shader.ActivateTexture(ppl2.Framebuffer.Texture, "uScreenTexture", 0);
+    Shader.ActivateTexture(Framebuffer.Texture, "uScreenTexture", 0);
 
     // Bind vao
     OpenGL32.glBindVertexArray(Context.GetVaoId(_mesh));

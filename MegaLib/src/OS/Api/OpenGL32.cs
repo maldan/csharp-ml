@@ -119,6 +119,12 @@ public static partial class OpenGL32
     glDeleteBuffers(1, [id]);
   }
 
+  public static void glDeleteRenderbuffer(GLuint id)
+  {
+    // var dataPtr = Marshal.UnsafeAddrOfPinnedArrayElement(list, 0);
+    glDeleteRenderbuffers(1, [id]);
+  }
+
   /*public static void glDeleteFramebuffers(GLsizei n, uint[] framebuffers) {
     var dataPtr = Marshal.UnsafeAddrOfPinnedArrayElement(framebuffers, 0);
     glDeleteFramebuffers(n, dataPtr);
@@ -150,6 +156,25 @@ public static partial class OpenGL32
           Console.WriteLine($"{fn} OpenGL error: " + error);
           break;
       }
+  }
+
+  private static void DebugCallback(uint source, uint type, uint id, uint severity, int length, IntPtr message,
+    IntPtr userParam)
+  {
+    // Преобразование указателя сообщения в строку
+    var msg = Marshal.PtrToStringAnsi(message, length);
+
+    // Вывод информации об ошибке или предупреждении
+    if (type == GL_DEBUG_TYPE_ERROR)
+      Console.WriteLine($"OpenGL Error: [type={type}, severity={severity}] {msg}");
+    //else Console.WriteLine($"OpenGL Debug Message: [type={type}, severity={severity}] {msg}");
+  }
+
+  public static void InitDebugCallback()
+  {
+    var ptr = wglGetProcAddress("glDebugMessageCallback");
+    if (ptr == IntPtr.Zero) throw new Exception("Method not found");
+    Marshal.GetDelegateForFunctionPointer<Gavno>(ptr)(DebugCallback);
   }
 
   public static void InitDebugCallback(DebugMessageDelegate debugCallback)

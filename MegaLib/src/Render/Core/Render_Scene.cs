@@ -18,6 +18,10 @@ public class Render_Scene
   public Texture_Cube Skybox;
   public List<LightBase> Lights = [];
   private Mutex _mutex = new();
+  public bool UseSSAO;
+  public bool UsePostprocess;
+
+  public Layer_PostProcess PostProcessLayer = new();
 
   public void AddLayer(string name, Layer_Base layer)
   {
@@ -104,7 +108,14 @@ public class Render_Scene
 
     OnBeforeRender();
 
+    if (UsePostprocess) PostProcessLayer.LayerRenderer.BeforeRender();
+
     foreach (var layer in Pipeline) layer.Render();
+    if (UsePostprocess)
+    {
+      PostProcessLayer.LayerRenderer.AfterRender();
+      PostProcessLayer.Render();
+    }
 
     _mutex.ReleaseMutex();
   }

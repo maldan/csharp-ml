@@ -468,9 +468,9 @@ public class LR_Skin : LR_Base
     // ppLayer.FrameBufferId;
     // OpenGL32.glBindFramebuffer(OpenGL32.GL_FRAMEBUFFER, ppLayer.FrameBufferId);
 
-    OpenGL32.glViewport(0, 0, 1280, 720);
-    OpenGL32.glClear(OpenGL32.GL_COLOR_BUFFER_BIT | OpenGL32.GL_DEPTH_BUFFER_BIT);
-    OpenGL32.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    //OpenGL32.glViewport(0, 0, 1280, 720);
+    //OpenGL32.glClear(OpenGL32.GL_COLOR_BUFFER_BIT | OpenGL32.GL_DEPTH_BUFFER_BIT);
+    //OpenGL32.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     Shader.Use();
     Shader.Enable(OpenGL32.GL_BLEND);

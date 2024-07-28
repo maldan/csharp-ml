@@ -53,6 +53,19 @@ public struct Rectangle
     return new Rectangle(uMin, vMin, uMax, vMax);
   }
 
+  public static bool operator ==(Rectangle r1, Rectangle r2)
+  {
+    return Math.Abs(r1.FromX - r2.FromX) < 0.0001f &&
+           Math.Abs(r1.FromY - r2.FromY) < 0.0001f &&
+           Math.Abs(r1.ToX - r2.ToX) < 0.0001f &&
+           Math.Abs(r1.ToY - r2.ToY) < 0.0001f;
+  }
+
+  public static bool operator !=(Rectangle r1, Rectangle r2)
+  {
+    return !(r1 == r2);
+  }
+
   public override string ToString()
   {
     return $"Rectangle(FromX: {FromX}, FromY: {FromY}, ToX: {ToX}, ToY: {ToY})";

@@ -14,6 +14,8 @@ public interface ILayerRenderer
 {
   public void Init();
   public void Render();
+  public void BeforeRender();
+  public void AfterRender();
 }
 
 public class Layer_Sprite : Layer_Base

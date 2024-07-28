@@ -10,6 +10,7 @@ using MegaLib.Render.Core;
 using MegaLib.Render.Core.Layer;
 using MegaLib.Render.Renderer.OpenGL.Layer;
 using MegaLib.VR;
+using Console = System.Console;
 
 namespace MegaLib.Render.Renderer.OpenGL;
 
@@ -87,6 +88,8 @@ public class OpenGL_Renderer : IRenderer
         fov.AngleLeft, fov.AngleUp, fov.AngleRight, fov.AngleDown
       );
 
+      SetViewport(0, 0, (ushort)_vrRuntime.ViewWidth, (ushort)_vrRuntime.ViewHeight);
+
       Render();
     };
     return _vrRuntime;
@@ -94,7 +97,12 @@ public class OpenGL_Renderer : IRenderer
 
   public void SetViewport(ushort x, ushort y, ushort width, ushort height)
   {
+    var old = _viewport;
     _viewport = Rectangle.FromLeftTopWidthHeight(x, y, width, height);
+    OpenGL32.glViewport(0, 0, width, height);
+
+    // Поменялся
+    if (old != _viewport) (_scene.PostProcessLayer.LayerRenderer as LR_PostProcess).Framebuffer.Resize(width, height);
   }
 
   public Render_Scene Scene
@@ -125,6 +133,9 @@ public class OpenGL_Renderer : IRenderer
 
         layer.Init();
       }
+
+      _scene.PostProcessLayer.LayerRenderer = new LR_PostProcess(_context, _scene.PostProcessLayer, _scene);
+      _scene.PostProcessLayer.Init();
     }
   }
 }

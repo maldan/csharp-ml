@@ -15,6 +15,8 @@ public class VrRuntime
   public bool IsSessionRunning;
   public XrSessionState SessionState;
   public Action<XrPosef, XrFovf> OnRender;
+  public uint ViewWidth;
+  public uint ViewHeight;
 
   public void InitSession(IntPtr dc, IntPtr glrc)
   {
@@ -50,6 +52,10 @@ public class VrRuntime
     {
       Console.Write($"View {i + 1}: ");
       viewList[i].PrintInfo();
+
+      // Задаем текущую ширину и высоту вью
+      ViewWidth = viewList[i].RecommendedImageRectWidth;
+      ViewHeight = viewList[i].RecommendedImageRectHeight;
     }
 
     // Swapchains

@@ -5,4 +5,5 @@ namespace MegaLib.Render.Renderer;
 
 public class RendererConfig
 {
+  public bool UseSSAO;
 }

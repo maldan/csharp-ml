@@ -165,6 +165,10 @@ public static extern void glPixelStorei(GLenum pname, GLint param);
 public static extern void glDeleteTextures(GLsizei n, ref GLuint []textures);
 
 // 
+[DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
+public static extern void glGetIntegerv(GLenum pname, ref GLint data);
+
+// 
 public static void glGenBuffers(GLsizei n, ref GLuint buffers) {
 GetProcedure<glGenBuffersDelegate>("glGenBuffers")(n, ref buffers);
 }
@@ -619,6 +623,12 @@ public static void glFramebufferRenderbuffer(GLenum target, GLenum attachment, G
 GetProcedure<glFramebufferRenderbufferDelegate>("glFramebufferRenderbuffer")(target, attachment, renderbuffertarget, renderbuffer);
 }
 private delegate void glFramebufferRenderbufferDelegate(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+
+// 
+public static void glDeleteRenderbuffers(GLsizei n, GLuint[] buffers) {
+GetProcedure<glDeleteRenderbuffersDelegate>("glDeleteRenderbuffers")(n, buffers);
+}
+private delegate void glDeleteRenderbuffersDelegate(GLsizei n, GLuint[] buffers);
 
 }
 }

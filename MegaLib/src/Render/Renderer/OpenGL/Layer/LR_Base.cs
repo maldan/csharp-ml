@@ -30,4 +30,12 @@ public class LR_Base : ILayerRenderer
   public virtual void Render()
   {
   }
+
+  public virtual void BeforeRender()
+  {
+  }
+
+  public virtual void AfterRender()
+  {
+  }
 }

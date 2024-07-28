@@ -239,6 +239,10 @@ public class Window
     var extensionsPtr = OpenGL32.glGetString(OpenGL32.GL_EXTENSIONS);
     var extensions = Marshal.PtrToStringAnsi(extensionsPtr);
     Console.WriteLine($"OpenGL Extensions: {extensions}");
+
+    // Инициализация дебага по умолчанию
+    OpenGL32.glEnable(OpenGL32.GL_DEBUG_OUTPUT);
+    OpenGL32.InitDebugCallback();
   }
 
   public Window()
