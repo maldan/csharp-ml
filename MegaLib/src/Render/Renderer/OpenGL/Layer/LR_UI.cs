@@ -107,7 +107,7 @@ public class LR_UI : LR_Base
 
   public override void Render()
   {
-    var layer = (Layer_UI)Layer;
+    /*var layer = (Layer_UI)Layer;
 
     Shader.Use();
     Shader.Enable(OpenGL32.GL_BLEND);
@@ -146,6 +146,6 @@ public class LR_UI : LR_Base
 
       // Unbind vao
       OpenGL32.glBindVertexArray(0);
-    });
+    });*/
   }
 }

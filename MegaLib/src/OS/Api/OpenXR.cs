@@ -17,6 +17,9 @@ using XrSwapchain = IntPtr;
 using XrSystemId = ulong;
 using XrBool32 = uint;
 using XrTime = long;
+using XrPath = ulong;
+using XrActionSet = IntPtr;
+using XrAction = IntPtr;
 
 public static partial class OpenXR
 {
@@ -41,13 +44,111 @@ public static partial class OpenXR
     };
 
     // Add extensions
-    createInfo.EnableExtensions(new[] { "XR_EXT_debug_utils", "XR_KHR_opengl_enable" });
+    createInfo.EnableExtensions(["XR_EXT_debug_utils", "XR_KHR_opengl_enable"]);
 
     // Try to create
     var xrInstance = XrInstance.Zero;
     Check(xrCreateInstance(ref createInfo, ref xrInstance), "Can't create instance");
 
     return xrInstance;
+  }
+
+  public static void AttachActionSet(XrSession session, XrActionSet actionSet)
+  {
+    var arr = new[] { actionSet };
+    var handle = GCHandle.Alloc(arr, GCHandleType.Pinned);
+
+    var actionSetAttachInfo = new XrSessionActionSetsAttachInfo()
+    {
+      Type = XrStructureType.XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO,
+      CountActionSets = 1,
+      ActionSets = handle.AddrOfPinnedObject()
+    };
+
+    Check(xrAttachSessionActionSets(session, ref actionSetAttachInfo), "Failed to attach ActionSet to Session.");
+  }
+
+  public static XrActionSet CreateActionSet(XrInstance instance, string name)
+  {
+    XrActionSet actionSet = 0;
+
+    var actionSetCI = new XrActionSetCreateInfo
+    {
+      Type = XrStructureType.XR_TYPE_ACTION_SET_CREATE_INFO,
+      Priority = 0
+    };
+    actionSetCI.ActionSetName = name;
+    actionSetCI.LocalizedActionSetName = name;
+    //actionSetCI.SetActionName(name);
+    //actionSetCI.SetLocalizedActionName(name);
+
+    Check(xrCreateActionSet(instance, ref actionSetCI, ref actionSet), "Failed to create ActionSet.");
+
+    return actionSet;
+  }
+
+  public static XrAction CreateAction(XrInstance instance, XrActionSet actionSet, XrActionType actionType, string name,
+    string[] paths)
+  {
+    var actionCI = new XrActionCreateInfo() { Type = XrStructureType.XR_TYPE_ACTION_CREATE_INFO };
+    actionCI.ActionType = actionType;
+
+    var xrPaths = new XrPath[paths.Length];
+    for (var i = 0; i < paths.Length; i++) xrPaths[i] = CreateXrPath(instance, paths[i]);
+
+    var handle = GCHandle.Alloc(xrPaths, GCHandleType.Pinned);
+    actionCI.CountSubactionPaths = (uint)paths.Length;
+    actionCI.SubactionPaths = handle.AddrOfPinnedObject();
+
+    actionCI.ActionName = name;
+    actionCI.LocalizedActionName = name;
+    //actionCI.SetActionName(name);
+    //actionCI.SetLocalizedActionName(name);
+
+    XrAction xrAction = 0;
+    Check(xrCreateAction(actionSet, ref actionCI, ref xrAction), "Failed to create Action.");
+    return xrAction;
+  }
+
+  public static XrSpace CreateActionSpace(XrSession session, XrAction action, XrPath path)
+  {
+    var actionSpaceCreateInfo = new XrActionSpaceCreateInfo
+    {
+      Type = XrStructureType.XR_TYPE_ACTION_SPACE_CREATE_INFO,
+      Action = action,
+      SubactionPath = path,
+      PoseInActionSpace = new XrPosef
+      {
+        Orientation = new XrQuaternionf { W = 1.0f }
+      }
+    };
+    XrSpace actionSpace = 0;
+    Check(xrCreateActionSpace(session, ref actionSpaceCreateInfo, ref actionSpace), "Failed to create action space");
+    return actionSpace;
+  }
+
+  public static XrPath CreateXrPath(XrInstance instance, string path)
+  {
+    XrPath xrPath = 0;
+    var pathPtr = Marshal.StringToHGlobalAnsi(path);
+    Check(xrStringToPath(instance, pathPtr, ref xrPath), "Failed to create XrPath from string.");
+    if (pathPtr != 0) Marshal.FreeHGlobal(pathPtr);
+    return xrPath;
+  }
+
+  public static void SuggestBindings(XrInstance instance, string profilePath, XrActionSuggestedBinding[] bindings)
+  {
+    var handle = GCHandle.Alloc(bindings, GCHandleType.Pinned);
+
+    var interactionProfileSuggestedBinding = new XrInteractionProfileSuggestedBinding
+    {
+      Type = XrStructureType.XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING,
+      InteractionProfile = CreateXrPath(instance, profilePath),
+      SuggestedBindings = handle.AddrOfPinnedObject(),
+      CountSuggestedBindings = (uint)bindings.Length
+    };
+    Check(xrSuggestInteractionProfileBindings(instance, ref interactionProfileSuggestedBinding),
+      "Failed to suggest bindings");
   }
 
   public static void EnumerateApiLayerProperties()
@@ -341,7 +442,7 @@ public static partial class OpenXR
       // Per swapchain
       for (var i = 0; i < ColorSwapchainList.Length; i++)
       {
-        Console.WriteLine($"VIEW: {views[i].Pose} {views[i].Fov}");
+        // Console.WriteLine($"VIEW: {views[i].Pose} {views[i].Fov}");
 
         var colorSwapchainImageId = ColorSwapchainList[i].AcquireSwapchainImage();
         var depthSwapchainImageId = DepthSwapchainList[i].AcquireSwapchainImage();
@@ -518,7 +619,7 @@ public static partial class OpenXR
 
     public uint AcquireSwapchainImage()
     {
-      Console.WriteLine($"ACUIR SWAPCHAIN {Swapchain}");
+      // Console.WriteLine($"ACUIR SWAPCHAIN {Swapchain}");
 
       // Acquire
       uint imageIndex = 0;
@@ -530,10 +631,10 @@ public static partial class OpenXR
         xrAcquireSwapchainImage(Swapchain, ref acquireInfo, ref imageIndex),
         "Failed to acquire Image from the Swapchian"
       );
-      Console.WriteLine($"Image index {imageIndex}");
+      // Console.WriteLine($"Image index {imageIndex}");
 
       // Wait
-      Console.WriteLine($"Wait image {Swapchain}");
+      // Console.WriteLine($"Wait image {Swapchain}");
       var waitInfo = new XrSwapchainImageWaitInfo
       {
         Type = XrStructureType.XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
@@ -547,7 +648,7 @@ public static partial class OpenXR
 
     public void ReleaseSwapchainImage()
     {
-      Console.WriteLine($"Release image {Swapchain}");
+      // Console.WriteLine($"Release image {Swapchain}");
       var releaseInfo = new XrSwapchainImageReleaseInfo
         { Type = XrStructureType.XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
       Check(xrReleaseSwapchainImage(Swapchain, ref releaseInfo),
@@ -703,13 +804,30 @@ public static partial class OpenXR
     return space;
   }
 
-  private static void Check(XrResult result, string errorMessage)
+  public static XrSpace CreateReferenceSpace(XrSession sessionId, XrReferenceSpaceType type)
+  {
+    var createInfo = new XrReferenceSpaceCreateInfo
+    {
+      Type = XrStructureType.XR_TYPE_REFERENCE_SPACE_CREATE_INFO,
+      ReferenceSpaceType = type,
+      PoseInReferenceSpace = new XrPosef
+      {
+        Orientation = new XrQuaternionf { X = 0, Y = 0, Z = 0, W = 1.0f },
+        Position = new XrVector3f { X = 0, Y = 0, Z = 0 }
+      }
+    };
+    var space = IntPtr.Zero;
+    Check(xrCreateReferenceSpace(sessionId, ref createInfo, ref space));
+    return space;
+  }
+
+  public static void Check(XrResult result, string errorMessage)
   {
     if (result != XrResult.XR_SUCCESS)
       throw new Exception(result + " " + errorMessage);
   }
 
-  private static void Check(XrResult result)
+  public static void Check(XrResult result)
   {
     if (result != XrResult.XR_SUCCESS)
       throw new Exception(result.ToString());
