@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using MegaLib.Mathematics.LinearAlgebra;
 using GLint = int;
 using GLsizei = int;
 
@@ -150,6 +151,66 @@ public static partial class OpenXR
     };
     Check(xrSuggestInteractionProfileBindings(instance, ref interactionProfileSuggestedBinding),
       "Failed to suggest bindings");
+  }
+
+  public static void GetActionStateFloat(XrSession session, XrAction action, XrPath path, ref float value)
+  {
+    var getInfo = new XrActionStateGetInfo
+    {
+      Type = XrStructureType.XR_TYPE_ACTION_STATE_GET_INFO,
+      Action = action,
+      SubactionPath = path
+    };
+
+    var state = new XrActionStateFloat
+    {
+      Type = XrStructureType.XR_TYPE_ACTION_STATE_FLOAT,
+      Next = IntPtr.Zero
+    };
+
+    Check(xrGetActionStateFloat(session, ref getInfo, ref state), "Failed to get action state.");
+
+    if (state.IsActive == 1) value = state.CurrentState;
+  }
+
+  public static void GetActionStateBoolean(XrSession session, XrAction action, XrPath path, ref bool value)
+  {
+    var getInfo = new XrActionStateGetInfo
+    {
+      Type = XrStructureType.XR_TYPE_ACTION_STATE_GET_INFO,
+      Action = action,
+      SubactionPath = path
+    };
+
+    var state = new XrActionStateBoolean
+    {
+      Type = XrStructureType.XR_TYPE_ACTION_STATE_BOOLEAN,
+      Next = IntPtr.Zero
+    };
+
+    Check(xrGetActionStateBoolean(session, ref getInfo, ref state), "Failed to get action state.");
+
+    if (state.IsActive == 1) value = state.CurrentState == 1;
+  }
+
+  public static void GetActionStateVector2(XrSession session, XrAction action, XrPath path, ref Vector2 value)
+  {
+    var getInfo = new XrActionStateGetInfo
+    {
+      Type = XrStructureType.XR_TYPE_ACTION_STATE_GET_INFO,
+      Action = action,
+      SubactionPath = path
+    };
+
+    var state = new XrActionStateVector2f
+    {
+      Type = XrStructureType.XR_TYPE_ACTION_STATE_VECTOR2F,
+      Next = IntPtr.Zero
+    };
+
+    Check(xrGetActionStateVector2f(session, ref getInfo, ref state), "Failed to get action state.");
+
+    if (state.IsActive == 1) value = new Vector2(state.CurrentState.X, state.CurrentState.Y);
   }
 
   public static void EnumerateApiLayerProperties()

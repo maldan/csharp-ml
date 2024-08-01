@@ -339,13 +339,8 @@ public class VrRuntime
 
     // Приложение в состоянии фокуса. Значит может считывать экшены
     if (SessionState == XrSessionState.XR_SESSION_STATE_FOCUSED)
-    {
       // Обновляем экшены
-      VrAction.Sync();
-      VrAction.UpdateControllerJoystick();
-      VrAction.UpdateControllerButtons();
-      VrAction.UpdateControllerPosition(frameState.PredictedDisplayTime);
-    }
+      VrAction.Sync(frameState.PredictedDisplayTime);
 
     // Begin
     var frameBeginInfo = new XrFrameBeginInfo { Type = XrStructureType.XR_TYPE_FRAME_BEGIN_INFO };

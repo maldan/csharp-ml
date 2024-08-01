@@ -5,31 +5,40 @@ namespace MegaLib.IO;
 public class VrSide
 {
   public Matrix4x4 Projection = Matrix4x4.Identity;
+
   public Matrix4x4 View = Matrix4x4.Identity;
-  public VrController Controller;
+
+  // public VrController Controller;
   private VrHeadset _headset;
 
   public VrSide(VrHeadset headset)
   {
     _headset = headset;
-    Controller = new VrController(headset);
+    // Controller = new VrController(headset);
   }
 }
 
 public class VrController
 {
-  public Matrix4x4 Transform = Matrix4x4.Identity;
-  private VrHeadset _headset;
-  public Vector2 JoystickDirection;
-  public float Trigger;
-  public float Grab;
-  public bool IsA;
-  public bool IsB;
+  public Matrix4x4 GripTransform = Matrix4x4.Identity;
+  public Matrix4x4 AimTransform = Matrix4x4.Identity;
 
-  public VrController(VrHeadset headset)
-  {
-    _headset = headset;
-  }
+  public Vector2 ThumbstickDirection;
+
+  public float TriggerValue;
+  public float GripValue;
+
+  public bool IsPressA;
+  public bool IsPressB;
+  public bool IsPressTrigger => TriggerValue > 0;
+  public bool IsPressGrip => GripValue > 0;
+  public bool IsPressThumbstick;
+
+  public bool IsHoverA;
+  public bool IsHoverB;
+  public bool IsHoverTrigger;
+  public bool IsHoverGrip;
+  public bool IsHoverThumbstick;
 }
 
 public class VrHeadset
@@ -37,6 +46,11 @@ public class VrHeadset
   public Matrix4x4 Transform = Matrix4x4.Identity;
   public VrSide Left;
   public VrSide Right;
+
+  public VrController LeftController { get; private set; }
+  public VrController RightController { get; private set; }
+  public VrController[] Controller => [LeftController, RightController];
+
   public Vector3 PositionOffset;
   public Quaternion RotationOffset = Quaternion.Identity;
 
@@ -46,6 +60,9 @@ public class VrHeadset
   {
     Left = new VrSide(this);
     Right = new VrSide(this);
+
+    LeftController = new VrController();
+    RightController = new VrController();
   }
 
   public void OffsetPosition(Vector3 dir)

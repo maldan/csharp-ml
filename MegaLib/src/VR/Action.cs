@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using MegaLib.IO;
 using MegaLib.Mathematics.LinearAlgebra;
@@ -14,15 +15,11 @@ public class VrAction
   private readonly IntPtr _space;
   public IntPtr ActionSet;
 
-  private IntPtr _poseAction;
-  private IntPtr _moveAction;
-  private IntPtr _triggerAction;
-  private IntPtr _grabAction;
-  private IntPtr _aAction;
-  private IntPtr _bAction;
+  private Dictionary<string, IntPtr> _action = new();
 
   private ulong[] _controllerPath = [0, 0];
-  private IntPtr[] _controllerSpace = [IntPtr.Zero, IntPtr.Zero];
+  private ulong[] _controllerSpacePath = [0, 0, 0, 0];
+  private IntPtr[] _controllerSpace = [IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero];
 
   public VrAction(IntPtr instance, IntPtr session, IntPtr space)
   {
@@ -31,104 +28,61 @@ public class VrAction
     _space = space;
   }
 
+  private void CreateAction(string name, XrActionType actionType)
+  {
+    _action[name] =
+      OpenXR.CreateAction(_instance, ActionSet, actionType, name.Replace("/", "-"),
+        ["/user/hand/left", "/user/hand/right"]);
+  }
+
   public void Init()
   {
     // Создаем сет
     ActionSet = OpenXR.CreateActionSet(_instance, "vr-action-set");
 
-    // Экшен для позиции
-    _poseAction = OpenXR.CreateAction(_instance, ActionSet, XrActionType.XR_ACTION_TYPE_POSE_INPUT,
-      "hand-position",
-      ["/user/hand/left", "/user/hand/right"]);
-
-    // Экшен для перемещения
-    _moveAction = OpenXR.CreateAction(_instance, ActionSet, XrActionType.XR_ACTION_TYPE_VECTOR2F_INPUT,
-      "joystick-move",
-      ["/user/hand/left", "/user/hand/right"]);
-
-    // Экшен для триггера
-    _triggerAction = OpenXR.CreateAction(_instance, ActionSet, XrActionType.XR_ACTION_TYPE_FLOAT_INPUT,
-      "trigger-press",
-      ["/user/hand/left", "/user/hand/right"]);
-
-    // Экшен для захвата
-    _grabAction = OpenXR.CreateAction(_instance, ActionSet, XrActionType.XR_ACTION_TYPE_FLOAT_INPUT,
-      "hand-grab",
-      ["/user/hand/left", "/user/hand/right"]);
-
-    // Создаем экшен для кнопки A (цифровой вход)
-    _aAction = OpenXR.CreateAction(_instance, ActionSet, XrActionType.XR_ACTION_TYPE_BOOLEAN_INPUT,
-      "a-button-press",
-      ["/user/hand/left", "/user/hand/right"]);
-
-    // Создаем экшен для кнопки B (цифровой вход)
-    _bAction = OpenXR.CreateAction(_instance, ActionSet, XrActionType.XR_ACTION_TYPE_BOOLEAN_INPUT,
-      "b-button-press",
-      ["/user/hand/left", "/user/hand/right"]);
+    // Создаем все экшены
+    CreateAction("grip/pose", XrActionType.XR_ACTION_TYPE_POSE_INPUT);
+    CreateAction("aim/pose", XrActionType.XR_ACTION_TYPE_POSE_INPUT);
+    CreateAction("thumbstick", XrActionType.XR_ACTION_TYPE_VECTOR2F_INPUT);
+    CreateAction("trigger/value", XrActionType.XR_ACTION_TYPE_FLOAT_INPUT);
+    CreateAction("squeeze/value", XrActionType.XR_ACTION_TYPE_FLOAT_INPUT);
+    CreateAction("a/click", XrActionType.XR_ACTION_TYPE_BOOLEAN_INPUT);
+    CreateAction("b/click", XrActionType.XR_ACTION_TYPE_BOOLEAN_INPUT);
+    CreateAction("x/click", XrActionType.XR_ACTION_TYPE_BOOLEAN_INPUT);
+    CreateAction("y/click", XrActionType.XR_ACTION_TYPE_BOOLEAN_INPUT);
 
     // Биндим всю дичь
-    OpenXR.SuggestBindings(_instance, "/interaction_profiles/oculus/touch_controller", [
-      new XrActionSuggestedBinding
+    var bindings = new List<XrActionSuggestedBinding>();
+    foreach (var (key, value) in _action)
+      switch (key[..2])
       {
-        Action = _poseAction,
-        Binding = OpenXR.CreateXrPath(_instance, "/user/hand/left/input/grip/pose")
-      },
-      new XrActionSuggestedBinding
-      {
-        Action = _poseAction,
-        Binding = OpenXR.CreateXrPath(_instance, "/user/hand/right/input/grip/pose")
-      },
-      new XrActionSuggestedBinding
-      {
-        Action = _moveAction,
-        Binding = OpenXR.CreateXrPath(_instance, "/user/hand/left/input/thumbstick")
-      },
-      new XrActionSuggestedBinding
-      {
-        Action = _moveAction,
-        Binding = OpenXR.CreateXrPath(_instance, "/user/hand/right/input/thumbstick")
-      },
-      new XrActionSuggestedBinding
-      {
-        Action = _triggerAction,
-        Binding = OpenXR.CreateXrPath(_instance, "/user/hand/left/input/trigger/value")
-      },
-      new XrActionSuggestedBinding
-      {
-        Action = _triggerAction,
-        Binding = OpenXR.CreateXrPath(_instance, "/user/hand/right/input/trigger/value")
-      },
-      new XrActionSuggestedBinding
-      {
-        Action = _grabAction,
-        Binding = OpenXR.CreateXrPath(_instance, "/user/hand/left/input/squeeze/value")
-      },
-      new XrActionSuggestedBinding
-      {
-        Action = _grabAction,
-        Binding = OpenXR.CreateXrPath(_instance, "/user/hand/right/input/squeeze/value")
-      },
-      new XrActionSuggestedBinding
-      {
-        Action = _aAction,
-        Binding = OpenXR.CreateXrPath(_instance, "/user/hand/left/input/x/click")
-      },
-      new XrActionSuggestedBinding
-      {
-        Action = _aAction,
-        Binding = OpenXR.CreateXrPath(_instance, "/user/hand/right/input/a/click")
-      },
-      new XrActionSuggestedBinding
-      {
-        Action = _bAction,
-        Binding = OpenXR.CreateXrPath(_instance, "/user/hand/left/input/y/click")
-      },
-      new XrActionSuggestedBinding
-      {
-        Action = _bAction,
-        Binding = OpenXR.CreateXrPath(_instance, "/user/hand/right/input/b/click")
+        case "x/":
+        case "y/":
+          bindings.Add(new XrActionSuggestedBinding
+          {
+            Action = value, Binding = OpenXR.CreateXrPath(_instance, "/user/hand/left/input/" + key)
+          });
+          break;
+        case "a/":
+        case "b/":
+          bindings.Add(new XrActionSuggestedBinding
+          {
+            Action = value, Binding = OpenXR.CreateXrPath(_instance, "/user/hand/right/input/" + key)
+          });
+          break;
+        default:
+          bindings.Add(new XrActionSuggestedBinding
+          {
+            Action = value, Binding = OpenXR.CreateXrPath(_instance, "/user/hand/left/input/" + key)
+          });
+          bindings.Add(new XrActionSuggestedBinding
+          {
+            Action = value, Binding = OpenXR.CreateXrPath(_instance, "/user/hand/right/input/" + key)
+          });
+          break;
       }
-    ]);
+
+    OpenXR.SuggestBindings(_instance, "/interaction_profiles/oculus/touch_controller", bindings.ToArray());
 
     // Аттачим сет к сессии
     OpenXR.AttachActionSet(_session, ActionSet);
@@ -136,12 +90,19 @@ public class VrAction
     _controllerPath[0] = OpenXR.CreateXrPath(_instance, "/user/hand/left");
     _controllerPath[1] = OpenXR.CreateXrPath(_instance, "/user/hand/right");
 
+    _controllerSpacePath[0] = OpenXR.CreateXrPath(_instance, "/user/hand/left");
+    _controllerSpacePath[1] = OpenXR.CreateXrPath(_instance, "/user/hand/right");
+    _controllerSpacePath[2] = OpenXR.CreateXrPath(_instance, "/user/hand/left");
+    _controllerSpacePath[3] = OpenXR.CreateXrPath(_instance, "/user/hand/right");
+
     // Создаем спейс для контроллера
-    _controllerSpace[0] = OpenXR.CreateActionSpace(_session, _poseAction, _controllerPath[0]);
-    _controllerSpace[1] = OpenXR.CreateActionSpace(_session, _poseAction, _controllerPath[1]);
+    _controllerSpace[0] = OpenXR.CreateActionSpace(_session, _action["grip/pose"], _controllerSpacePath[0]);
+    _controllerSpace[1] = OpenXR.CreateActionSpace(_session, _action["grip/pose"], _controllerSpacePath[1]);
+    _controllerSpace[2] = OpenXR.CreateActionSpace(_session, _action["aim/pose"], _controllerSpacePath[2]);
+    _controllerSpace[3] = OpenXR.CreateActionSpace(_session, _action["aim/pose"], _controllerSpacePath[3]);
   }
 
-  public void Sync()
+  public void Sync(long predictedDisplayTime)
   {
     // Сначала синкаем экшены все
     var activeActionSet = new XrActiveActionSet
@@ -159,215 +120,87 @@ public class VrAction
     };
 
     OpenXR.Check(OpenXR.xrSyncActions(_session, ref actionsSyncInfo), "Failed to sync Actions.");
+
+
+    // Читаем триггер, грип, A, B кнопки
+    for (var i = 0; i < _controllerPath.Length; i++)
+    {
+      OpenXR.GetActionStateFloat(_session, _action["trigger/value"], _controllerPath[i],
+        ref VrInput.Headset.Controller[i].TriggerValue);
+      OpenXR.GetActionStateFloat(_session, _action["squeeze/value"], _controllerPath[i],
+        ref VrInput.Headset.Controller[i].GripValue);
+      OpenXR.GetActionStateBoolean(_session, _action["x/click"], _controllerPath[i],
+        ref VrInput.Headset.Controller[i].IsPressA);
+      OpenXR.GetActionStateBoolean(_session, _action["y/click"], _controllerPath[i],
+        ref VrInput.Headset.Controller[i].IsPressB);
+      OpenXR.GetActionStateBoolean(_session, _action["a/click"], _controllerPath[i],
+        ref VrInput.Headset.Controller[i].IsPressA);
+      OpenXR.GetActionStateBoolean(_session, _action["b/click"], _controllerPath[i],
+        ref VrInput.Headset.Controller[i].IsPressB);
+      OpenXR.GetActionStateVector2(_session, _action["thumbstick"], _controllerPath[i],
+        ref VrInput.Headset.Controller[i].ThumbstickDirection);
+    }
+
+    UpdateControllerPosition(predictedDisplayTime);
+
     handle.Free();
   }
 
-  public void UpdateControllerButtons()
+  private void UpdateControllerPosition(long predictedDisplayTime)
   {
-    // Считываем триггер
-    for (var i = 0; i < _controllerPath.Length; i++)
-    {
-      var getInfo = new XrActionStateGetInfo
+    var nn = new[] { "grip/pose", "aim/pose" };
+    var spaceId = -1;
+    foreach (var key in nn)
+      for (var i = 0; i < _controllerPath.Length; i++)
       {
-        Type = XrStructureType.XR_TYPE_ACTION_STATE_GET_INFO,
-        Action = _triggerAction,
-        SubactionPath = _controllerPath[i]
-      };
+        spaceId += 1;
 
-      var state = new XrActionStateFloat
-      {
-        Type = XrStructureType.XR_TYPE_ACTION_STATE_FLOAT,
-        Next = IntPtr.Zero
-      };
+        // Теперь получаем инфу
+        var actionStateInfo = new XrActionStateGetInfo
+        {
+          Type = XrStructureType.XR_TYPE_ACTION_STATE_GET_INFO,
+          Action = _action[key],
+          SubactionPath = _controllerSpacePath[spaceId]
+        };
 
-      OpenXR.Check(OpenXR.xrGetActionStateFloat(_session, ref getInfo, ref state), "Failed to get joystick state.");
+        var poseState = new XrActionStatePose { Type = XrStructureType.XR_TYPE_ACTION_STATE_POSE };
+        OpenXR.Check(OpenXR.xrGetActionStatePose(_session, ref actionStateInfo, ref poseState),
+          "Failed to get Pose State.");
 
-      if (state.IsActive == 1)
-        if (state.IsActive == 1)
-          switch (i)
+        // Типа получаем положение контроллеров
+        var viewInStage = new XrSpaceLocation
+        {
+          Type = XrStructureType.XR_TYPE_SPACE_LOCATION,
+          Pose = new XrPosef
           {
-            case 0:
-              VrInput.Headset.Left.Controller.Trigger = state.CurrentState;
+            Orientation = new XrQuaternionf { W = 1.0f },
+            Position = new XrVector3f()
+          }
+        };
+
+        OpenXR.xrLocateSpace(_controllerSpace[spaceId], _space, predictedDisplayTime, ref viewInStage);
+
+        if ((viewInStage.LocationFlags & OpenXR.XR_SPACE_LOCATION_POSITION_VALID_BIT) != 0 &&
+            (viewInStage.LocationFlags & OpenXR.XR_SPACE_LOCATION_ORIENTATION_VALID_BIT) != 0)
+        {
+          var pose = viewInStage.Pose;
+
+          // Обновляем здесь положение контроллеров
+          var mx = Matrix4x4.Identity;
+          mx = mx.Translate(pose.Position.X, pose.Position.Y, -pose.Position.Z);
+          mx = mx.Rotate(new Quaternion(pose.Orientation.X, pose.Orientation.Y, pose.Orientation.Z,
+            pose.Orientation.W));
+
+          switch (key)
+          {
+            case "grip/pose":
+              VrInput.Headset.Controller[i].GripTransform = mx;
               break;
-            case 1:
-              VrInput.Headset.Right.Controller.Trigger = state.CurrentState;
+            case "aim/pose":
+              VrInput.Headset.Controller[i].AimTransform = mx;
               break;
           }
-    }
-
-    // Считываем состояние grab
-    for (var i = 0; i < _controllerPath.Length; i++)
-    {
-      var getInfo = new XrActionStateGetInfo
-      {
-        Type = XrStructureType.XR_TYPE_ACTION_STATE_GET_INFO,
-        Action = _grabAction,
-        SubactionPath = _controllerPath[i]
-      };
-
-      var state = new XrActionStateFloat
-      {
-        Type = XrStructureType.XR_TYPE_ACTION_STATE_FLOAT,
-        Next = IntPtr.Zero
-      };
-
-      OpenXR.Check(OpenXR.xrGetActionStateFloat(_session, ref getInfo, ref state), "Failed to get joystick state.");
-
-      if (state.IsActive == 1)
-        switch (i)
-        {
-          case 0:
-            VrInput.Headset.Left.Controller.Grab = state.CurrentState;
-            break;
-          case 1:
-            VrInput.Headset.Right.Controller.Grab = state.CurrentState;
-            break;
-        }
-    }
-
-    // Кнопки А
-    for (var i = 0; i < _controllerPath.Length; i++)
-    {
-      // Считываем состояние джойстиков
-      var getInfo = new XrActionStateGetInfo
-      {
-        Type = XrStructureType.XR_TYPE_ACTION_STATE_GET_INFO,
-        Action = _aAction,
-        SubactionPath = _controllerPath[i]
-      };
-
-      var state = new XrActionStateBoolean
-      {
-        Type = XrStructureType.XR_TYPE_ACTION_STATE_BOOLEAN,
-        Next = IntPtr.Zero
-      };
-
-      OpenXR.Check(OpenXR.xrGetActionStateBoolean(_session, ref getInfo, ref state), "Failed to get joystick state.");
-
-      if (state.IsActive == 1)
-        switch (i)
-        {
-          case 0:
-            VrInput.Headset.Left.Controller.IsA = state.CurrentState == 1;
-            break;
-          case 1:
-            VrInput.Headset.Right.Controller.IsA = state.CurrentState == 1;
-            break;
-        }
-    }
-
-    // Кнопки B
-    for (var i = 0; i < _controllerPath.Length; i++)
-    {
-      // Считываем состояние кнопок
-      var getInfo = new XrActionStateGetInfo
-      {
-        Type = XrStructureType.XR_TYPE_ACTION_STATE_GET_INFO,
-        Action = _aAction,
-        SubactionPath = _controllerPath[i]
-      };
-      var state = new XrActionStateBoolean
-      {
-        Type = XrStructureType.XR_TYPE_ACTION_STATE_BOOLEAN,
-        Next = IntPtr.Zero
-      };
-
-      OpenXR.Check(OpenXR.xrGetActionStateBoolean(_session, ref getInfo, ref state), "Failed to get joystick state.");
-
-      if (state.IsActive == 1)
-        switch (i)
-        {
-          case 0:
-            VrInput.Headset.Left.Controller.IsB = state.CurrentState == 1;
-            break;
-          case 1:
-            VrInput.Headset.Right.Controller.IsB = state.CurrentState == 1;
-            break;
-        }
-    }
-  }
-
-  public void UpdateControllerJoystick()
-  {
-    for (var i = 0; i < _controllerPath.Length; i++)
-    {
-      // Считываем состояние джойстиков
-      var getInfo = new XrActionStateGetInfo
-      {
-        Type = XrStructureType.XR_TYPE_ACTION_STATE_GET_INFO,
-        Action = _moveAction,
-        SubactionPath = _controllerPath[i]
-      };
-
-      var state = new XrActionStateVector2f
-      {
-        Type = XrStructureType.XR_TYPE_ACTION_STATE_VECTOR2F,
-        Next = IntPtr.Zero
-      };
-
-      OpenXR.Check(OpenXR.xrGetActionStateVector2f(_session, ref getInfo, ref state), "Failed to get joystick state.");
-
-      if (state.IsActive == 1)
-      {
-        var x = state.CurrentState.X;
-        var y = state.CurrentState.Y;
-
-        // Обрабатывайте значения X и Y по вашему усмотрению
-        // Console.WriteLine($"Joystick position {i}: X={x}, Y={y}");
-        VrInput.Headset.Left.Controller.JoystickDirection = new Vector2(x, y);
-      }
-    }
-  }
-
-  public void UpdateControllerPosition(long predictedDisplayTime)
-  {
-    for (var i = 0; i < _controllerPath.Length; i++)
-    {
-      // Теперь получаем инфу
-      var actionStateGetInfo = new XrActionStateGetInfo
-      {
-        Type = XrStructureType.XR_TYPE_ACTION_STATE_GET_INFO,
-        Action = _poseAction,
-        SubactionPath = _controllerPath[i]
-      };
-
-      var handPoseState = new XrActionStatePose { Type = XrStructureType.XR_TYPE_ACTION_STATE_POSE };
-      OpenXR.Check(OpenXR.xrGetActionStatePose(_session, ref actionStateGetInfo, ref handPoseState),
-        "Failed to get Pose State.");
-
-      // Типа получаем положение контроллеров
-      var viewInStage = new XrSpaceLocation
-      {
-        Type = XrStructureType.XR_TYPE_SPACE_LOCATION,
-        LocationFlags = 0,
-        Pose = new XrPosef
-        {
-          Orientation = new XrQuaternionf { X = 0, Y = 0, Z = 0, W = 1.0f },
-          Position = new XrVector3f { X = 0, Y = 0, Z = 0 }
-        }
-      };
-      OpenXR.xrLocateSpace(_controllerSpace[i], _space, predictedDisplayTime, ref viewInStage);
-
-      if ((viewInStage.LocationFlags & OpenXR.XR_SPACE_LOCATION_POSITION_VALID_BIT) != 0 &&
-          (viewInStage.LocationFlags & OpenXR.XR_SPACE_LOCATION_ORIENTATION_VALID_BIT) != 0)
-      {
-        var pose = viewInStage.Pose;
-
-        // Обновляем здесь положение контроллеров
-        var mx = Matrix4x4.Identity;
-        mx = mx.Translate(pose.Position.X, pose.Position.Y, -pose.Position.Z);
-        mx = mx.Rotate(new Quaternion(pose.Orientation.X, pose.Orientation.Y, pose.Orientation.Z, pose.Orientation.W));
-
-        switch (i)
-        {
-          case 0:
-            VrInput.Headset.Left.Controller.Transform = mx;
-            break;
-          case 1:
-            VrInput.Headset.Right.Controller.Transform = mx;
-            break;
         }
       }
-    }
   }
 }
