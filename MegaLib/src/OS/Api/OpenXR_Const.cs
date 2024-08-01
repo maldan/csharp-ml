@@ -1483,6 +1483,18 @@ public struct XrVector3f
 }
 
 [StructLayout(LayoutKind.Sequential)]
+public struct XrVector2f
+{
+  public float X;
+  public float Y;
+
+  public override string ToString()
+  {
+    return $"Vector2f({X}, {Y})";
+  }
+}
+
+[StructLayout(LayoutKind.Sequential)]
 public struct XrQuaternionf
 {
   public float X;
@@ -1550,7 +1562,12 @@ public struct XrReferenceSpaceCreateInfo
 
 public enum XrActionType
 {
-  XR_ACTION_TYPE_POSE_INPUT = 4
+  XR_ACTION_TYPE_BOOLEAN_INPUT = 1,
+  XR_ACTION_TYPE_FLOAT_INPUT = 2,
+  XR_ACTION_TYPE_VECTOR2F_INPUT = 3,
+  XR_ACTION_TYPE_POSE_INPUT = 4,
+  XR_ACTION_TYPE_VIBRATION_OUTPUT = 100,
+  XR_ACTION_TYPE_MAX_ENUM = 0x7FFFFFFF
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -1734,6 +1751,17 @@ public struct XrActionStateBoolean
   public XrStructureType Type;
   public IntPtr Next;
   public XrBool32 CurrentState;
+  public XrBool32 ChangedSinceLastSync;
+  public XrTime LastChangeTime;
+  public XrBool32 IsActive;
+};
+
+[StructLayout(LayoutKind.Sequential)]
+public struct XrActionStateVector2f
+{
+  public XrStructureType Type;
+  public IntPtr Next;
+  public XrVector2f CurrentState;
   public XrBool32 ChangedSinceLastSync;
   public XrTime LastChangeTime;
   public XrBool32 IsActive;

@@ -90,8 +90,11 @@ public static partial class OpenXR
   public static XrAction CreateAction(XrInstance instance, XrActionSet actionSet, XrActionType actionType, string name,
     string[] paths)
   {
-    var actionCI = new XrActionCreateInfo() { Type = XrStructureType.XR_TYPE_ACTION_CREATE_INFO };
-    actionCI.ActionType = actionType;
+    var actionCI = new XrActionCreateInfo
+    {
+      Type = XrStructureType.XR_TYPE_ACTION_CREATE_INFO,
+      ActionType = actionType
+    };
 
     var xrPaths = new XrPath[paths.Length];
     for (var i = 0; i < paths.Length; i++) xrPaths[i] = CreateXrPath(instance, paths[i]);
@@ -102,8 +105,6 @@ public static partial class OpenXR
 
     actionCI.ActionName = name;
     actionCI.LocalizedActionName = name;
-    //actionCI.SetActionName(name);
-    //actionCI.SetLocalizedActionName(name);
 
     XrAction xrAction = 0;
     Check(xrCreateAction(actionSet, ref actionCI, ref xrAction), "Failed to create Action.");

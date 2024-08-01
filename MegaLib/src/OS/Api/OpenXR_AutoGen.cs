@@ -140,5 +140,14 @@ public static extern XrResult xrAttachSessionActionSets(XrSession session, ref X
 [DllImport("D:/csharp_lib/MegaLib/MegaLib/lib/openxr_loader.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
 public static extern XrResult xrSuggestInteractionProfileBindings(XrInstance instance, ref XrInteractionProfileSuggestedBinding suggestedBindings);
 
+[DllImport("D:/csharp_lib/MegaLib/MegaLib/lib/openxr_loader.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
+public static extern XrResult xrGetActionStateVector2f(XrSession session, ref XrActionStateGetInfo getInfo, ref XrActionStateVector2f state);
+
+[DllImport("D:/csharp_lib/MegaLib/MegaLib/lib/openxr_loader.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
+public static extern XrResult xrGetActionStateFloat(XrSession session, ref XrActionStateGetInfo getInfo, ref XrActionStateFloat state);
+
+[DllImport("D:/csharp_lib/MegaLib/MegaLib/lib/openxr_loader.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
+public static extern XrResult xrGetActionStateBoolean(XrSession session, ref XrActionStateGetInfo getInfo, ref XrActionStateBoolean state);
+
 }
 }

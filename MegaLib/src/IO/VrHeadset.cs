@@ -20,6 +20,11 @@ public class VrController
 {
   public Matrix4x4 Transform = Matrix4x4.Identity;
   private VrHeadset _headset;
+  public Vector2 JoystickDirection;
+  public float Trigger;
+  public float Grab;
+  public bool IsA;
+  public bool IsB;
 
   public VrController(VrHeadset headset)
   {

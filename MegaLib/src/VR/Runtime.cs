@@ -34,7 +34,7 @@ public class VrRuntime
   public XrPath LeftControllerPath;
   public XrActionSet ActionSet;
 
-  private bool Gas;
+  private VrAction VrAction;
 
   public void InitSession(IntPtr dc, IntPtr glrc)
   {
@@ -143,35 +143,17 @@ public class VrRuntime
 
     // throw new Exception("X");
 
+    // Устанавливаем все переменные
     Instance = xrInstance;
     LocalSpace = OpenXR.CreateReferenceSpace(sessionId, XrReferenceSpaceType.XR_REFERENCE_SPACE_TYPE_LOCAL);
     ViewSpace = OpenXR.CreateReferenceSpace(sessionId, XrReferenceSpaceType.XR_REFERENCE_SPACE_TYPE_VIEW);
     StageSpace = OpenXR.CreateReferenceSpace(sessionId, XrReferenceSpaceType.XR_REFERENCE_SPACE_TYPE_STAGE);
-
-    //LeftControllerSpace = OpenXR.CreateReferenceSpace(sessionId, XrReferenceSpaceType.XR_REFERENCE_SPACE_TYPE_LOCAL);
-    //RightControllerSpace = OpenXR.CreateReferenceSpace(sessionId, XrReferenceSpaceType.XR_REFERENCE_SPACE_TYPE_LOCAL);
-
     Session = sessionId;
     ColorSwapchainList = colorSwapchainList;
     DepthSwapchainList = depthSwapchainList;
 
-    // Теперь настраиваем управление
-    ActionSet = OpenXR.CreateActionSet(xrInstance, "vr-action-set");
-    PoseAction = OpenXR.CreateAction(xrInstance, ActionSet, XrActionType.XR_ACTION_TYPE_POSE_INPUT,
-      "hand-position",
-      ["/user/hand/left", "/user/hand/right"]);
-    LeftControllerPath = OpenXR.CreateXrPath(xrInstance, "/user/hand/left");
-
-    OpenXR.SuggestBindings(Instance, "/interaction_profiles/khr/simple_controller", [
-      new XrActionSuggestedBinding
-      {
-        Action = PoseAction,
-        Binding = OpenXR.CreateXrPath(Instance, "/user/hand/left/input/grip/pose")
-      }
-    ]);
-    OpenXR.AttachActionSet(Session, ActionSet);
-
-    LeftControllerSpace = OpenXR.CreateActionSpace(sessionId, PoseAction, LeftControllerPath);
+    VrAction = new VrAction(Instance, Session, LocalSpace);
+    VrAction.Init();
   }
 
   public XrPosef GetHeadsetPose(long predictedDisplayTime)
@@ -342,35 +324,27 @@ public class VrRuntime
                         SessionState == XrSessionState.XR_SESSION_STATE_VISIBLE ||
                         SessionState == XrSessionState.XR_SESSION_STATE_FOCUSED;
 
-    // if (!sessionActive) return;
-
     var frameState = new XrFrameState { Type = XrStructureType.XR_TYPE_FRAME_STATE };
     var rli = new OpenXR.RenderLayerInfo();
     rli.Init();
     rli.ColorSwapchainList = ColorSwapchainList;
     rli.DepthSwapchainList = DepthSwapchainList;
 
-    // OpenXR.xrSyncActions(Session, );
-
-    // Wait frame
+    // Ждем фрейм
     var frameWaitInfo = new XrFrameWaitInfo
     {
       Type = XrStructureType.XR_TYPE_FRAME_WAIT_INFO
     };
     OpenXR.xrWaitFrame(Session, ref frameWaitInfo, ref frameState);
 
-    //var posex = GetHeadsetPose(frameState.PredictedDisplayTime);
-    //Console.WriteLine(posex);
-
-    if (SessionState == XrSessionState.XR_SESSION_STATE_FOCUSED && Gas)
+    // Приложение в состоянии фокуса. Значит может считывать экшены
+    if (SessionState == XrSessionState.XR_SESSION_STATE_FOCUSED)
     {
-      var posex2 = GetControllerPose(frameState.PredictedDisplayTime);
-      // Console.WriteLine(posex2);
-      var mx = Matrix4x4.Identity;
-      mx = mx.Translate(posex2.Position.X, posex2.Position.Y, -posex2.Position.Z);
-      mx = mx.Rotate(new Quaternion(posex2.Orientation.X, posex2.Orientation.Y, posex2.Orientation.Z,
-        posex2.Orientation.W));
-      VrInput.Headset.Left.Controller.Transform = mx;
+      // Обновляем экшены
+      VrAction.Sync();
+      VrAction.UpdateControllerJoystick();
+      VrAction.UpdateControllerButtons();
+      VrAction.UpdateControllerPosition(frameState.PredictedDisplayTime);
     }
 
     // Begin
@@ -398,7 +372,5 @@ public class VrRuntime
 
     // Console.WriteLine($"End frame. Layers len {rli.Layers.Length}");
     OpenXR.xrEndFrame(Session, ref frameEndInfo);
-
-    Gas = true;
   }
 }
