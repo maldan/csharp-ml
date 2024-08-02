@@ -331,6 +331,24 @@ public struct Quaternion
     };
   }
 
+  public static Quaternion operator *(Quaternion quaternion, Matrix4x4 matrix)
+  {
+    // Извлекаем матрицу вращения из Matrix4x4
+    float m00 = matrix.M00, m01 = matrix.M01, m02 = matrix.M02;
+    float m10 = matrix.M10, m11 = matrix.M11, m12 = matrix.M12;
+    float m20 = matrix.M20, m21 = matrix.M21, m22 = matrix.M22;
+
+    // Вычисляем новый кватернион, умножая на матрицу
+    var result = new Quaternion(
+      quaternion.W * m00 + quaternion.X * m01 + quaternion.Y * m02,
+      quaternion.W * m10 + quaternion.X * m11 + quaternion.Y * m12,
+      quaternion.W * m20 + quaternion.X * m21 + quaternion.Y * m22,
+      quaternion.W * (1.0f - m00 - m11 - m22) // предположительно, вычисление W компоненты
+    );
+
+    return result;
+  }
+
   public static Quaternion operator *(Quaternion value1, float value2)
   {
     return new Quaternion(

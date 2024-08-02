@@ -59,10 +59,12 @@ public class OpenGL_Renderer : IRenderer
     for (var i = 0; i < updateIteration; i++) _scene.Update(delta);
     if (_vrRuntime != null)
     {
+      _scene.IsVrMode = true;
       _vrRuntime.Tick();
     }
     else
     {
+      _scene.IsVrMode = false;
       Clear();
       Render();
     }
@@ -76,22 +78,35 @@ public class OpenGL_Renderer : IRenderer
     {
       Clear();
 
-      _scene.Camera.IsZInverted = true;
-      _scene.Camera.Position = new Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);
-      _scene.Camera.Position += new Vector3(VrInput.Headset.PositionOffset.X, VrInput.Headset.PositionOffset.Y,
-        -VrInput.Headset.PositionOffset.Z);
+      // _scene.Camera.IsZInverted = true;
+      _scene.Camera.Position = new Vector3(pose.Position.X, pose.Position.Y, -pose.Position.Z);
+
+      /*_scene.Camera.Position += new Vector3(VrInput.Headset.PositionOffset.X, VrInput.Headset.PositionOffset.Y,
+        -VrInput.Headset.PositionOffset.Z);*/
 
       _scene.Camera.Rotation = new Quaternion(
         pose.Orientation.X, pose.Orientation.Y, pose.Orientation.Z, pose.Orientation.W
       ).Inverted;
+
+      /*var mx = Matrix4x4.Identity;
+      mx = mx.Rotate(new Quaternion(
+        pose.Orientation.X, pose.Orientation.Y, pose.Orientation.Z, pose.Orientation.W
+      ).Inverted);
+      mx = mx.Translate(pose.Position.X, pose.Position.Y, -pose.Position.Z);*/
+
       ((Camera_Perspective)_scene.Camera).XrFOV = new Vector4(
         fov.AngleLeft, fov.AngleUp, fov.AngleRight, fov.AngleDown
       );
+
+      _scene.Camera.ViewMatrix = VrInput.Headset.WorldTransform * _scene.Camera.ViewMatrix;
+      //_scene.Camera.Position += VrInput.Headset.WorldTransform.Position;
+      //_scene.Camera.Rotation *= VrInput.Headset.WorldTransform.Rotation;
 
       SetViewport(0, 0, (ushort)_vrRuntime.ViewWidth, (ushort)_vrRuntime.ViewHeight);
 
       Render();
     };
+
     return _vrRuntime;
   }
 

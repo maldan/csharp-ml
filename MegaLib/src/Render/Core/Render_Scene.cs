@@ -20,6 +20,7 @@ public class Render_Scene
   private Mutex _mutex = new();
   public bool UseSSAO;
   public bool UsePostprocess;
+  public bool IsVrMode { get; set; }
 
   public Layer_PostProcess PostProcessLayer = new();
 

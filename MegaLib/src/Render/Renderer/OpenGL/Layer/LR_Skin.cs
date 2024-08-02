@@ -374,7 +374,7 @@ public class LR_Skin : LR_Base
                 mat.normal, 
                 -light.vector,
                 viewDirection, 
-                mat.albedo, lightColor, vec3(1.0, 0.2, 0.05) * 0.02, mat.roughness, 0.0001);
+                mat.albedo, lightColor, vec3(1.0, 0.2, 0.05) * 0.01, mat.roughness, 0.0001);
    
             return finalColor + scatter;
         }

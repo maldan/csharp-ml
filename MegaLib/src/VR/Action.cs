@@ -194,10 +194,10 @@ public class VrAction
           switch (key)
           {
             case "grip/pose":
-              VrInput.Headset.Controller[i].GripTransform = mx;
+              VrInput.Headset.Controller[i].GripLocalTransform = mx;
               break;
             case "aim/pose":
-              VrInput.Headset.Controller[i].AimTransform = mx;
+              VrInput.Headset.Controller[i].AimLocalTransform = mx;
               break;
           }
         }

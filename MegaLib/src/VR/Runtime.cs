@@ -168,73 +168,13 @@ public class VrRuntime
         Position = new XrVector3f() { X = 0, Y = 0, Z = 0 }
       }
     };
-    OpenXR.xrLocateSpace(ViewSpace, StageSpace, predictedDisplayTime, ref viewInStage);
+    OpenXR.xrLocateSpace(ViewSpace, LocalSpace, predictedDisplayTime, ref viewInStage);
 
     if ((viewInStage.LocationFlags & OpenXR.XR_SPACE_LOCATION_POSITION_VALID_BIT) != 0 &&
         (viewInStage.LocationFlags & OpenXR.XR_SPACE_LOCATION_ORIENTATION_VALID_BIT) != 0)
       return viewInStage.Pose;
 
     // Возвращение стандартной позы при ошибке
-    var invalidPose = new XrPosef() { };
-    invalidPose.Orientation.W = 1.0f;
-    return invalidPose;
-  }
-
-  public XrPosef GetControllerPose(long predictedDisplayTime)
-  {
-    // Сначала синкаем экшены все
-    var activeActionSet = new XrActiveActionSet
-    {
-      ActionSet = ActionSet,
-      SubactionPath = 0
-    };
-    var handle = GCHandle.Alloc(activeActionSet, GCHandleType.Pinned);
-
-    var actionsSyncInfo = new XrActionsSyncInfo
-    {
-      Type = XrStructureType.XR_TYPE_ACTIONS_SYNC_INFO,
-      CountActiveActionSets = 1,
-      ActiveActionSets = handle.AddrOfPinnedObject()
-    };
-
-    OpenXR.Check(OpenXR.xrSyncActions(Session, ref actionsSyncInfo), "Failed to sync Actions.");
-
-    // Теперь получаем инфу
-    var actionStateGetInfo = new XrActionStateGetInfo
-    {
-      Type = XrStructureType.XR_TYPE_ACTION_STATE_GET_INFO,
-      Action = PoseAction,
-      SubactionPath = LeftControllerPath
-    };
-
-    var handPoseState = new XrActionStatePose { Type = XrStructureType.XR_TYPE_ACTION_STATE_POSE };
-    OpenXR.Check(OpenXR.xrGetActionStatePose(Session, ref actionStateGetInfo, ref handPoseState),
-      "Failed to get Pose State.");
-
-    // Console.WriteLine(handPoseState.IsActive);
-
-    var viewInStage = new XrSpaceLocation()
-    {
-      Type = XrStructureType.XR_TYPE_SPACE_LOCATION,
-      LocationFlags = 0,
-      Pose = new XrPosef()
-      {
-        Orientation = new XrQuaternionf() { X = 0, Y = 0, Z = 0, W = 1.0f },
-        Position = new XrVector3f() { X = 0, Y = 0, Z = 0 }
-      }
-    };
-    // Console.WriteLine($"{LeftControllerSpace} {LocalSpace} {predictedDisplayTime}");
-    OpenXR.xrLocateSpace(LeftControllerSpace, LocalSpace, predictedDisplayTime, ref viewInStage);
-
-    if ((viewInStage.LocationFlags & OpenXR.XR_SPACE_LOCATION_POSITION_VALID_BIT) != 0 &&
-        (viewInStage.LocationFlags & OpenXR.XR_SPACE_LOCATION_ORIENTATION_VALID_BIT) != 0)
-    {
-      handle.Free();
-      return viewInStage.Pose;
-    }
-
-    // Возвращение стандартной позы при ошибке
-    handle.Free();
     var invalidPose = new XrPosef() { };
     invalidPose.Orientation.W = 1.0f;
     return invalidPose;
@@ -339,8 +279,18 @@ public class VrRuntime
 
     // Приложение в состоянии фокуса. Значит может считывать экшены
     if (SessionState == XrSessionState.XR_SESSION_STATE_FOCUSED)
+    {
       // Обновляем экшены
       VrAction.Sync(frameState.PredictedDisplayTime);
+
+      // Считываем позицию шлема и ориентацию
+      var headPose = GetHeadsetPose(frameState.PredictedDisplayTime);
+      var mx = Matrix4x4.Identity;
+      mx = mx.Translate(headPose.Position.X, headPose.Position.Y, -headPose.Position.Z);
+      mx = mx.Rotate(new Quaternion(headPose.Orientation.X, headPose.Orientation.Y, headPose.Orientation.Z,
+        headPose.Orientation.W));
+      VrInput.Headset.LocalTransform = mx;
+    }
 
     // Begin
     var frameBeginInfo = new XrFrameBeginInfo { Type = XrStructureType.XR_TYPE_FRAME_BEGIN_INFO };
