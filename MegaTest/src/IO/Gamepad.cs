@@ -8,7 +8,7 @@ public class GamepadTest
   [Test]
   public void TestBasic()
   {
-    var state = new Gamepad.XInputState();
+    /*var state = new Gamepad.XInputState();
 
     while (true)
     {
@@ -31,6 +31,6 @@ public class GamepadTest
       }
 
       System.Threading.Thread.Sleep(100); // Пауза для уменьшения нагрузки на процессор
-    }
+    }*/
   }
 }

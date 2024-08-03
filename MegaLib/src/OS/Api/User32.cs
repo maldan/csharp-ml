@@ -89,6 +89,18 @@ public class User32
   [DllImport("user32.dll")]
   public static extern IntPtr SetCursor(IntPtr hCursor);
 
+  // Импорт функции GetCursorPos из user32.dll
+  [DllImport("user32.dll")]
+  public static extern bool GetCursorPos(out POINT lpPoint);
+
+  // Импорт функции ScreenToClient из user32.dll
+  [DllImport("user32.dll")]
+  public static extern bool ScreenToClient(IntPtr hWnd, ref POINT lpPoint);
+
+  // Импорт функции GetClientRect из user32.dll
+  [DllImport("user32.dll")]
+  public static extern bool GetClientRect(IntPtr hWnd, out RECT lpRect);
+
   public static int GetScreenWidth()
   {
     return GetSystemMetrics(0);

@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
 
 namespace MegaLib.IO;
 
-public class Gamepad
+public class GamepadOld
 {
   [StructLayout(LayoutKind.Sequential)]
   public struct XInputState
@@ -188,5 +190,110 @@ public class Gamepad
 
       System.Threading.Thread.Sleep(100); // Пауза для уменьшения нагрузки на процессор
     }
+  }
+}
+
+public class Gamepad
+{
+  private const int FILE_SHARE_READ = 0x00000001;
+  private const int FILE_SHARE_WRITE = 0x00000002;
+  private const int OPEN_EXISTING = 3;
+
+  private const uint GENERIC_READ = 0x80000000;
+  private const uint GENERIC_WRITE = 0x40000000;
+
+  private const string DevicePath =
+    @"\\?\hid#vid_054c&pid_0ce6#8&12345678&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}";
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct HIDP_CAPS
+  {
+    public ushort Usage;
+    public ushort UsagePage;
+    public ushort InputReportByteLength;
+    public ushort OutputReportByteLength;
+    public ushort FeatureReportByteLength;
+
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 17)]
+    public ushort[] Reserved;
+
+    public ushort NumberLinkCollectionNodes;
+    public ushort NumberInputButtonCaps;
+    public ushort NumberInputValueCaps;
+    public ushort NumberInputDataIndices;
+    public ushort NumberOutputButtonCaps;
+    public ushort NumberOutputValueCaps;
+    public ushort NumberOutputDataIndices;
+    public ushort NumberFeatureButtonCaps;
+    public ushort NumberFeatureValueCaps;
+    public ushort NumberFeatureDataIndices;
+  }
+
+  [DllImport("hid.dll", SetLastError = true)]
+  private static extern bool HidD_GetPreparsedData(SafeFileHandle hObject, out IntPtr PreparsedData);
+
+  [DllImport("hid.dll", SetLastError = true)]
+  private static extern int HidP_GetCaps(IntPtr PreparsedData, out HIDP_CAPS Capabilities);
+
+  [DllImport("hid.dll", SetLastError = true)]
+  private static extern bool HidD_FreePreparsedData(IntPtr PreparsedData);
+
+  [DllImport("kernel32.dll", SetLastError = true)]
+  private static extern SafeFileHandle CreateFile(
+    string lpFileName,
+    uint dwDesiredAccess,
+    uint dwShareMode,
+    IntPtr lpSecurityAttributes,
+    uint dwCreationDisposition,
+    uint dwFlagsAndAttributes,
+    IntPtr hTemplateFile);
+
+  public void Gas()
+  {
+    // Открытие устройства
+    var deviceHandle = CreateFile(DevicePath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+      IntPtr.Zero, OPEN_EXISTING, 0, IntPtr.Zero);
+    if (deviceHandle.IsInvalid)
+    {
+      Console.WriteLine("Не удалось открыть устройство.");
+      return;
+    }
+
+    // Получение данных устройства
+    if (HidD_GetPreparsedData(deviceHandle, out var preparsedData))
+    {
+      if (HidP_GetCaps(preparsedData, out var capabilities) == 0)
+      {
+        Console.WriteLine("Не удалось получить возможности устройства.");
+        HidD_FreePreparsedData(preparsedData);
+        deviceHandle.Close();
+        return;
+      }
+
+      var inputReport = new byte[capabilities.InputReportByteLength];
+      var fs = new FileStream(deviceHandle, FileAccess.ReadWrite, inputReport.Length, false);
+      fs.Read(inputReport, 0, inputReport.Length);
+
+      // Чтение данных контроллера
+      var buttonData = inputReport[5]; // Пример, уточните по документации
+      var leftStickX = BitConverter.ToInt16(inputReport, 7);
+      var leftStickY = BitConverter.ToInt16(inputReport, 9);
+      var rightStickX = BitConverter.ToInt16(inputReport, 11);
+      var rightStickY = BitConverter.ToInt16(inputReport, 13);
+
+      Console.WriteLine($"Buttons: {buttonData}");
+      Console.WriteLine($"Left Stick X: {leftStickX}");
+      Console.WriteLine($"Left Stick Y: {leftStickY}");
+      Console.WriteLine($"Right Stick X: {rightStickX}");
+      Console.WriteLine($"Right Stick Y: {rightStickY}");
+
+      HidD_FreePreparsedData(preparsedData);
+    }
+    else
+    {
+      Console.WriteLine("Не удалось получить данные устройства.");
+    }
+
+    deviceHandle.Close();
   }
 }

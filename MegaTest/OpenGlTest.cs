@@ -51,7 +51,7 @@ public class OpenGlTest
     OpenGL32.PrintGlError("OpenGL32.GL_DEBUG_OUTPUT");
 
     var scene = new Render_Scene();
-    scene.AddLayer("main", new RL_Sprite());
+    scene.AddLayer("main", new Layer_Sprite());
 
     for (var i = 0; i < 10; i++)
     {

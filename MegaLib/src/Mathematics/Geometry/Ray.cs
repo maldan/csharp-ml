@@ -1,21 +1,25 @@
 using MegaLib.Mathematics.LinearAlgebra;
 
-namespace MegaLib.Mathematics.Geometry
+namespace MegaLib.Mathematics.Geometry;
+
+public struct Ray
 {
-  public struct Ray
+  public Vector3 Position;
+  public Vector3 Direction;
+  public float Length;
+
+  public Ray(Vector3 from, Vector3 to)
   {
-    public Vector3 Position;
-    public Vector3 Direction;
-    public float Length;
+    Position = from;
+    Direction = (to - from).Normalized;
+    Length = Vector3.Distance(from, to);
+  }
 
-    public Ray(Vector3 from, Vector3 to)
-    {
-      Position = from;
-      Direction = (to - from).Normalized;
-      Length = Vector3.Distance(from, to);
-    }
+  public Vector3 Start => Position;
+  public Vector3 End => Position + Direction * Length;
 
-    public Vector3 Start => Position;
-    public Vector3 End => Position + Direction * Length;
+  public override string ToString()
+  {
+    return $"Ray(P: {Position}, D: {Direction}, L: {Length})";
   }
 }

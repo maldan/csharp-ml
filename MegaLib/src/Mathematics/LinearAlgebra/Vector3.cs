@@ -123,6 +123,16 @@ public struct Vector3
     };
   }
 
+  public static Vector3 operator *(float s, Vector3 a)
+  {
+    return new Vector3
+    {
+      X = a.X * s,
+      Y = a.Y * s,
+      Z = a.Z * s
+    };
+  }
+
   public static Vector3 operator /(Vector3 a, float s)
   {
     return new Vector3
