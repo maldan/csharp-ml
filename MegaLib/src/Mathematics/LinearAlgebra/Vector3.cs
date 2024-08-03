@@ -101,6 +101,16 @@ public struct Vector3
     };
   }
 
+  public static Vector3 operator +(Vector3 a, Vector2 b)
+  {
+    return new Vector3
+    {
+      X = a.X + b.X,
+      Y = a.Y + b.Y,
+      Z = a.Z
+    };
+  }
+
   // Sub
   public static Vector3 operator -(Vector3 a, Vector3 b)
   {
@@ -201,6 +211,11 @@ public struct Vector3
   public Vector4 AddW(float w)
   {
     return new Vector4(X, Y, Z, w);
+  }
+
+  public Vector2 DropZ()
+  {
+    return new Vector2(X, Y);
   }
 
   public override string ToString()

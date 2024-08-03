@@ -34,6 +34,15 @@ public struct Vector2
     };
   }
 
+  public static Vector2 operator *(Vector2 a, float s)
+  {
+    return new Vector2
+    {
+      X = a.X * s,
+      Y = a.Y * s
+    };
+  }
+
   public static Vector2 operator /(Vector2 a, Vector2 b)
   {
     return new Vector2

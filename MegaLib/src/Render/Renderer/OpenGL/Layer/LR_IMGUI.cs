@@ -13,6 +13,7 @@ public class LR_IMGUI : LR_Base
   private ListGPU<Vector3> _vertices;
   private ListGPU<uint> _indices;
   private ListGPU<Vector4> _colors;
+  private ListGPU<Vector2> _uv;
   private uint _vaoId;
   private Matrix4x4 _mx = Matrix4x4.Identity;
 
@@ -32,8 +33,8 @@ public class LR_IMGUI : LR_Base
         precision highp sampler2D;
 
         layout (location = 0) in vec3 aPosition;
-        layout (location = 1) in vec4 aColor;
-        layout (location = 2) in vec2 aUV;
+        layout (location = 1) in vec2 aUV;
+        layout (location = 2) in vec4 aColor;
         
         uniform mat4 uProjectionMatrix;
         uniform mat4 uViewMatrix;
@@ -68,7 +69,8 @@ public class LR_IMGUI : LR_Base
         
         out vec4 color;
         
-        uniform sampler2D uTexture;
+        uniform sampler2D uFontTexture;
+        uniform vec3 uMode;
         
         const float PI = 3.141592653589793;
         
@@ -103,9 +105,13 @@ public class LR_IMGUI : LR_Base
         
         void main()
         {
-            //vec4 texelColor = texture(uTexture, vo_UV) * vo_Color;
-            //if (texelColor.a <= 0.01) discard;
-            color = vo_Color;
+            if (vo_UV.x < 0.0) {
+                color = vo_Color;
+            } else {
+                vec4 texelColor = texture(uFontTexture, vo_UV) * vo_Color;
+                if (texelColor.a <= 0.01) discard;
+                color = texelColor;
+            }
         }";
 
     #endregion
@@ -117,7 +123,9 @@ public class LR_IMGUI : LR_Base
     _vertices = [];
     _colors = [];
     _indices = [];
+    _uv = [];
     Context.MapBuffer(_vertices);
+    Context.MapBuffer(_uv);
     Context.MapBuffer(_colors);
     Context.MapBuffer(_indices, true);
 
@@ -129,10 +137,12 @@ public class LR_IMGUI : LR_Base
   {
     var layer = (Layer_IMGUI)Layer;
     _vertices.Clear();
+    _uv.Clear();
     _colors.Clear();
     _indices.Clear();
-    var (v, c, i) = layer.Build();
+    var (v, u, c, i) = layer.Build();
     _vertices.AddRange(v);
+    _uv.AddRange(u);
     _colors.AddRange(c);
     _indices.AddRange(i);
 
@@ -155,8 +165,12 @@ public class LR_IMGUI : LR_Base
 
     Shader.SetUniform("uModelMatrix", _mx);
 
+    // Маппим текстуру шрифтов
+    Context.MapTexture(layer.FontTexture);
+
     // Загружаем на гпу
     _vertices.Sync();
+    _uv.Sync();
     _colors.Sync();
     _indices.Sync();
 
@@ -165,7 +179,11 @@ public class LR_IMGUI : LR_Base
 
     // Активируем атрибуты
     Shader.EnableAttribute(_vertices, "aPosition");
+    Shader.EnableAttribute(_uv, "aUV");
     Shader.EnableAttribute(_colors, "aColor");
+
+    // Texture
+    Shader.ActivateTexture(layer.FontTexture, "uFontTexture", 0);
 
     // Биндим индексы
     OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(_indices));

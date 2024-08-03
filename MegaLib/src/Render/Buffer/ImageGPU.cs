@@ -39,6 +39,8 @@ public class ImageGPU<T>
 
   private T[] _pixelData;
 
+  public IntPtr DataPtr => Marshal.UnsafeAddrOfPinnedArrayElement(_pixelData, 0);
+
   public event EventHandler<ulong> OnDestroy;
   public Action<T[]> OnSync;
 
