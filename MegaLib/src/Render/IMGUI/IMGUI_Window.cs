@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using MegaLib.IO;
 using MegaLib.Mathematics.Geometry;
@@ -14,6 +15,10 @@ public class IMGUI_Window : IMGUI_Element
   private Vector2 _startDrag;
   private Vector3 _startPos;
 
+  public bool IsVerticalContent = true;
+  public float Padding = 5;
+  public float HeaderHeight = 20;
+
   public override uint Build(uint indexOffset = 0)
   {
     Clear();
@@ -24,63 +29,89 @@ public class IMGUI_Window : IMGUI_Element
       Position = _startPos + v;
     }
 
-    InitCollision(Rectangle.FromLeftTopWidthHeight(Position.X, Position.Y, Size.X, 15));
-    var isHit = CheckCollision();
-
-    // Header
-    indexOffset = DoRectangle(new Vector3(Position.X, Position.Y, 0), new Vector2(Size.X, 15),
-      new Vector4(0.3f, 0.3f, 0.3f, 1),
-      indexOffset);
-
-    if (isHit)
+    if (HeaderHeight > 0)
     {
-      if (Mouse.IsKeyDown(MouseKey.Left))
-        if (!_isClick)
-        {
-          _isClick = true;
-          _isDrag = true;
-          _startDrag = Mouse.ClientClamped;
-          _startPos = Position;
-        }
+      var headerColor = new Vector4(0.1f, 0.1f, 0.1f, 1f);
 
-      for (var i = 0; i < Colors.Count; i++)
-        Colors[i] = new Vector4(0.7f, 0.7f, 0.7f, 1.0f);
-    }
-    else
-    {
-      for (var i = 0; i < Colors.Count; i++)
-        Colors[i] = new Vector4(0.5f, 0.5f, 0.5f, 1.0f);
-    }
+      InitCollision(Rectangle.FromLeftTopWidthHeight(Position.X, Position.Y, Size.X, HeaderHeight));
+      var isHit = CheckCollision();
 
+      if (isHit)
+      {
+        if (Mouse.IsKeyDown(MouseKey.Left))
+          if (!_isClick)
+          {
+            _isClick = true;
+            _isDrag = true;
+            _startDrag = Mouse.ClientClamped;
+            _startPos = Position;
+          }
 
-    if (!Mouse.IsKeyDown(MouseKey.Left))
-    {
-      _isClick = false;
-      _isDrag = false;
+        headerColor = new Vector4(0.2f, 0.2f, 0.2f, 1f);
+      }
+
+      // Заголовок
+      indexOffset = DoRectangle(
+        new Vector3(Position.X, Position.Y, 0),
+        new Vector2(Size.X, HeaderHeight),
+        headerColor,
+        indexOffset);
+
+      // Текст заголовка
+      indexOffset = DoText(Position, Title, indexOffset);
+
+      if (!Mouse.IsKeyDown(MouseKey.Left))
+      {
+        _isClick = false;
+        _isDrag = false;
+      }
     }
 
     // Body
-    indexOffset = DoRectangle(new Vector3(Position.X, Position.Y + 15, 0), Size, new Vector4(0.2f, 0.2f, 0.2f, 1),
+    indexOffset = DoRectangle(new Vector3(Position.X, Position.Y + HeaderHeight, 0), Size,
+      new Vector4(0.2f, 0.2f, 0.2f, 1),
       indexOffset);
 
-    var p = new Vector3(Position.X + 1, Position.Y + 1 + 15, 0.0001f);
-    for (var i = 0; i < Elements.Count; i++)
+    if (IsVerticalContent)
     {
-      Elements[i].Position = p;
-      Elements[i].Size = new Vector2(Size.X - 2, 20);
-      indexOffset = Elements[i].Build(indexOffset);
-      p.Y += 20;
-      p.Y += 1;
+      var p = new Vector3(Position.X + Padding, Position.Y + Padding + HeaderHeight, 0.0001f);
+      var totalH = 0f;
+      for (var i = 0; i < Elements.Count; i++)
+      {
+        Elements[i].Position = p;
+        var h = Elements[i].Size.Y > 0 ? Elements[i].Size.Y : 20;
+        Elements[i].Size = new Vector2(Size.X - Padding * 2, h);
+        indexOffset = Elements[i].Build(indexOffset);
+        p.Y += h;
+        p.Y += 5;
+        totalH += h + 5;
 
-      Vertices.AddRange(Elements[i].Vertices);
-      UV.AddRange(Elements[i].UV);
-      Colors.AddRange(Elements[i].Colors);
-      Indices.AddRange(Elements[i].Indices);
+        Vertices.AddRange(Elements[i].Vertices);
+        UV.AddRange(Elements[i].UV);
+        Colors.AddRange(Elements[i].Colors);
+        Indices.AddRange(Elements[i].Indices);
+      }
 
-      // for (var j = 0; j < Elements[i].Indices.Count; j++) Indices.Add(Elements[i].Indices[j] + maxIndex);
+      Size.Y = HeaderHeight + totalH + Padding * 2;
     }
+    else
+    {
+      var eachItemWidth = (Size.X - Padding * 2) / Elements.Count;
+      var p = new Vector3(Position.X + Padding, Position.Y + Padding + HeaderHeight, 0.0001f);
+      for (var i = 0; i < Elements.Count; i++)
+      {
+        Elements[i].Position = p;
+        Elements[i].Size = new Vector2(eachItemWidth, 20);
+        indexOffset = Elements[i].Build(indexOffset);
+        p.X += eachItemWidth;
 
-    // Console.WriteLine(Elements.Count);
+        Vertices.AddRange(Elements[i].Vertices);
+        UV.AddRange(Elements[i].UV);
+        Colors.AddRange(Elements[i].Colors);
+        Indices.AddRange(Elements[i].Indices);
+      }
+      // Console.WriteLine("X");
+    }
 
     return indexOffset;
   }

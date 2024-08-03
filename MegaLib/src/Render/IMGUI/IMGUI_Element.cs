@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using MegaLib.IO;
 using MegaLib.Mathematics.Geometry;
@@ -67,20 +68,31 @@ public class IMGUI_Element
     return indexOffset;
   }
 
-  protected uint DoText(Vector3 offset, string text, uint indexOffset = 0)
+  protected uint DoText(Vector3 position, string text, uint indexOffset = 0)
   {
     var color = new Vector4(1, 1, 1, 1);
+    var maxLineHeight = 0f;
+    var offset = new Vector2(0, 0);
 
     for (var i = 0; i < text.Length; i++)
     {
+      var symbol = text[i];
+      if (symbol == '\n')
+      {
+        offset.X = 0;
+        offset.Y += maxLineHeight;
+        maxLineHeight = 0;
+        continue;
+      }
+
       var area = FontData.GetGlyph(text[i]);
       if (area.TextureArea.IsEmpty) continue;
 
       Vertices.AddRange([
-        new Vector3(0, 0, 0) * new Vector3(area.TextureArea.Width, area.TextureArea.Height, 1) + offset,
-        new Vector3(1, 0, 0) * new Vector3(area.TextureArea.Width, area.TextureArea.Height, 1) + offset,
-        new Vector3(1, 1, 0) * new Vector3(area.TextureArea.Width, area.TextureArea.Height, 1) + offset,
-        new Vector3(0, 1, 0) * new Vector3(area.TextureArea.Width, area.TextureArea.Height, 1) + offset
+        new Vector3(0, 0, 0) * new Vector3(area.TextureArea.Width, area.TextureArea.Height, 1) + offset + position,
+        new Vector3(1, 0, 0) * new Vector3(area.TextureArea.Width, area.TextureArea.Height, 1) + offset + position,
+        new Vector3(1, 1, 0) * new Vector3(area.TextureArea.Width, area.TextureArea.Height, 1) + offset + position,
+        new Vector3(0, 1, 0) * new Vector3(area.TextureArea.Width, area.TextureArea.Height, 1) + offset + position
       ]);
       Colors.AddRange([color, color, color, color]);
 
@@ -97,6 +109,7 @@ public class IMGUI_Element
       indexOffset += 4;
 
       offset.X += area.Width;
+      maxLineHeight = Math.Max(maxLineHeight, area.TextureArea.Height);
     }
 
     return indexOffset;

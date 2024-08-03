@@ -81,6 +81,57 @@ public class Layer_IMGUI : Layer_Base
     });
   }
 
+  public void Pipi(float initial, float step, Action<float> onChange)
+  {
+    // var win = _currentWindow.Peek();
+    BeginWindow("1", "1");
+
+    _currentWindow.Peek().IsVerticalContent = false;
+    _currentWindow.Peek().HeaderHeight = 0;
+    _currentWindow.Peek().Padding = 0;
+    _currentWindow.Peek().Size.Y = 0;
+
+    var value = initial;
+    Button("-", () =>
+    {
+      value -= step;
+      onChange(value);
+    });
+    Text("yy", () => { return $"{value:F}"; });
+    Button("+", () =>
+    {
+      value += step;
+      onChange(value);
+    });
+
+    var cw = _currentWindow.Peek();
+
+    EndWindow();
+
+    _currentWindow.Peek().Elements.Add(cw);
+    _windows.Remove(cw);
+
+    /*win.Elements.Add(new IMGUI_Check()
+    {
+      FontData = _fontData,
+      Text = text,
+      OnClick = onClick,
+      IsActive = initial
+    });*/
+  }
+
+  public void Check(string text, bool initial, Func<bool, bool> onClick)
+  {
+    var win = _currentWindow.Peek();
+    win.Elements.Add(new IMGUI_Check()
+    {
+      FontData = _fontData,
+      Text = text,
+      OnClick = onClick,
+      IsActive = initial
+    });
+  }
+
   public void BeginWindow(string id, string name)
   {
     var win = new IMGUI_Window
@@ -88,8 +139,8 @@ public class Layer_IMGUI : Layer_Base
       FontData = _fontData,
       Id = id,
       Title = name,
-      Position = new Vector3(10, 10, 0),
-      Size = new Vector2(64, 64)
+      Position = new Vector3(10 + _windows.Count * 140, 10, 0),
+      Size = new Vector2(128, 128)
     };
     _windows.Add(win);
     _currentWindow.Push(win);
