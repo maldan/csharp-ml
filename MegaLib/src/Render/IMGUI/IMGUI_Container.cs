@@ -33,12 +33,13 @@ public class IMGUI_Container : IMGUI_Element
         if (!Elements[i].IsVisible) continue;
 
         Elements[i].Position = p;
-        var h = Elements[i].Size.Y > 0 ? Elements[i].Size.Y : 20;
-        Elements[i].Size = new Vector2(Size.X - Padding * 2, h);
-        buildArgs.IndexOffset = Elements[i].Build(buildArgs).IndexOffset;
-        p.Y += h;
+        // var h = Elements[i].Size.Y > 0 ? Elements[i].Size.Y : 20;
+        Elements[i].Size = new Vector2(Size.X - Padding * 2, 0);
+        var buildOut = Elements[i].Build(buildArgs);
+        buildArgs.IndexOffset = buildOut.IndexOffset;
+        p.Y += buildOut.Height;
         p.Y += Gap;
-        totalH += h + Gap;
+        totalH += buildOut.Height + Gap;
 
         Vertices.AddRange(Elements[i].Vertices);
         UV.AddRange(Elements[i].UV);
@@ -47,6 +48,7 @@ public class IMGUI_Container : IMGUI_Element
       }
 
       Size.Y = totalH + Padding * 2;
+      Height = Size.Y;
     }
     else
     {
@@ -67,6 +69,6 @@ public class IMGUI_Container : IMGUI_Element
       }
     }
 
-    return new IMGUI_BuildOut() { IndexOffset = buildArgs.IndexOffset };
+    return new IMGUI_BuildOut() { IndexOffset = buildArgs.IndexOffset, Height = Height };
   }
 }

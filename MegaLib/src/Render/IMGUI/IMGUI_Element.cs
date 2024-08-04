@@ -40,6 +40,7 @@ public class IMGUI_Element
   public float Margin;
   public Vector4 BackgroundColor;
   public Vector4 TextColor;
+  public float Height;
 
   // События
   public Action OnClick;

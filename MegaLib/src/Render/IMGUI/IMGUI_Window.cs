@@ -90,62 +90,20 @@ public class IMGUI_Window : IMGUI_Element
     }
 
     // Body
-    buildArgs.IndexOffset = DoRectangle(new Vector3(Position.X, Position.Y + HeaderHeight, 0), Size,
+    buildArgs.IndexOffset = DoRectangle(
+      new Vector3(Position.X, Position.Y + HeaderHeight, 0),
+      new Vector2(Size.X, Height),
       new Vector4(0.2f, 0.2f, 0.2f, 1),
       buildArgs.IndexOffset);
 
     // Билдим контент
     Content.Position = Position + new Vector2(0, HeaderHeight) + new Vector2(Padding, Padding);
     Content.Size = Size - new Vector2(Padding, Padding) * 2;
-    buildArgs.IndexOffset = Content.Build(buildArgs).IndexOffset;
-    Vertices.AddRange(Content.Vertices);
-    UV.AddRange(Content.UV);
-    Colors.AddRange(Content.Colors);
-    Indices.AddRange(Content.Indices);
+    var buildOut = Content.Build(buildArgs);
+    buildArgs.IndexOffset = buildArgs.IndexOffset;
+    Height = buildOut.Height + Padding;
 
-    /*if (FlexDirection == IMGUI_FlexDirection.Column)
-    {
-      var p = new Vector3(Position.X + Padding, Position.Y + Padding + HeaderHeight, 0.0001f);
-      var totalH = 0f;
-      for (var i = 0; i < Elements.Count; i++)
-      {
-        // Пропускаем невидимые
-        if (!Elements[i].IsVisible) continue;
-
-        Elements[i].Position = p;
-        var h = Elements[i].Size.Y > 0 ? Elements[i].Size.Y : 20;
-        Elements[i].Size = new Vector2(Size.X - Padding * 2, h);
-        indexOffset = Elements[i].Build(indexOffset);
-        p.Y += h;
-        p.Y += Gap;
-        totalH += h + Gap;
-
-        Vertices.AddRange(Elements[i].Vertices);
-        UV.AddRange(Elements[i].UV);
-        Colors.AddRange(Elements[i].Colors);
-        Indices.AddRange(Elements[i].Indices);
-      }
-
-      Size.Y = HeaderHeight + totalH + Padding * 2;
-    }
-    else
-    {
-      var eachItemWidth = (Size.X - Padding * 2) / Elements.Count;
-      var p = new Vector3(Position.X + Padding, Position.Y + Padding + HeaderHeight, 0.0001f);
-      for (var i = 0; i < Elements.Count; i++)
-      {
-        Elements[i].Position = p;
-        Elements[i].Size = new Vector2(eachItemWidth, 20);
-        indexOffset = Elements[i].Build(indexOffset);
-        p.X += eachItemWidth;
-
-        Vertices.AddRange(Elements[i].Vertices);
-        UV.AddRange(Elements[i].UV);
-        Colors.AddRange(Elements[i].Colors);
-        Indices.AddRange(Elements[i].Indices);
-      }
-      // Console.WriteLine("X");
-    }*/
+    CopyRenderDataFrom(Content);
 
     return new IMGUI_BuildOut() { IndexOffset = buildArgs.IndexOffset };
   }

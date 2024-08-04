@@ -21,6 +21,6 @@ public class IMGUI_Text : IMGUI_Element
 
     buildArgs.IndexOffset = DoText(Position, Text, TextColor, buildArgs.IndexOffset);
 
-    return new IMGUI_BuildOut() { IndexOffset = buildArgs.IndexOffset };
+    return new IMGUI_BuildOut() { IndexOffset = buildArgs.IndexOffset, Height = 20 };
   }
 }

@@ -52,10 +52,18 @@ public class IMGUI_Tree : IMGUI_Element
     {
       Content.Position = Position + new Vector2(0, HeaderHeight + Padding);
       Content.Size = Size;
-      buildArgs.IndexOffset = Content.Build(buildArgs).IndexOffset;
+      var buildOut = Content.Build(buildArgs);
+      buildArgs.IndexOffset = buildOut.IndexOffset;
+
+      Height = HeaderHeight + buildOut.Height;
+
       CopyRenderDataFrom(Content);
     }
+    else
+    {
+      Height = HeaderHeight;
+    }
 
-    return new IMGUI_BuildOut() { IndexOffset = buildArgs.IndexOffset };
+    return new IMGUI_BuildOut() { IndexOffset = buildArgs.IndexOffset, Height = Height };
   }
 }
