@@ -94,26 +94,39 @@ public class Layer_IMGUI : Layer_Base
     });
   }*/
 
-  public void Button(string text, Action<IMGUI_Button> onInit = null, Action<IMGUI_Button> onTick = null)
+  public void Button(string text, Action<IMGUI_Button> onInit = null)
   {
     var cnt = _currentContainer.Peek();
     var btn = new IMGUI_Button
     {
       FontData = _fontData,
-      Text = text,
-      OnTick = onTick
+      Text = text
     };
     cnt.Elements.Add(btn);
     onInit?.Invoke(btn);
+  }
 
-    /*var win = _currentWindow.Peek();
-    win.Elements.Add(new IMGUI_Button()
+  public void Add<T>(Action<T> onInit = null) where T : IMGUI_Element, new()
+  {
+    var cnt = _currentContainer.Peek();
+    var element = new T
     {
-      FontData = _fontData,
-      Text = text,
-      OnTick = onTick,
-      // OnClick = onClick
-    });*/
+      FontData = _fontData
+    };
+    cnt.Elements.Add(element);
+
+    // Проверка типа T
+    if (typeof(T) == typeof(IMGUI_Tree))
+    {
+      _currentContainer.Push((element as IMGUI_Tree)?.Content);
+    }
+
+    onInit?.Invoke(element);
+
+    if (typeof(T) == typeof(IMGUI_Tree))
+    {
+      _currentContainer.Pop();
+    }
   }
 
   /*public void Pipi(float initial, float step, Action<float> onChange)
@@ -201,10 +214,11 @@ public class Layer_IMGUI : Layer_Base
     _uv.Clear();
     _indices.Clear();
 
-    uint indexOffset = 0;
+    // uint indexOffset = 0;
+    var args = new IMGUI_BuildArgs() { FontData = _fontData };
     for (var i = 0; i < _windows.Count; i++)
     {
-      indexOffset = _windows[i].Build(indexOffset);
+      args.IndexOffset = _windows[i].Build(args).IndexOffset;
       _vertices.AddRange(_windows[i].Vertices);
       _uv.AddRange(_windows[i].UV);
       _colors.AddRange(_windows[i].Colors);

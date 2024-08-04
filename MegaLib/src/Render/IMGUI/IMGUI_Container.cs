@@ -14,13 +14,13 @@ public class IMGUI_Container : IMGUI_Element
 
   public IMGUI_Container()
   {
-    Padding = 5;
+    Padding = 0;
   }
 
-  public override uint Build(uint indexOffset = 0)
+  public override IMGUI_BuildOut Build(IMGUI_BuildArgs buildArgs)
   {
     Clear();
-    if (!IsVisible) return indexOffset;
+    if (!IsVisible) return new IMGUI_BuildOut() { IndexOffset = buildArgs.IndexOffset };
 
     // Вертикальный контейнер, сверху вниз
     if (FlexDirection == FlexDirection.Column)
@@ -35,7 +35,7 @@ public class IMGUI_Container : IMGUI_Element
         Elements[i].Position = p;
         var h = Elements[i].Size.Y > 0 ? Elements[i].Size.Y : 20;
         Elements[i].Size = new Vector2(Size.X - Padding * 2, h);
-        indexOffset = Elements[i].Build(indexOffset);
+        buildArgs.IndexOffset = Elements[i].Build(buildArgs).IndexOffset;
         p.Y += h;
         p.Y += Gap;
         totalH += h + Gap;
@@ -51,14 +51,14 @@ public class IMGUI_Container : IMGUI_Element
     else
     {
       // Горизонтальный
-      var eachItemWidth = (Size.X - Padding * 2) / Elements.Count;
+      var eachItemWidth = (Size.X - Padding * 2) / Elements.Count - Gap / Elements.Count * (Elements.Count - 1);
       var p = new Vector3(Position.X + Padding, Position.Y + Padding, 0.0001f);
       for (var i = 0; i < Elements.Count; i++)
       {
         Elements[i].Position = p;
         Elements[i].Size = new Vector2(eachItemWidth, 20);
-        indexOffset = Elements[i].Build(indexOffset);
-        p.X += eachItemWidth;
+        buildArgs.IndexOffset = Elements[i].Build(buildArgs).IndexOffset;
+        p.X += eachItemWidth + Gap;
 
         Vertices.AddRange(Elements[i].Vertices);
         UV.AddRange(Elements[i].UV);
@@ -67,6 +67,6 @@ public class IMGUI_Container : IMGUI_Element
       }
     }
 
-    return indexOffset;
+    return new IMGUI_BuildOut() { IndexOffset = buildArgs.IndexOffset };
   }
 }

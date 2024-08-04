@@ -58,6 +58,8 @@ public static class GDI32
   public const int TRANSPARENT = 1;
   public const int OPAQUE = 2;
   public const uint DIB_RGB_COLORS = 0;
+  public const uint NONANTIALIASED_QUALITY = 3;
+  public const uint ANTIALIASED_QUALITY = 4;
 
   [DllImport("gdi32.dll", SetLastError = true)]
   public static extern int ChoosePixelFormat(IntPtr hdc, [In] ref PIXELFORMATDESCRIPTOR ppfd);

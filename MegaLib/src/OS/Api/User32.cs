@@ -6,6 +6,12 @@ namespace MegaLib.OS.Api;
 
 public class User32
 {
+  // Константы для стандартных типов курсоров
+  public const int IDC_ARROW = 32512;
+  public const int IDC_HAND = 32649;
+  public const int IDC_SIZEWE = 32644;
+  public const int IDC_SIZENS = 32645;
+
   [DllImport("user32.dll", SetLastError = true)]
   public static extern IntPtr CreateWindowEx(
     uint dwExStyle,
@@ -120,6 +126,7 @@ public class User32
   // Импорт функции MapVirtualKey из user32.dll
   [DllImport("user32.dll")]
   public static extern uint MapVirtualKey(uint uCode, uint uMapType);
+
 
   public static int GetScreenWidth()
   {

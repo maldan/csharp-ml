@@ -35,10 +35,10 @@ public class IMGUI_Window : IMGUI_Element
     Padding = 5;
   }
 
-  public override uint Build(uint indexOffset = 0)
+  public override IMGUI_BuildOut Build(IMGUI_BuildArgs buildArgs)
   {
     Clear();
-    if (!IsVisible) return indexOffset;
+    if (!IsVisible) return new IMGUI_BuildOut() { IndexOffset = buildArgs.IndexOffset };
 
     if (_isDrag)
     {
@@ -68,14 +68,19 @@ public class IMGUI_Window : IMGUI_Element
       }
 
       // Заголовок
-      indexOffset = DoRectangle(
+      buildArgs.IndexOffset = DoRectangle(
         new Vector3(Position.X, Position.Y, 0),
         new Vector2(Size.X, HeaderHeight),
         headerColor,
-        indexOffset);
+        buildArgs.IndexOffset);
 
       // Текст заголовка
-      indexOffset = DoText(Position, Title, indexOffset);
+      var textSize = GetTextSize(Title) * 0.5f;
+      buildArgs.IndexOffset = DoText(
+        Position + new Vector3(5, HeaderHeight / 2f, 0) + new Vector3(0, -textSize.Y, 0),
+        Title,
+        new Vector4(0.5f, 0.5f, 0.5f, 1),
+        buildArgs.IndexOffset);
 
       if (!Mouse.IsKeyDown(MouseKey.Left))
       {
@@ -85,14 +90,14 @@ public class IMGUI_Window : IMGUI_Element
     }
 
     // Body
-    indexOffset = DoRectangle(new Vector3(Position.X, Position.Y + HeaderHeight, 0), Size,
+    buildArgs.IndexOffset = DoRectangle(new Vector3(Position.X, Position.Y + HeaderHeight, 0), Size,
       new Vector4(0.2f, 0.2f, 0.2f, 1),
-      indexOffset);
+      buildArgs.IndexOffset);
 
     // Билдим контент
-    Content.Position = Position + new Vector2(0, HeaderHeight);
-    Content.Size = Size;
-    indexOffset = Content.Build(indexOffset);
+    Content.Position = Position + new Vector2(0, HeaderHeight) + new Vector2(Padding, Padding);
+    Content.Size = Size - new Vector2(Padding, Padding) * 2;
+    buildArgs.IndexOffset = Content.Build(buildArgs).IndexOffset;
     Vertices.AddRange(Content.Vertices);
     UV.AddRange(Content.UV);
     Colors.AddRange(Content.Colors);
@@ -142,6 +147,6 @@ public class IMGUI_Window : IMGUI_Element
       // Console.WriteLine("X");
     }*/
 
-    return indexOffset;
+    return new IMGUI_BuildOut() { IndexOffset = buildArgs.IndexOffset };
   }
 }

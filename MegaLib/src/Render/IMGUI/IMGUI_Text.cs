@@ -1,23 +1,26 @@
 using System;
+using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Render.IMGUI;
 
 public class IMGUI_Text : IMGUI_Element
 {
   public string Text;
-  public Func<string> OnText;
 
-  public override uint Build(uint indexOffset = 0)
+  public IMGUI_Text()
+  {
+    TextColor = new Vector4(1, 1, 1, 1);
+  }
+
+  public override IMGUI_BuildOut Build(IMGUI_BuildArgs buildArgs)
   {
     Clear();
-    if (!IsVisible) return indexOffset;
+    if (!IsVisible) return new IMGUI_BuildOut() { IndexOffset = buildArgs.IndexOffset };
 
-    if (OnText != null)
-      indexOffset = DoText(Position, OnText.Invoke(), indexOffset);
-    else
-      indexOffset = DoText(Position, Text, indexOffset);
+    FontData = buildArgs.FontData;
 
+    buildArgs.IndexOffset = DoText(Position, Text, TextColor, buildArgs.IndexOffset);
 
-    return indexOffset;
+    return new IMGUI_BuildOut() { IndexOffset = buildArgs.IndexOffset };
   }
 }

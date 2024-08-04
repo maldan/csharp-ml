@@ -81,7 +81,9 @@ public static class Font
     Marshal.Copy(pixelData, 0, bits, pixelData.Length);*/
 
     // Создаем шрифт
-    var hFont = GDI32.CreateFont(fontSize, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, fontName);
+    var hFont = GDI32.CreateFont(fontSize, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+      GDI32.ANTIALIASED_QUALITY,
+      0, fontName);
     GDI32.SelectObject(hdcMem, hFont);
 
     // Рендерим текст

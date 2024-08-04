@@ -142,6 +142,8 @@ public class Window
         OnShow?.Invoke();
         return IntPtr.Zero;
       case WinApi.WM_PAINT:
+        // User32.SetCursor(User32.LoadCursor(IntPtr.Zero, User32.IDC_ARROW));
+
         _timer.Start();
         OnPaint?.Invoke(_delta);
         var deltaTime = _timer.Elapsed;
@@ -162,11 +164,11 @@ public class Window
         var height = (int)((lParam.ToInt64() >> 16) & 0xFFFF);
         OnResize?.Invoke(width, height);
         return IntPtr.Zero;
-      case WinApi.WM_SETCURSOR:
+      /*case WinApi.WM_SETCURSOR:
         const int IDC_ARROW = 32512;
         var hCursor = User32.LoadCursor(IntPtr.Zero, IDC_ARROW);
         User32.SetCursor(hCursor);
-        return IntPtr.Zero;
+        return IntPtr.Zero;*/
       default:
         return User32.DefWindowProc(hWnd, msg, wParam, lParam);
     }

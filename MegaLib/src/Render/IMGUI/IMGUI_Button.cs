@@ -2,6 +2,7 @@ using System;
 using MegaLib.IO;
 using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
+using MegaLib.OS.Api;
 
 namespace MegaLib.Render.IMGUI;
 
@@ -14,11 +15,12 @@ public class IMGUI_Button : IMGUI_Element
 
   public bool IsClicked => _isClick;
 
-  public override uint Build(uint indexOffset = 0)
+  public override IMGUI_BuildOut Build(IMGUI_BuildArgs buildArgs)
   {
     Clear();
-    if (!IsVisible) return indexOffset;
-    
+    if (!IsVisible) return new IMGUI_BuildOut { IndexOffset = buildArgs.IndexOffset };
+    FontData = buildArgs.FontData;
+
     InitCollision(Rectangle.FromLeftTopWidthHeight(Position.X, Position.Y, Size.X, Size.Y));
     var isHit = CheckCollision();
     if (isHit)
@@ -31,19 +33,26 @@ public class IMGUI_Button : IMGUI_Element
           OnClick?.Invoke();
         }
 
-        indexOffset = DoRectangle(Position, Size, new Vector4(0.7f, 0.4f, 0.4f, 1), indexOffset);
+        buildArgs.IndexOffset = DoRectangle(Position, Size, new Vector4(0.7f, 0.4f, 0.4f, 1), buildArgs.IndexOffset);
       }
       else
       {
-        indexOffset = DoRectangle(Position, Size, new Vector4(0.4f, 0.4f, 0.4f, 1), indexOffset);
+        buildArgs.IndexOffset = DoRectangle(Position, Size, new Vector4(0.4f, 0.4f, 0.4f, 1), buildArgs.IndexOffset);
       }
     }
     else
     {
-      indexOffset = DoRectangle(Position, Size, new Vector4(0.3f, 0.3f, 0.3f, 1), indexOffset);
+      buildArgs.IndexOffset = DoRectangle(Position, Size, new Vector4(0.3f, 0.3f, 0.3f, 1), buildArgs.IndexOffset);
     }
 
-    indexOffset = DoText(Position + new Vector3(0, 0, 0.0001f), Text, indexOffset);
+    var textSize = GetTextSize(Text) * 0.5f;
+    var center = Size * 0.5f;
+    // System.Console.WriteLine(textSize);
+    buildArgs.IndexOffset = DoText(
+      Position + new Vector3(0, 0, 0.0001f) + center + new Vector2(-textSize.X, -textSize.Y),
+      Text,
+      new Vector4(0.75f, 0.75f, 0.75f, 1),
+      buildArgs.IndexOffset);
 
     /*if (isHit)
     {
@@ -75,6 +84,6 @@ public class IMGUI_Button : IMGUI_Element
     // Вызываем каждый кадр
     OnTick?.Invoke(this);
 
-    return indexOffset;
+    return new IMGUI_BuildOut { IndexOffset = buildArgs.IndexOffset };
   }
 }

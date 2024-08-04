@@ -7,6 +7,18 @@ using MegaLib.OS.Api;
 
 namespace MegaLib.Render.IMGUI;
 
+public struct IMGUI_BuildArgs
+{
+  public uint IndexOffset;
+  public FontData FontData;
+}
+
+public struct IMGUI_BuildOut
+{
+  public uint IndexOffset;
+  public float Height;
+}
+
 public class IMGUI_Element
 {
   public string Id;
@@ -26,6 +38,8 @@ public class IMGUI_Element
   // Дизайн
   public float Padding;
   public float Margin;
+  public Vector4 BackgroundColor;
+  public Vector4 TextColor;
 
   // События
   public Action OnClick;
@@ -75,16 +89,67 @@ public class IMGUI_Element
     return false;
   }
 
-  public virtual uint Build(uint indexOffset = 0)
+  public virtual IMGUI_BuildOut Build(IMGUI_BuildArgs buildArgs)
   {
-    return indexOffset;
+    return new IMGUI_BuildOut { IndexOffset = buildArgs.IndexOffset };
   }
 
-  protected uint DoText(Vector3 position, string text, uint indexOffset = 0)
+  protected Vector2 GetTextSize(string text)
   {
-    var color = new Vector4(1, 1, 1, 1);
+    if (text == null) return new Vector2();
+    if (text.Length == 0) return new Vector2();
+
+    var o = new Vector2(0, FontData.GetGlyph(text[0]).Height);
+    var offset = new Vector2(0, 0);
+    var maxLineHeight = 0f;
+
+    for (var i = 0; i < text.Length; i++)
+    {
+      var symbol = text[i];
+      if (symbol == '\n')
+      {
+        offset.X = 0;
+        offset.Y += maxLineHeight;
+        maxLineHeight = 0;
+        continue;
+      }
+
+      var area = FontData.GetGlyph(text[i]);
+      if (area.TextureArea.IsEmpty) continue;
+
+      offset.X += area.Width;
+      maxLineHeight = Math.Max(maxLineHeight, area.TextureArea.Height);
+
+      // Вычисляем максимальный размер
+      o.X = Math.Max(o.X, offset.X);
+      o.Y = Math.Max(o.Y, offset.Y);
+    }
+
+    return o;
+  }
+
+  protected uint DoTextCenter(Vector3 position, Vector2 areaSize, string text, Vector4 color, uint indexOffset = 0)
+  {
+    var textSize = GetTextSize(text) * 0.5f;
+    var center = areaSize * 0.5f;
+
+    return DoText(
+      position + new Vector3(0, 0, 0.0001f) + center + new Vector2(-textSize.X, -textSize.Y),
+      text,
+      color,
+      indexOffset);
+  }
+
+  protected uint DoText(Vector3 position, string text, Vector4 color, uint indexOffset = 0)
+  {
+    if (text == null) return indexOffset;
+    if (text.Length == 0) return indexOffset;
+
+    // var color = new Vector4(1, 1, 1, 1);
     var maxLineHeight = 0f;
     var offset = new Vector2(0, 0);
+
+    // Сначала надо рассчитать
 
     for (var i = 0; i < text.Length; i++)
     {
@@ -152,5 +217,13 @@ public class IMGUI_Element
       0 + indexOffset, 2 + indexOffset, 3 + indexOffset
     ]);
     return indexOffset + 4;
+  }
+
+  protected void CopyRenderDataFrom(IMGUI_Element element)
+  {
+    Vertices.AddRange(element.Vertices);
+    UV.AddRange(element.UV);
+    Colors.AddRange(element.Colors);
+    Indices.AddRange(element.Indices);
   }
 }
