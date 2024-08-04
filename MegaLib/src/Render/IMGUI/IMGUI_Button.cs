@@ -10,11 +10,15 @@ public class IMGUI_Button : IMGUI_Element
   public string Text;
   public Action OnClick;
   private bool _isClick;
+  public Action<IMGUI_Button> OnTick;
+
+  public bool IsClicked => _isClick;
 
   public override uint Build(uint indexOffset = 0)
   {
     Clear();
-
+    if (!IsVisible) return indexOffset;
+    
     InitCollision(Rectangle.FromLeftTopWidthHeight(Position.X, Position.Y, Size.X, Size.Y));
     var isHit = CheckCollision();
     if (isHit)
@@ -67,6 +71,9 @@ public class IMGUI_Button : IMGUI_Element
     }*/
 
     if (!Mouse.IsKeyDown(MouseKey.Left)) _isClick = false;
+
+    // Вызываем каждый кадр
+    OnTick?.Invoke(this);
 
     return indexOffset;
   }

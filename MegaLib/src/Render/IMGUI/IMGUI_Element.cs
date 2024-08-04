@@ -21,6 +21,18 @@ public class IMGUI_Element
 
   public FontData FontData;
 
+  public bool IsVisible = true;
+
+  // Дизайн
+  public float Padding;
+  public float Margin;
+
+  // События
+  public Action OnClick;
+  public Action OnMouseOver;
+  public Action OnMouseOut;
+
+  // Очищаем вершины и прочий контент
   public void Clear()
   {
     Vertices.Clear();

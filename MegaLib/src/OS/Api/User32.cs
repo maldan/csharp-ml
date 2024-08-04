@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace MegaLib.OS.Api;
 
@@ -100,6 +101,25 @@ public class User32
   // Импорт функции GetClientRect из user32.dll
   [DllImport("user32.dll")]
   public static extern bool GetClientRect(IntPtr hWnd, out RECT lpRect);
+
+  // Импорт функции ToUnicode из user32.dll
+  [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+  public static extern int ToUnicode(
+    uint wVirtKey, // Виртуальный код клавиши
+    uint wScanCode, // Скан-код клавиши
+    byte[] lpKeyState, // Массив состояния клавиш
+    [Out] [MarshalAs(UnmanagedType.LPWStr, SizeParamIndex = 4)]
+    StringBuilder pwszBuff, // Буфер для символов
+    int cchBuff, // Размер буфера
+    uint wFlags); // Флаги
+
+  // Импорт функции GetKeyboardState из user32.dll
+  [DllImport("user32.dll")]
+  public static extern bool GetKeyboardState(byte[] lpKeyState);
+
+  // Импорт функции MapVirtualKey из user32.dll
+  [DllImport("user32.dll")]
+  public static extern uint MapVirtualKey(uint uCode, uint uMapType);
 
   public static int GetScreenWidth()
   {

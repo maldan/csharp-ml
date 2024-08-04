@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using MegaLib.OS.Api;
 
 namespace MegaLib.IO;
@@ -168,6 +169,36 @@ public static class Keyboard
 
     return isKeyDown && !wasKeyDown;*/
     return IsKeyDown(key) && _previousState[(int)key] == 0;
+  }
+
+  static Keyboard()
+  {
+  }
+
+  public static char? GetCharFromKey(int virtualKey)
+  {
+    var keyboardState = new byte[256];
+    User32.GetKeyboardState(keyboardState);
+
+    var scanCode = (uint)User32.MapVirtualKey((uint)virtualKey, 0);
+    var buffer = new StringBuilder(2);
+    var result = User32.ToUnicode((uint)virtualKey, scanCode, keyboardState, buffer, buffer.Capacity, 0);
+
+    if (result > 0 && buffer.Length > 0) return buffer[0];
+    return null;
+  }
+
+  public static string GetCurrentInput()
+  {
+    var str = "";
+    for (var i = 0; i < _state.Length; i++)
+      if (IsKeyPressed((KeyboardKey)i))
+      {
+        var ch = GetCharFromKey(i);
+        if (ch != null) str += ch.ToString();
+      }
+
+    return str;
   }
 
   public static void Update()

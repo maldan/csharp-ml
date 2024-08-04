@@ -10,6 +10,7 @@ public class IMGUI_Text : IMGUI_Element
   public override uint Build(uint indexOffset = 0)
   {
     Clear();
+    if (!IsVisible) return indexOffset;
 
     if (OnText != null)
       indexOffset = DoText(Position, OnText.Invoke(), indexOffset);

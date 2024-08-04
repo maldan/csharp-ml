@@ -15,6 +15,7 @@ public class IMGUI_Check : IMGUI_Element
   public override uint Build(uint indexOffset = 0)
   {
     Clear();
+    if (!IsVisible) return indexOffset;
 
     var checkSize = new Vector2(Size.Y, Size.Y);
 
