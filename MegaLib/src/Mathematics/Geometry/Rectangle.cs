@@ -43,6 +43,31 @@ public struct Rectangle
            Math.Max(FromY, ToY) > Math.Min(other.FromY, other.ToY);
   }
 
+  // Проверка, находится ли точка внутри прямоугольника
+  public bool IsPointInside(float x, float y)
+  {
+    return x >= FromX && x <= ToX && y >= FromY && y <= ToY;
+  }
+
+  public bool IsPointInside(Vector2 point)
+  {
+    return IsPointInside(point.X, point.Y);
+  }
+
+  // Проверка, находится ли прямоугольник внутри другого прямоугольника или пересекается с ним
+  public bool IsInsideOrIntersects(Rectangle other)
+  {
+    // Проверка, находятся ли углы одного прямоугольника внутри другого
+    return IsPointInside(other.FromX, other.FromY) ||
+           IsPointInside(other.FromX, other.ToY) ||
+           IsPointInside(other.ToX, other.FromY) ||
+           IsPointInside(other.ToX, other.ToY) ||
+           other.IsPointInside(FromX, FromY) ||
+           other.IsPointInside(FromX, ToY) ||
+           other.IsPointInside(ToX, FromY) ||
+           other.IsPointInside(ToX, ToY);
+  }
+
   public Rectangle ToUV(float maxWidth, float maxHeight)
   {
     var uMin = FromX / maxWidth;
@@ -70,6 +95,8 @@ public struct Rectangle
   {
     return $"Rectangle(FromX: {FromX}, FromY: {FromY}, ToX: {ToX}, ToY: {ToY})";
   }
+
+  public static Rectangle Zero => new(0, 0, 0, 0);
 
   public static Rectangle FromLeftTopWidthHeight(float x, float y, float width, float height)
   {

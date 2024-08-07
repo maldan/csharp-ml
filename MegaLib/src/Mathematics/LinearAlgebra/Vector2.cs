@@ -74,4 +74,12 @@ public struct Vector2
   {
     return $"Vector2({X}, {Y})";
   }
+
+  #region Set
+
+  // Already set
+  public static Vector2 One => new(1, 1);
+  public static Vector2 Zero => new(0, 0);
+
+  #endregion
 }

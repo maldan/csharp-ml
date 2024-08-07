@@ -19,14 +19,17 @@ public class Layer_IMGUI : Layer_Base
 
   private FontData _fontData;
 
-  private List<Vector3> _vertices = [];
-  private List<Vector4> _colors = [];
-  private List<Vector2> _uv = [];
-  private List<uint> _indices = [];
+  //private List<Vector3> _vertices = [];
+  //private List<Vector4> _colors = [];
+  //private List<Vector2> _uv = [];
+  //private List<uint> _indices = [];
 
-  private List<IMGUI_Window> _windows = [];
-  private Stack<IMGUI_Window> _currentWindow = new();
-  private Stack<IMGUI_Container> _currentContainer = new();
+  private List<RenderData> _renderData = [];
+
+  //private List<IMGUI_Window> _windows = [];
+  //private Stack<IMGUI_Window> _currentWindow = new();
+  //private Stack<IMGUI_Container> _currentContainer = new();
+  private Stack<IMGUI_Element> _currentElement = new();
 
   private Dictionary<string, IMGUI_Element> _elements = new();
 
@@ -39,62 +42,21 @@ public class Layer_IMGUI : Layer_Base
     FontTexture.Options.WrapMode = TextureWrapMode.Clamp;
     FontTexture.Options.FiltrationMode = TextureFiltrationMode.Linear;
     // FontTexture.SaveToBMP("baka.bmp");
-  }
 
-  public void GetElement()
-  {
-  }
-
-  /*public void Text(string id, Func<string> text)
-  {
-    var win = _currentWindow.Peek();
-    var txt = new IMGUI_Text
+    _currentElement.Push(new IMGUI_Element()
     {
-      Id = id,
-      FontData = _fontData,
-      OnText = text
-    };
-    win.Elements.Add(txt);
-    _elements[id] = txt;
-  }
-
-  public void Text(string id, string text)
-  {
-    var win = _currentWindow.Peek();
-    var txt = new IMGUI_Text
-    {
-      Id = id,
-      FontData = _fontData,
-      Text = text
-    };
-    win.Elements.Add(txt);
-    _elements[id] = txt;
-  }
-
-  public void InputText(string text, Func<string, string> onChange)
-  {
-    var win = _currentWindow.Peek();
-    var txt = new IMGUI_InputText
-    {
-      FontData = _fontData,
-      Text = text,
-      OnChange = onChange
-    };
-    win.Elements.Add(txt);
-  }
-
-  public void Button(string text, Action onClick)
-  {
-    var win = _currentWindow.Peek();
-    win.Elements.Add(new IMGUI_Button()
-    {
-      FontData = _fontData,
-      Text = text,
-      OnClick = onClick
+      Style = new ElementStyle()
+      {
+        Width = "100",
+        Height = "100",
+        BackgroundColor = "red",
+        Left = "10",
+        Top = "5"
+      }
     });
-  }*/
+  }
 
-  public void Button(string text, Action<IMGUI_Button> onInit = null)
+  /*public void Button(string text, Action<IMGUI_Button> onInit = null)
   {
     var cnt = _currentContainer.Peek();
     var btn = new IMGUI_Button
@@ -104,9 +66,9 @@ public class Layer_IMGUI : Layer_Base
     };
     cnt.Elements.Add(btn);
     onInit?.Invoke(btn);
-  }
+  }*/
 
-  public void Add<T>(Action<T> onInit = null) where T : IMGUI_Element, new()
+  /*public void Add<T>(Action<T> onInit = null) where T : IMGUI_Element, new()
   {
     var cnt = _currentContainer.Peek();
     var element = new T
@@ -127,52 +89,9 @@ public class Layer_IMGUI : Layer_Base
     {
       _currentContainer.Pop();
     }
-  }
-
-  /*public void Pipi(float initial, float step, Action<float> onChange)
-  {
-    // var win = _currentWindow.Peek();
-    BeginWindow("1", "1");
-
-    _currentWindow.Peek().FlexDirection = IMGUI_FlexDirection.Row;
-    _currentWindow.Peek().HeaderHeight = 0;
-    _currentWindow.Peek().Padding = 0;
-    _currentWindow.Peek().Size.Y = 0;
-
-    var value = initial;
-    Button("-", () =>
-    {
-      value -= step;
-      onChange(value);
-    });
-    Text("yy", () => { return $"{value:F}"; });
-    Button("+", () =>
-    {
-      value += step;
-      onChange(value);
-    });
-
-    var cw = _currentWindow.Peek();
-
-    EndWindow();
-
-    _currentWindow.Peek().Elements.Add(cw);
-    _windows.Remove(cw);
   }*/
 
-  /*public void Check(string text, bool initial, Func<bool, bool> onClick)
-  {
-    var win = _currentWindow.Peek();
-    win.Elements.Add(new IMGUI_Check()
-    {
-      FontData = _fontData,
-      Text = text,
-      OnClick = onClick,
-      IsActive = initial
-    });
-  }*/
-
-  public void BeginWindow(string name)
+  /*public void BeginWindow(string name)
   {
     var win = new IMGUI_Window
     {
@@ -200,14 +119,40 @@ public class Layer_IMGUI : Layer_Base
   public void EndContainer()
   {
     _currentContainer.Pop();
-  }
+  }*/
 
-  public void EndWindow()
+  /*public void EndWindow()
   {
     _currentWindow.Pop();
+  }*/
+
+  public void Add<T>(Action<T> onInit = null) where T : IMGUI_Element, new()
+  {
+    var cnt = _currentElement.Peek();
+    var element = new T
+    {
+      // FontData = _fontData
+    };
+    cnt.Children.Add(element);
+
+    // Проверка типа T
+    _currentElement.Push(element);
+    onInit?.Invoke(element);
+    _currentElement.Pop();
   }
 
-  public (Vector3[], Vector2[], Vector4[], uint[]) Build()
+  public List<RenderData> Build(float delta)
+  {
+    var root = _currentElement.Peek();
+    root.Build(new BuildIn
+    {
+      Delta = delta
+    });
+
+    return root.RenderData;
+  }
+
+  /*public (Vector3[], Vector2[], Vector4[], uint[]) Build()
   {
     _vertices.Clear();
     _colors.Clear();
@@ -226,5 +171,5 @@ public class Layer_IMGUI : Layer_Base
     }
 
     return (_vertices.ToArray(), _uv.ToArray(), _colors.ToArray(), _indices.ToArray());
-  }
+  }*/
 }

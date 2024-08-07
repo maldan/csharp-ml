@@ -21,6 +21,7 @@ public class Render_Scene
   public bool UseSSAO;
   public bool UsePostprocess;
   public bool IsVrMode { get; set; }
+  public float DeltaTime;
 
   public Layer_PostProcess PostProcessLayer = new();
 

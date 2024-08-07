@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Buffer;
@@ -136,15 +137,7 @@ public class LR_IMGUI : LR_Base
   public override void Render()
   {
     var layer = (Layer_IMGUI)Layer;
-    _vertices.Clear();
-    _uv.Clear();
-    _colors.Clear();
-    _indices.Clear();
-    var (v, u, c, i) = layer.Build();
-    _vertices.AddRange(v);
-    _uv.AddRange(u);
-    _colors.AddRange(c);
-    _indices.AddRange(i);
+    var renderData = layer.Build(Scene.DeltaTime);
 
     Shader.Use();
     Shader.Enable(OpenGL32.GL_BLEND);
@@ -165,33 +158,48 @@ public class LR_IMGUI : LR_Base
 
     Shader.SetUniform("uModelMatrix", _mx);
 
-    // Маппим текстуру шрифтов
-    Context.MapTexture(layer.FontTexture);
+    // Основной рендер
+    renderData.ForEach(rd =>
+    {
+      _vertices.Clear();
+      _uv.Clear();
+      _colors.Clear();
+      _indices.Clear();
+      // var (v, u, c, i) = layer.Build();
 
-    // Загружаем на гпу
-    _vertices.Sync();
-    _uv.Sync();
-    _colors.Sync();
-    _indices.Sync();
+      _vertices.AddRange(rd.Vertices.ToArray());
+      _uv.AddRange(rd.UV.ToArray());
+      _colors.AddRange(rd.Colors.ToArray());
+      _indices.AddRange(rd.Indices.ToArray());
 
-    // Биндим vao
-    OpenGL32.glBindVertexArray(_vaoId);
+      // Маппим текстуру шрифтов
+      Context.MapTexture(layer.FontTexture);
 
-    // Активируем атрибуты
-    Shader.EnableAttribute(_vertices, "aPosition");
-    Shader.EnableAttribute(_uv, "aUV");
-    Shader.EnableAttribute(_colors, "aColor");
+      // Загружаем на гпу
+      _vertices.Sync();
+      _uv.Sync();
+      _colors.Sync();
+      _indices.Sync();
 
-    // Texture
-    Shader.ActivateTexture(layer.FontTexture, "uFontTexture", 0);
+      // Биндим vao
+      OpenGL32.glBindVertexArray(_vaoId);
 
-    // Биндим индексы
-    OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(_indices));
+      // Активируем атрибуты
+      Shader.EnableAttribute(_vertices, "aPosition");
+      Shader.EnableAttribute(_uv, "aUV");
+      Shader.EnableAttribute(_colors, "aColor");
 
-    // Рисуем
-    OpenGL32.glDrawElements(OpenGL32.GL_TRIANGLES, _indices.Count, OpenGL32.GL_UNSIGNED_INT, IntPtr.Zero);
+      // Texture
+      Shader.ActivateTexture(layer.FontTexture, "uFontTexture", 0);
 
-    // Разбиндим vao
-    OpenGL32.glBindVertexArray(0);
+      // Биндим индексы
+      OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(_indices));
+
+      // Рисуем
+      OpenGL32.glDrawElements(OpenGL32.GL_TRIANGLES, _indices.Count, OpenGL32.GL_UNSIGNED_INT, IntPtr.Zero);
+
+      // Разбиндим vao
+      OpenGL32.glBindVertexArray(0);
+    });
   }
 }

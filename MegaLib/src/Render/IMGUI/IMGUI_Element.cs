@@ -4,22 +4,334 @@ using MegaLib.IO;
 using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
+using MegaLib.Render.Color;
 
 namespace MegaLib.Render.IMGUI;
 
-public struct IMGUI_BuildArgs
+public class RenderData
 {
-  public uint IndexOffset;
-  public FontData FontData;
+  public List<Vector3> Vertices = [];
+  public List<Vector4> Colors = [];
+  public List<Vector2> UV = [];
+  public List<uint> Indices = [];
+
+  // Очищаем вершины и прочий контент
+  public void Clear()
+  {
+    Vertices.Clear();
+    Colors.Clear();
+    UV.Clear();
+    Indices.Clear();
+  }
+
+  public void DrawRectangle(Rectangle area, Vector4 color)
+  {
+    var pivot = new Vector3(0.5f, 0.5f, 0);
+    var size = new Vector3(area.Width, area.Height, 1);
+    var offset = new Vector2(area.FromX, area.FromY);
+
+    Vertices.AddRange([
+      (new Vector3(-0.5f, -0.5f, 0) + pivot) * size + offset,
+      (new Vector3(-0.5f, 0.5f, 0) + pivot) * size + offset,
+      (new Vector3(0.5f, 0.5f, 0) + pivot) * size + offset,
+      (new Vector3(0.5f, -0.5f, 0) + pivot) * size + offset
+    ]);
+    UV.AddRange([
+      new Vector2(0, 0) + new Vector2(-1, -1),
+      new Vector2(0, 1) + new Vector2(-1, -1),
+      new Vector2(1, 1) + new Vector2(-1, -1),
+      new Vector2(1, 0) + new Vector2(-1, -1)
+    ]);
+    Colors.AddRange([
+      color, color, color, color
+    ]);
+    Indices.AddRange([0, 1, 2, 0, 2, 3]);
+  }
+
+  public void DrawText(
+    string text,
+    FontData fontData,
+    Vector2 position,
+    Vector4 color,
+    Rectangle drawArea
+  )
+  {
+    if (text == null) return;
+    if (text.Length == 0) return;
+
+    var maxLineHeight = 0f;
+    var offset = new Vector2(0, 0);
+    uint indexOffset = 0;
+
+    for (var i = 0; i < text.Length; i++)
+    {
+      var symbol = text[i];
+      if (symbol == '\n')
+      {
+        offset.X = 0;
+        offset.Y += maxLineHeight;
+        maxLineHeight = 0;
+        continue;
+      }
+
+      var area = fontData.GetGlyph(text[i]);
+      if (area.TextureArea.IsEmpty) continue;
+
+      var lt = new Vector2(0, 0) * new Vector2(area.TextureArea.Width, area.TextureArea.Height) + offset + position;
+      var rt = new Vector2(1, 1) * new Vector2(area.TextureArea.Width, area.TextureArea.Height) + offset + position;
+      var symbolArea = new Rectangle(lt.X, lt.Y, rt.X, rt.Y);
+
+      // Если символ находится за пределами области рисования
+      if (!drawArea.IsInsideOrIntersects(symbolArea))
+      {
+        continue;
+      }
+
+      Vertices.AddRange([
+        new Vector3(0, 0, 0) * new Vector3(area.TextureArea.Width, area.TextureArea.Height, 1) + offset + position,
+        new Vector3(1, 0, 0) * new Vector3(area.TextureArea.Width, area.TextureArea.Height, 1) + offset + position,
+        new Vector3(1, 1, 0) * new Vector3(area.TextureArea.Width, area.TextureArea.Height, 1) + offset + position,
+        new Vector3(0, 1, 0) * new Vector3(area.TextureArea.Width, area.TextureArea.Height, 1) + offset + position
+      ]);
+
+      Colors.AddRange([color, color, color, color]);
+
+      var uv = area.TextureArea.ToUV(fontData.Texture.RAW.Width, fontData.Texture.RAW.Height);
+      UV.AddRange([
+        new Vector2(uv.FromX, uv.FromY),
+        new Vector2(uv.ToX, uv.FromY),
+        new Vector2(uv.ToX, uv.ToY),
+        new Vector2(uv.FromX, uv.ToY)
+      ]);
+      Indices.AddRange([
+        0 + indexOffset, 1 + indexOffset, 2 + indexOffset, 0 + indexOffset, 2 + indexOffset, 3 + indexOffset
+      ]);
+      indexOffset += 4;
+
+      offset.X += area.Width;
+      maxLineHeight = Math.Max(maxLineHeight, area.TextureArea.Height);
+    }
+  }
 }
 
-public struct IMGUI_BuildOut
+public class ElementStyle
 {
-  public uint IndexOffset;
-  public float Height;
+  public object Width;
+  public object Height;
+  public string Color;
+  public object BackgroundColor;
+  public string Padding;
+  public string Margin;
+  public string Gap;
+  public string Position;
+  public object Left;
+  public object Top;
+  public object Right;
+  public object Bottom;
+  public string FlexDirection;
+
+  public Vector4 BackgroundColorValue()
+  {
+    if (BackgroundColor is Vector4 v)
+    {
+      return v;
+    }
+
+    return BackgroundColor switch
+    {
+      "white" => new Vector4(1, 1, 1, 1),
+      "black" => new Vector4(0, 0, 0, 1),
+      "red" => new Vector4(1, 0, 0, 1),
+      "green" => new Vector4(0, 1, 0, 1),
+      "blue" => new Vector4(0, 0, 1, 1),
+      _ => new Vector4(0, 0, 0, 0)
+    };
+  }
+}
+
+public class ElementEvents
+{
+  public Action OnClick;
+  public Action OnMouseOver;
+  public Action OnMouseOut;
+  public Action<float> OnRender;
+}
+
+public struct BuildIn
+{
+  public Rectangle DrawArea;
+  public FontData FontData;
+  public float ZIndex;
+  public IMGUI_Element Parent;
+  public float Delta;
+}
+
+public struct BuildOut
+{
+  public Rectangle DrawArea;
+  public float ZIndex;
 }
 
 public class IMGUI_Element
+{
+  public string Id;
+  public bool IsVisible = true;
+  public ElementStyle Style = new();
+  public List<RenderData> RenderData = [];
+  public ElementEvents Events = new();
+  public List<Triangle> Collision = [];
+  public List<IMGUI_Element> Children = [];
+
+  public void InitCollision(Rectangle r)
+  {
+    Collision.Clear();
+    Collision.Add(new Triangle
+    {
+      A = new Vector3(r.FromX, r.FromY, 0),
+      B = new Vector3(r.ToX, r.FromY, 0),
+      C = new Vector3(r.ToX, r.ToY, 0)
+    });
+    Collision.Add(new Triangle
+    {
+      A = new Vector3(r.FromX, r.ToY, 0),
+      B = new Vector3(r.FromX, r.FromY, 0),
+      C = new Vector3(r.ToX, r.ToY, 0)
+    });
+  }
+
+  public bool CheckCollision()
+  {
+    var ray = new Ray(
+      new Vector3(Mouse.ClientClamped.X, Mouse.ClientClamped.Y, -10),
+      new Vector3(Mouse.ClientClamped.X, Mouse.ClientClamped.Y, 10)
+    );
+
+    for (var i = 0; i < Collision.Count; i++)
+    {
+      Collision[i].RayIntersection(ray, out _, out var isHit);
+      if (isHit) return true;
+    }
+
+    return false;
+  }
+
+  public void Clear()
+  {
+    foreach (var rd in RenderData) rd.Clear();
+    RenderData.Clear();
+  }
+
+  public virtual BuildOut Build(BuildIn buildArgs)
+  {
+    Clear();
+
+    // Рисуем основное тело
+    var bg = Style.BackgroundColorValue();
+    var re = new RenderData();
+
+    var boundingBox = BoundingBox(buildArgs.DrawArea);
+    boundingBox += new Vector2(buildArgs.DrawArea.FromX, buildArgs.DrawArea.FromY);
+    // area += pa;
+
+    re.DrawRectangle(boundingBox, bg);
+    RenderData.Add(re);
+
+    // Проходимся по чилдам
+    var yOffset = 0f;
+    for (var i = 0; i < Children.Count; i++)
+    {
+      var buildOut = Children[i].Build(new BuildIn()
+      {
+        Parent = this,
+        DrawArea = boundingBox + new Vector2(0, yOffset),
+        Delta = buildArgs.Delta
+      });
+      yOffset += buildOut.DrawArea.Height;
+
+      // Копируем содержимое чилда
+      RenderData.AddRange(Children[i].RenderData);
+    }
+
+    Events?.OnRender?.Invoke(buildArgs.Delta);
+
+    return new BuildOut
+    {
+      ZIndex = buildArgs.ZIndex + 1,
+      DrawArea = boundingBox + new Vector2(0, yOffset)
+    };
+  }
+
+  public float Width(Rectangle parentArea = default)
+  {
+    if (Style.Width is string s)
+    {
+      if (s.EndsWith('%'))
+      {
+        var v = float.Parse(s[..^1]);
+        return parentArea.Width * (v / 100f);
+      }
+    }
+
+    return Style.Width switch
+    {
+      float v => v,
+      int v => v,
+      string v => string.IsNullOrEmpty(v) ? 0 : float.Parse(v),
+      _ => 0
+    };
+  }
+
+  public Vector2 Position()
+  {
+    var o = new Vector2();
+
+    o.X = Style.Left switch
+    {
+      float v => v,
+      double v => (float)v,
+      int v => v,
+      string v => string.IsNullOrEmpty(v) ? 0 : float.Parse(v),
+      _ => o.X
+    };
+
+    o.Y = Style.Top switch
+    {
+      float v => v,
+      double v => (float)v,
+      int v => v,
+      string v => string.IsNullOrEmpty(v) ? 0 : float.Parse(v),
+      _ => o.Y
+    };
+
+    return o;
+  }
+
+  public Vector2 Size(Rectangle parentArea = default)
+  {
+    var o = new Vector2();
+
+    o.X = Width(parentArea);
+
+    o.Y = Style.Height switch
+    {
+      float v => v,
+      int v => v,
+      string v => string.IsNullOrEmpty(v) ? 0 : float.Parse(v),
+      _ => o.Y
+    };
+
+    return o;
+  }
+
+  public Rectangle BoundingBox(Rectangle parentArea = default)
+  {
+    var p = Position();
+    var s = Size(parentArea);
+    return Rectangle.FromLeftTopWidthHeight(p.X, p.Y, s.X, s.Y);
+  }
+}
+
+/*public class IMGUI_Element
 {
   public string Id;
   public Vector3 Position;
@@ -227,4 +539,4 @@ public class IMGUI_Element
     Colors.AddRange(element.Colors);
     Indices.AddRange(element.Indices);
   }
-}
+}*/

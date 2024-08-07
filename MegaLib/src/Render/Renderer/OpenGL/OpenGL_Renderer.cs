@@ -56,6 +56,7 @@ public class OpenGL_Renderer : IRenderer
 
   public void Tick(float delta, int updateIteration)
   {
+    _scene.DeltaTime = delta;
     for (var i = 0; i < updateIteration; i++) _scene.Update(delta);
     if (_vrRuntime != null)
     {
