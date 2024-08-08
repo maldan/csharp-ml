@@ -18,24 +18,11 @@ public class Layer_IMGUI : Layer_Base
   public Texture_2D<RGBA<byte>> FontTexture;
 
   private FontData _fontData;
-
-  //private List<Vector3> _vertices = [];
-  //private List<Vector4> _colors = [];
-  //private List<Vector2> _uv = [];
-  //private List<uint> _indices = [];
-
-  private List<RenderData> _renderData = [];
-
-  //private List<IMGUI_Window> _windows = [];
-  //private Stack<IMGUI_Window> _currentWindow = new();
-  //private Stack<IMGUI_Container> _currentContainer = new();
   private Stack<IMGUI_Element> _currentElement = new();
-
-  private Dictionary<string, IMGUI_Element> _elements = new();
 
   public Layer_IMGUI()
   {
-    _fontData = Font.Generate("Consolas", 14);
+    _fontData = Font.Generate("Consolas", 15);
     FontTexture = _fontData.Texture;
 
     FontTexture.Options.UseMipMaps = false;
@@ -47,11 +34,11 @@ public class Layer_IMGUI : Layer_Base
     {
       Style = new ElementStyle()
       {
-        Width = "100",
-        Height = "100",
-        BackgroundColor = "red",
-        Left = "10",
-        Top = "5"
+        //Width = "100",
+        //Height = "100",
+        //BackgroundColor = "red"
+        //Left = "10",
+        //Top = "5"
       }
     });
   }
@@ -146,7 +133,8 @@ public class Layer_IMGUI : Layer_Base
     var root = _currentElement.Peek();
     root.Build(new BuildIn
     {
-      Delta = delta
+      Delta = delta,
+      FontData = _fontData
     });
 
     return root.RenderData;

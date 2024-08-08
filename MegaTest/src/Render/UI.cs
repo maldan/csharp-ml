@@ -14,6 +14,77 @@ using Random = MegaLib.Mathematics.Random;
 
 namespace MegaTest.Render;
 
+internal class TestScene2 : Render_Scene
+{
+  public override void OnInit()
+  {
+    // Инициализируем камеру
+    var _camera = new Camera_Perspective
+    {
+      AspectRatio = 800f / 600f
+    };
+    _camera.Position += new Vector3(0, 4, -5);
+    _camera.Rotation = Quaternion.FromEuler(45, 0, 0, "deg");
+    Camera = _camera;
+
+    // Добавляем слои
+    AddLayer("imgui", new Layer_IMGUI()
+    {
+      Camera = new Camera_Orthographic()
+    });
+
+    var imgui = GetLayer<Layer_IMGUI>();
+
+    var rnd = new Random();
+    var sex = 0f;
+
+    imgui.Add<IMGUI_Element>(t =>
+    {
+      t.Style.Padding = new Vector4(5, 5, 5, 5);
+      t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
+      t.Style.Gap = 5;
+
+      imgui.Add<IMGUI_Element>(t =>
+      {
+        t.Style.Width = 80;
+        t.Style.Height = 30;
+        t.Style.BackgroundColor = new Vector4(0.35f, 0.35f, 0.35f, 1);
+
+        t.Events.OnMouseOver = () => { t.Style.BackgroundColor = new Vector4(1.0f, 0.5f, 0.5f, 1); };
+        t.Events.OnMouseOut = () => { t.Style.BackgroundColor = new Vector4(0.0f, 0.5f, 0.5f, 1); };
+        t.Events.OnClick = () => { t.Style.BackgroundColor = new Vector4(1.0f, 1.5f, 1.5f, 1); };
+      });
+
+      imgui.Add<IMGUI_Element>(t =>
+      {
+        t.Style.Width = 80;
+        t.Style.Height = 30;
+        t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
+
+        t.Events.OnMouseOver = () =>
+        {
+          System.Console.WriteLine("OVER");
+          t.Style.BackgroundColor = new Vector4(1.0f, 0.5f, 0.5f, 1);
+        };
+        t.Events.OnMouseOut = () =>
+        {
+          System.Console.WriteLine("OUT");
+          t.Style.BackgroundColor = new Vector4(0.0f, 0.5f, 0.5f, 1);
+        };
+        t.Events.OnClick = () =>
+        {
+          System.Console.WriteLine("CICK");
+          t.Style.BackgroundColor = new Vector4(1.0f, 1.5f, 1.5f, 1);
+          t.Style.Color = new Vector4(0.0f, 0.0f, 0.0f, 1);
+        };
+        t.Style.Color = new Vector4(1, 1, 1, 1);
+        t.Text = "GAY";
+        t.Style.Margin = new Vector4(0, 5, 0, 0);
+      });
+    });
+  }
+}
+
 internal class TestScene : Render_Scene
 {
   public override void OnInit()
@@ -36,31 +107,43 @@ internal class TestScene : Render_Scene
     var imgui = GetLayer<Layer_IMGUI>();
 
     var rnd = new Random();
+    var sex = 0f;
 
     imgui.Add<IMGUI_Element>(t =>
     {
       t.Style.Width = 80;
       t.Style.Height = 30;
-      t.Style.BackgroundColor = "white";
-      t.Style.Left = 5;
-      t.Style.Top = 5;
+      t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
+      t.Style.Left = 4;
+      t.Style.Top = 4;
+
+      t.Style.Color = new Vector4(1, 1, 1, 1);
+
+      t.Events.OnRender = f =>
+      {
+        t.Text = $"{t.Style.Left}";
+        t.Style.Left = Math.Sin(sex * 3f) * 32;
+        t.Style.Top = -Math.Cos(sex * 3f) * 32;
+        sex += f;
+      };
 
       imgui.Add<IMGUI_Element>(t =>
       {
-        t.Style.Width = 10;
+        t.Style.Width = "50%";
         t.Style.Height = 10;
         t.Style.BackgroundColor = "blue";
-        /*t.Style.Left = 5;
-        t.Style.Top = 5;*/
+        t.Style.Left = 5;
+        t.Style.Top = 5;
       });
-      imgui.Add<IMGUI_Element>(t =>
+
+      /*imgui.Add<IMGUI_Element>(t =>
       {
         t.Style.Width = "100%";
         t.Style.Height = 10;
         t.Style.BackgroundColor = "green";
 
         /*t.Style.Left = 5;
-        t.Style.Top = 5;*/
+        t.Style.Top = 5;#1#
         t.Style.Top = 1;
       });
 
@@ -72,7 +155,7 @@ internal class TestScene : Render_Scene
         t.Style.BackgroundColor = new Vector4(1, 1, 1, 1) * new Vector4(0.5f, 0.5f, 0.5f, 1f);
 
         /*t.Style.Left = 5;
-        t.Style.Top = 5;*/
+        t.Style.Top = 5;#1#
         t.Style.Top = 1;
 
         t.Events.OnRender = f =>
@@ -80,7 +163,7 @@ internal class TestScene : Render_Scene
           t.Style.Left = Math.Sin(sex * 10f) * 10;
           sex += f;
         };
-      });
+      });*/
     });
 
     /*imgui.BeginWindow("Hello");
@@ -110,7 +193,7 @@ public class UITest
   public void TestBasic()
   {
     var renderer = new OpenGL_Renderer();
-    var scene = new TestScene();
+    var scene = new TestScene2();
 
     var win = new Window
     {

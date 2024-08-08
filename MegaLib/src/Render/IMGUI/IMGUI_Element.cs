@@ -14,6 +14,7 @@ public class RenderData
   public List<Vector4> Colors = [];
   public List<Vector2> UV = [];
   public List<uint> Indices = [];
+  private uint _indexOffset;
 
   // Очищаем вершины и прочий контент
   public void Clear()
@@ -22,6 +23,30 @@ public class RenderData
     Colors.Clear();
     UV.Clear();
     Indices.Clear();
+    _indexOffset = 0;
+  }
+
+  public void DrawOutline(Rectangle area, float[] width, Vector4[] color)
+  {
+    DrawRectangle(
+      new Rectangle(area.FromX, area.FromY, area.FromX + width[0], area.ToY),
+      color[0]
+    );
+
+    DrawRectangle(
+      new Rectangle(area.FromX, area.FromY, area.ToX, area.FromY + width[1]),
+      color[1]
+    );
+
+    DrawRectangle(
+      new Rectangle(area.FromX + area.Width - width[2], area.FromY, area.FromX + area.Width, area.ToY),
+      color[2]
+    );
+
+    DrawRectangle(
+      new Rectangle(area.FromX, area.FromY + area.Height, area.ToX, area.FromY + area.Height - width[3]),
+      color[3]
+    );
   }
 
   public void DrawRectangle(Rectangle area, Vector4 color)
@@ -45,10 +70,14 @@ public class RenderData
     Colors.AddRange([
       color, color, color, color
     ]);
-    Indices.AddRange([0, 1, 2, 0, 2, 3]);
+    Indices.AddRange([
+      0 + _indexOffset, 1 + _indexOffset, 2 + _indexOffset,
+      0 + _indexOffset, 2 + _indexOffset, 3 + _indexOffset
+    ]);
+    _indexOffset += 4;
   }
 
-  public void DrawText(
+  public Rectangle DrawText(
     string text,
     FontData fontData,
     Vector2 position,
@@ -56,12 +85,15 @@ public class RenderData
     Rectangle drawArea
   )
   {
-    if (text == null) return;
-    if (text.Length == 0) return;
+    if (text == null) return new Rectangle();
+    if (text.Length == 0) return new Rectangle();
 
     var maxLineHeight = 0f;
     var offset = new Vector2(0, 0);
-    uint indexOffset = 0;
+    // uint indexOffset = 0;
+
+    var textSize = new Rectangle(float.MaxValue, float.MaxValue, float.MinValue, float.MinValue);
+    var vectorList = new List<Vector3>();
 
     for (var i = 0; i < text.Length; i++)
     {
@@ -87,7 +119,13 @@ public class RenderData
         continue;
       }
 
-      Vertices.AddRange([
+      // Высчитываем размер текста
+      textSize.FromX = Math.Min(textSize.FromX, symbolArea.FromX);
+      textSize.FromY = Math.Min(textSize.FromY, symbolArea.FromY);
+      textSize.ToX = Math.Max(textSize.ToX, symbolArea.ToX);
+      textSize.ToY = Math.Max(textSize.ToY, symbolArea.ToY);
+
+      vectorList.AddRange([
         new Vector3(0, 0, 0) * new Vector3(area.TextureArea.Width, area.TextureArea.Height, 1) + offset + position,
         new Vector3(1, 0, 0) * new Vector3(area.TextureArea.Width, area.TextureArea.Height, 1) + offset + position,
         new Vector3(1, 1, 0) * new Vector3(area.TextureArea.Width, area.TextureArea.Height, 1) + offset + position,
@@ -104,49 +142,42 @@ public class RenderData
         new Vector2(uv.FromX, uv.ToY)
       ]);
       Indices.AddRange([
-        0 + indexOffset, 1 + indexOffset, 2 + indexOffset, 0 + indexOffset, 2 + indexOffset, 3 + indexOffset
+        0 + _indexOffset, 1 + _indexOffset, 2 + _indexOffset,
+        0 + _indexOffset, 2 + _indexOffset, 3 + _indexOffset
       ]);
-      indexOffset += 4;
+      _indexOffset += 4;
 
       offset.X += area.Width;
       maxLineHeight = Math.Max(maxLineHeight, area.TextureArea.Height);
     }
+
+    for (var i = 0; i < vectorList.Count; i++)
+    {
+      vectorList[i] += new Vector3(drawArea.Width / 2f, drawArea.Height / 2f, 0);
+      vectorList[i] -= new Vector3(textSize.Width / 2f, textSize.Height / 2f, 0);
+    }
+
+    Vertices.AddRange(vectorList);
+
+    return textSize;
   }
 }
 
 public class ElementStyle
 {
-  public object Width;
-  public object Height;
-  public string Color;
+  public object Width = "auto";
+  public object Height = "auto";
+  public object Color = new Vector4(1, 1, 1, 1);
   public object BackgroundColor;
-  public string Padding;
-  public string Margin;
-  public string Gap;
+  public object Padding;
+  public object Margin;
+  public object Gap;
   public string Position;
   public object Left;
   public object Top;
   public object Right;
   public object Bottom;
   public string FlexDirection;
-
-  public Vector4 BackgroundColorValue()
-  {
-    if (BackgroundColor is Vector4 v)
-    {
-      return v;
-    }
-
-    return BackgroundColor switch
-    {
-      "white" => new Vector4(1, 1, 1, 1),
-      "black" => new Vector4(0, 0, 0, 1),
-      "red" => new Vector4(1, 0, 0, 1),
-      "green" => new Vector4(0, 1, 0, 1),
-      "blue" => new Vector4(0, 0, 1, 1),
-      _ => new Vector4(0, 0, 0, 0)
-    };
-  }
 }
 
 public class ElementEvents
@@ -181,6 +212,10 @@ public class IMGUI_Element
   public ElementEvents Events = new();
   public List<Triangle> Collision = [];
   public List<IMGUI_Element> Children = [];
+  public string Text;
+  private bool _isClick;
+  private bool _isMouseDown;
+  private bool _isMouseOver;
 
   public void InitCollision(Rectangle r)
   {
@@ -226,31 +261,127 @@ public class IMGUI_Element
     Clear();
 
     // Рисуем основное тело
-    var bg = Style.BackgroundColorValue();
+    var bg = BackgroundColor();
     var re = new RenderData();
 
     var boundingBox = BoundingBox(buildArgs.DrawArea);
     boundingBox += new Vector2(buildArgs.DrawArea.FromX, buildArgs.DrawArea.FromY);
     // area += pa;
 
-    re.DrawRectangle(boundingBox, bg);
-    RenderData.Add(re);
+    // Инициализация коллизии
+    var hasCollision = Events.OnMouseOver != null || Events.OnMouseOut != null || Events.OnClick != null;
+    if (hasCollision)
+    {
+      InitCollision(boundingBox);
+      if (CheckCollision())
+      {
+        if (!_isMouseOver)
+        {
+          _isMouseOver = true;
+          Events?.OnMouseOver?.Invoke();
+        }
+
+        if (Mouse.IsKeyDown(MouseKey.Left) && !_isMouseDown)
+        {
+          _isMouseDown = true;
+          // Events?.OnClick?.Invoke();
+        }
+
+        if (Mouse.IsKeyUp(MouseKey.Left) && _isMouseDown)
+        {
+          _isMouseDown = false;
+          Events?.OnClick?.Invoke();
+        }
+      }
+      else
+      {
+        if (_isMouseOver)
+        {
+          _isMouseOver = false;
+          Events?.OnMouseOut?.Invoke();
+        }
+
+        if (Mouse.IsKeyUp(MouseKey.Left))
+        {
+          _isMouseDown = false;
+        }
+      }
+    }
 
     // Проходимся по чилдам
     var yOffset = 0f;
+    var maxX = 0f;
+    var parentPadding = Padding();
+    var parentMargin = Margin();
+    var parentGap = Gap();
+    var marginOffsetY = 0f;
     for (var i = 0; i < Children.Count; i++)
     {
+      var childMargin = Children[i].Margin();
+
+      var localBB = boundingBox;
+      localBB.FromX += parentPadding.X;
+      localBB.FromY += parentPadding.Y;
+      localBB.ToX -= parentPadding.X * 2;
+      localBB.ToY -= parentPadding.Y * 2;
+
+      localBB.FromY += childMargin.Y;
+      localBB.ToY += childMargin.Y;
+      marginOffsetY += childMargin.Y;
+
       var buildOut = Children[i].Build(new BuildIn()
       {
         Parent = this,
-        DrawArea = boundingBox + new Vector2(0, yOffset),
-        Delta = buildArgs.Delta
+        DrawArea = localBB + new Vector2(0, yOffset),
+        Delta = buildArgs.Delta,
+        FontData = buildArgs.FontData
       });
       yOffset += buildOut.DrawArea.Height;
+      maxX = Math.Max(maxX, buildOut.DrawArea.Width);
+
+      if (i < Children.Count - 1) yOffset += parentGap;
 
       // Копируем содержимое чилда
       RenderData.AddRange(Children[i].RenderData);
     }
+
+    // Добавляем текстовый контент
+    if (!string.IsNullOrEmpty(Text))
+    {
+      var rd = new RenderData();
+      var textSize = rd.DrawText(
+        Text,
+        buildArgs.FontData,
+        new Vector2(boundingBox.FromX, boundingBox.FromY),
+        TextColor(),
+        boundingBox);
+      RenderData.Add(rd);
+
+      /*var rd2 = new RenderData();
+      rd2.DrawRectangle(textSize + new Vector2(boundingBox.FromX, boundingBox.FromY), new Vector4(1, 1, 0, 0.5f));
+      RenderData.Add(rd2);*/
+    }
+
+    // Рисуем основной квадрат. Ставим его на первое место
+    if (Style.Height is "auto")
+    {
+      boundingBox.ToY += yOffset + parentPadding.Y * 2 + marginOffsetY;
+    }
+
+    if (Style.Width is "auto")
+    {
+      boundingBox.ToX += maxX + parentPadding.X * 2;
+    }
+
+    re.DrawRectangle(boundingBox, bg);
+    re.DrawOutline(boundingBox, [1, 2, 3, 4], [
+      new Vector4(1, 1, 1, 1),
+      new Vector4(0, 1, 1, 1),
+      new Vector4(0, 0, 1, 1),
+      new Vector4(1, 0, 1, 1)
+    ]);
+
+    RenderData.Insert(0, re);
 
     Events?.OnRender?.Invoke(buildArgs.Delta);
 
@@ -272,12 +403,66 @@ public class IMGUI_Element
       }
     }
 
+    if (Style.Width is "auto") return 0;
+
     return Style.Width switch
     {
       float v => v,
       int v => v,
       string v => string.IsNullOrEmpty(v) ? 0 : float.Parse(v),
       _ => 0
+    };
+  }
+
+  public float Height(Rectangle parentArea = default)
+  {
+    if (Style.Height is string s)
+    {
+      if (s.EndsWith('%'))
+      {
+        var v = float.Parse(s[..^1]);
+        return parentArea.Height * (v / 100f);
+      }
+    }
+
+    if (Style.Height is "auto") return 0;
+
+    return Style.Height switch
+    {
+      float v => v,
+      int v => v,
+      string v => string.IsNullOrEmpty(v) ? 0 : float.Parse(v),
+      _ => 0
+    };
+  }
+
+  public float Gap()
+  {
+    return Style.Gap switch
+    {
+      float v => v,
+      int v => v,
+      double v => (float)v,
+      string v => string.IsNullOrEmpty(v) ? 0 : float.Parse(v),
+      _ => 0
+    };
+  }
+
+  public Vector4 Padding()
+  {
+    return Style.Padding switch
+    {
+      Vector4 v => v,
+      _ => new Vector4()
+    };
+  }
+
+  public Vector4 Margin()
+  {
+    return Style.Margin switch
+    {
+      Vector4 v => v,
+      _ => new Vector4()
     };
   }
 
@@ -308,19 +493,11 @@ public class IMGUI_Element
 
   public Vector2 Size(Rectangle parentArea = default)
   {
-    var o = new Vector2();
-
-    o.X = Width(parentArea);
-
-    o.Y = Style.Height switch
+    return new Vector2
     {
-      float v => v,
-      int v => v,
-      string v => string.IsNullOrEmpty(v) ? 0 : float.Parse(v),
-      _ => o.Y
+      X = Width(parentArea),
+      Y = Height(parentArea)
     };
-
-    return o;
   }
 
   public Rectangle BoundingBox(Rectangle parentArea = default)
@@ -328,6 +505,38 @@ public class IMGUI_Element
     var p = Position();
     var s = Size(parentArea);
     return Rectangle.FromLeftTopWidthHeight(p.X, p.Y, s.X, s.Y);
+  }
+
+  public Vector4 TextColor()
+  {
+    if (Style.Color is Vector4 v) return v;
+    return Style.Color switch
+    {
+      "white" => new Vector4(1, 1, 1, 1),
+      "black" => new Vector4(0, 0, 0, 1),
+      "red" => new Vector4(1, 0, 0, 1),
+      "green" => new Vector4(0, 1, 0, 1),
+      "blue" => new Vector4(0, 0, 1, 1),
+      _ => new Vector4(0, 0, 0, 0)
+    };
+  }
+
+  public Vector4 BackgroundColor()
+  {
+    if (Style.BackgroundColor is Vector4 v)
+    {
+      return v;
+    }
+
+    return Style.BackgroundColor switch
+    {
+      "white" => new Vector4(1, 1, 1, 1),
+      "black" => new Vector4(0, 0, 0, 1),
+      "red" => new Vector4(1, 0, 0, 1),
+      "green" => new Vector4(0, 1, 0, 1),
+      "blue" => new Vector4(0, 0, 1, 1),
+      _ => new Vector4(0, 0, 0, 0)
+    };
   }
 }
 
