@@ -28,25 +28,37 @@ public class RenderData
 
   public void DrawOutline(Rectangle area, float[] width, Vector4[] color)
   {
-    DrawRectangle(
-      new Rectangle(area.FromX, area.FromY, area.FromX + width[0], area.ToY),
-      color[0]
-    );
+    if (width[0] > 0)
+    {
+      DrawRectangle(
+        new Rectangle(area.FromX, area.FromY, area.FromX + width[0], area.ToY),
+        color[0]
+      );
+    }
 
-    DrawRectangle(
-      new Rectangle(area.FromX, area.FromY, area.ToX, area.FromY + width[1]),
-      color[1]
-    );
+    if (width[1] > 0)
+    {
+      DrawRectangle(
+        new Rectangle(area.FromX, area.FromY, area.ToX, area.FromY + width[1]),
+        color[1]
+      );
+    }
 
-    DrawRectangle(
-      new Rectangle(area.FromX + area.Width - width[2], area.FromY, area.FromX + area.Width, area.ToY),
-      color[2]
-    );
+    if (width[2] > 0)
+    {
+      DrawRectangle(
+        new Rectangle(area.FromX + area.Width - width[2], area.FromY, area.FromX + area.Width, area.ToY),
+        color[2]
+      );
+    }
 
-    DrawRectangle(
-      new Rectangle(area.FromX, area.FromY + area.Height, area.ToX, area.FromY + area.Height - width[3]),
-      color[3]
-    );
+    if (width[3] > 0)
+    {
+      DrawRectangle(
+        new Rectangle(area.FromX, area.FromY + area.Height, area.ToX, area.FromY + area.Height - width[3]),
+        color[3]
+      );
+    }
   }
 
   public void DrawRectangle(Rectangle area, Vector4 color)
@@ -108,9 +120,10 @@ public class RenderData
 
       var area = fontData.GetGlyph(text[i]);
       if (area.TextureArea.IsEmpty) continue;
+      var size = new Vector2(area.TextureArea.Width, area.TextureArea.Height) / area.ScaleFactor;
 
-      var lt = new Vector2(0, 0) * new Vector2(area.TextureArea.Width, area.TextureArea.Height) + offset + position;
-      var rt = new Vector2(1, 1) * new Vector2(area.TextureArea.Width, area.TextureArea.Height) + offset + position;
+      var lt = new Vector2(0, 0) * size + offset + position;
+      var rt = new Vector2(1, 1) * size + offset + position;
       var symbolArea = new Rectangle(lt.X, lt.Y, rt.X, rt.Y);
 
       // Если символ находится за пределами области рисования
@@ -126,10 +139,10 @@ public class RenderData
       textSize.ToY = Math.Max(textSize.ToY, symbolArea.ToY);
 
       vectorList.AddRange([
-        new Vector3(0, 0, 0) * new Vector3(area.TextureArea.Width, area.TextureArea.Height, 1) + offset + position,
-        new Vector3(1, 0, 0) * new Vector3(area.TextureArea.Width, area.TextureArea.Height, 1) + offset + position,
-        new Vector3(1, 1, 0) * new Vector3(area.TextureArea.Width, area.TextureArea.Height, 1) + offset + position,
-        new Vector3(0, 1, 0) * new Vector3(area.TextureArea.Width, area.TextureArea.Height, 1) + offset + position
+        new Vector3(0, 0, 0) * new Vector3(size.X, size.Y, 1) + offset + position,
+        new Vector3(1, 0, 0) * new Vector3(size.X, size.Y, 1) + offset + position,
+        new Vector3(1, 1, 0) * new Vector3(size.X, size.Y, 1) + offset + position,
+        new Vector3(0, 1, 0) * new Vector3(size.X, size.Y, 1) + offset + position
       ]);
 
       Colors.AddRange([color, color, color, color]);
@@ -147,7 +160,7 @@ public class RenderData
       ]);
       _indexOffset += 4;
 
-      offset.X += area.Width;
+      offset.X += area.Width / area.ScaleFactor;
       maxLineHeight = Math.Max(maxLineHeight, area.TextureArea.Height);
     }
 
@@ -177,6 +190,8 @@ public class ElementStyle
   public object Top;
   public object Right;
   public object Bottom;
+  public object BorderWidth;
+  public object BorderColor;
   public string FlexDirection;
 }
 
@@ -266,6 +281,10 @@ public class IMGUI_Element
 
     var boundingBox = BoundingBox(buildArgs.DrawArea);
     boundingBox += new Vector2(buildArgs.DrawArea.FromX, buildArgs.DrawArea.FromY);
+    /*if (boundingBox.Width > buildArgs.DrawArea.Width)
+    {
+      boundingBox.ToX -= boundingBox.Width - buildArgs.DrawArea.Width;
+    }*/
     // area += pa;
 
     // Инициализация коллизии
@@ -317,6 +336,9 @@ public class IMGUI_Element
     var marginOffsetY = 0f;
     for (var i = 0; i < Children.Count; i++)
     {
+      /*var childBB = Children[i].BoundingBox() + new Vector2(buildArgs.DrawArea.FromX, buildArgs.DrawArea.FromY);
+      */
+
       var childMargin = Children[i].Margin();
 
       var localBB = boundingBox;
@@ -329,10 +351,25 @@ public class IMGUI_Element
       localBB.ToY += childMargin.Y;
       marginOffsetY += childMargin.Y;
 
-      var buildOut = Children[i].Build(new BuildIn()
+      var finalLocalBB = localBB + new Vector2(0, yOffset);
+
+      // Отсекаем все что за областью
+      if (!boundingBox.IsInsideOrIntersects(finalLocalBB))
+      {
+        continue;
+      }
+
+      if (boundingBox.IsIntersects(finalLocalBB))
+      {
+        System.Console.WriteLine(finalLocalBB);
+        finalLocalBB = boundingBox.GetIntersection(finalLocalBB);
+        System.Console.WriteLine(finalLocalBB);
+      }
+
+      var buildOut = Children[i].Build(new BuildIn
       {
         Parent = this,
-        DrawArea = localBB + new Vector2(0, yOffset),
+        DrawArea = finalLocalBB,
         Delta = buildArgs.Delta,
         FontData = buildArgs.FontData
       });
@@ -374,12 +411,15 @@ public class IMGUI_Element
     }
 
     re.DrawRectangle(boundingBox, bg);
-    re.DrawOutline(boundingBox, [1, 2, 3, 4], [
-      new Vector4(1, 1, 1, 1),
-      new Vector4(0, 1, 1, 1),
-      new Vector4(0, 0, 1, 1),
-      new Vector4(1, 0, 1, 1)
-    ]);
+
+    // Обводка
+    var parentBorderWidth = BorderWidth();
+    var parentBorderColor = BorderColor();
+    re.DrawOutline(
+      boundingBox,
+      parentBorderWidth,
+      parentBorderColor
+    );
 
     RenderData.Insert(0, re);
 
@@ -463,6 +503,30 @@ public class IMGUI_Element
     {
       Vector4 v => v,
       _ => new Vector4()
+    };
+  }
+
+  public Vector4[] BorderColor()
+  {
+    if (Style.BorderColor is Vector4[] { Length: 1 } vv) return [vv[0], vv[0], vv[0], vv[0]];
+
+    return Style.BorderColor switch
+    {
+      Vector4[] v => v,
+      _ => [Vector4.One, Vector4.One, Vector4.One, Vector4.One]
+    };
+  }
+
+  public float[] BorderWidth()
+  {
+    return Style.BorderWidth switch
+    {
+      float[] v => v,
+      Vector4 v => [v.X, v.Y, v.Z, v.W],
+      int v => [v, v, v, v],
+      float v => [v, v, v, v],
+      double v => [(float)v, (float)v, (float)v, (float)v],
+      _ => [0, 0, 0, 0]
     };
   }
 

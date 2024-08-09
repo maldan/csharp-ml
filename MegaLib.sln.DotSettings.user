@@ -4,12 +4,22 @@
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Render.UITest.TestBasic&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=53d8cf8a_002D801c_002D4a99_002Dbaaa_002D7aeb84f7b8f6/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="TestBasic #8" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Render.UITest.TestBasic&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=55e0d595_002Dd077_002D464c_002Da208_002D493883ad427e/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="TestBasic #5" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Render.UITest.TestBasic&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=9bd84eae_002Dfc26_002D4f6f_002D81c9_002Dcef8ab8bb307/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="TestBasic" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Render.UITest.TestBasic&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=a546be9c_002D3e24_002D493d_002Dafa1_002Df243865fd58a/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="TestBasic #7" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Render.UITest.TestBasic&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;

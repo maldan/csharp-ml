@@ -29,18 +29,20 @@ public static class Font
     public Rectangle TextureArea;
     public int Width;
     public int Height;
+    public float ScaleFactor;
   }
 
-  public static FontData Generate(string fontName, int fontSize)
+  public static FontData Generate(string fontName, int fontSize, float scaleFactor)
   {
     return Generate(
       " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя",
-      fontName, fontSize);
+      fontName, fontSize, scaleFactor);
   }
 
-  public static FontData Generate(string charset, string fontName, int fontSize)
+  public static FontData Generate(string charset, string fontName, int fontSize, float scaleFactor)
   {
-    var info = GetGlyphInfo(charset, fontName, fontSize);
+    var info = GetGlyphInfo(charset, fontName, fontSize, scaleFactor);
+
     var startOffset = 1;
     var width = startOffset; // Начальный оффсет
     var height = 0;
@@ -81,7 +83,7 @@ public static class Font
     Marshal.Copy(pixelData, 0, bits, pixelData.Length);*/
 
     // Создаем шрифт
-    var hFont = GDI32.CreateFont(fontSize, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+    var hFont = GDI32.CreateFont((int)(fontSize * scaleFactor), 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
       GDI32.ANTIALIASED_QUALITY,
       0, fontName);
     GDI32.SelectObject(hdcMem, hFont);
@@ -92,7 +94,7 @@ public static class Font
     {
       var g = info[k];
       g.TextureArea = Rectangle.FromLeftTopWidthHeight(offsetX, 0, g.Width + padding, g.Height + padding);
-      GDI32.TextOut(hdcMem, offsetX, 0, k.ToString(), 1);
+      GDI32.TextOut(hdcMem, (int)offsetX, 0, k.ToString(), 1);
       offsetX += v.Width + padding;
       info[k] = g;
     }
@@ -108,9 +110,9 @@ public static class Font
     {
       var p = texture.RAW[x, y];
       if (p is { R: 0, B: 0, G: 0 })
-        texture.RAW[x, y] = new RGBA<byte>(p.R, p.G, p.B, 0);
+        texture.RAW[x, y] = new RGBA<byte>(0, 0, 0, 0);
       else
-        texture.RAW[x, y] = new RGBA<byte>(p.R, p.G, p.B, 255);
+        texture.RAW[x, y] = new RGBA<byte>(p.R, p.G, p.B, p.R);
     }
 
     // Освобождаем ресурсы
@@ -193,14 +195,16 @@ public static class Font
     return size;
   }*/
 
-  public static Dictionary<char, GlyphInfo> GetGlyphInfo(string charset, string fontName, int fontSize)
+  public static Dictionary<char, GlyphInfo> GetGlyphInfo(string charset, string fontName, int fontSize,
+    float scaleFactor)
   {
     var d = new Dictionary<char, GlyphInfo>();
 
     var hdc = User32.GetDC(IntPtr.Zero);
     var hdcMem = GDI32.CreateCompatibleDC(hdc);
 
-    var hFont = GDI32.CreateFont(fontSize, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, fontName);
+    var hFont = GDI32.CreateFont((int)(fontSize * scaleFactor), 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, GDI32.ANTIALIASED_QUALITY,
+      0, fontName);
     GDI32.SelectObject(hdcMem, hFont);
 
     foreach (var ch in charset)
@@ -209,7 +213,8 @@ public static class Font
       d[ch] = new GlyphInfo
       {
         Width = size.cx,
-        Height = size.cy
+        Height = size.cy,
+        ScaleFactor = scaleFactor
       };
     }
 

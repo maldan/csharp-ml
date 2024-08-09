@@ -43,6 +43,11 @@ public struct Rectangle
            Math.Max(FromY, ToY) > Math.Min(other.FromY, other.ToY);
   }
 
+  public bool IsIntersects(Rectangle other)
+  {
+    return IsCollide(other);
+  }
+
   // Проверка, находится ли точка внутри прямоугольника
   public bool IsPointInside(float x, float y)
   {
@@ -66,6 +71,17 @@ public struct Rectangle
            other.IsPointInside(FromX, ToY) ||
            other.IsPointInside(ToX, FromY) ||
            other.IsPointInside(ToX, ToY);
+  }
+
+  // Метод для получения прямоугольника пересечения
+  public Rectangle GetIntersection(Rectangle other)
+  {
+    var intersectionFromX = Math.Max(FromX, other.FromX);
+    var intersectionFromY = Math.Max(FromY, other.FromY);
+    var intersectionToX = Math.Min(ToX, other.ToX);
+    var intersectionToY = Math.Min(ToY, other.ToY);
+
+    return new Rectangle(intersectionFromX, intersectionFromY, intersectionToX, intersectionToY);
   }
 
   public Rectangle ToUV(float maxWidth, float maxHeight)

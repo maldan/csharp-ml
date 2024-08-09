@@ -22,7 +22,7 @@ public class Layer_IMGUI : Layer_Base
 
   public Layer_IMGUI()
   {
-    _fontData = Font.Generate("Consolas", 15);
+    _fontData = Font.Generate("Consolas", 15, 1);
     FontTexture = _fontData.Texture;
 
     FontTexture.Options.UseMipMaps = false;
@@ -139,25 +139,4 @@ public class Layer_IMGUI : Layer_Base
 
     return root.RenderData;
   }
-
-  /*public (Vector3[], Vector2[], Vector4[], uint[]) Build()
-  {
-    _vertices.Clear();
-    _colors.Clear();
-    _uv.Clear();
-    _indices.Clear();
-
-    // uint indexOffset = 0;
-    var args = new IMGUI_BuildArgs() { FontData = _fontData };
-    for (var i = 0; i < _windows.Count; i++)
-    {
-      args.IndexOffset = _windows[i].Build(args).IndexOffset;
-      _vertices.AddRange(_windows[i].Vertices);
-      _uv.AddRange(_windows[i].UV);
-      _colors.AddRange(_windows[i].Colors);
-      _indices.AddRange(_windows[i].Indices);
-    }
-
-    return (_vertices.ToArray(), _uv.ToArray(), _colors.ToArray(), _indices.ToArray());
-  }*/
 }

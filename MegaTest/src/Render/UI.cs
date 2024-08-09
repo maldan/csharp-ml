@@ -43,6 +43,8 @@ internal class TestScene2 : Render_Scene
       t.Style.Padding = new Vector4(5, 5, 5, 5);
       t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
       t.Style.Gap = 5;
+      t.Style.Width = 60;
+      t.Style.Height = 60;
 
       imgui.Add<IMGUI_Element>(t =>
       {
@@ -60,6 +62,7 @@ internal class TestScene2 : Render_Scene
         t.Style.Width = 80;
         t.Style.Height = 30;
         t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
+        t.Style.BorderWidth = 1;
 
         t.Events.OnMouseOver = () =>
         {
@@ -80,6 +83,16 @@ internal class TestScene2 : Render_Scene
         t.Style.Color = new Vector4(1, 1, 1, 1);
         t.Text = "GAY";
         t.Style.Margin = new Vector4(0, 5, 0, 0);
+      });
+
+      imgui.Add<IMGUI_Element>(t =>
+      {
+        t.Style.Width = 80;
+        t.Style.Height = 30;
+        t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
+        t.Style.BorderWidth = 1;
+        t.Style.Color = new Vector4(1, 1, 1, 1);
+        t.Text = "GAY";
       });
     });
   }
