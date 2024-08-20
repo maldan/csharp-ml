@@ -210,6 +210,7 @@ public struct BuildIn
   public float ZIndex;
   public IMGUI_Element Parent;
   public float Delta;
+  public Rectangle ClipRect;
 }
 
 public struct BuildOut
@@ -231,6 +232,7 @@ public class IMGUI_Element
   private bool _isClick;
   private bool _isMouseDown;
   private bool _isMouseOver;
+  public Vector2 Scroll;
 
   public void InitCollision(Rectangle r)
   {
@@ -281,11 +283,33 @@ public class IMGUI_Element
 
     var boundingBox = BoundingBox(buildArgs.DrawArea);
     boundingBox += new Vector2(buildArgs.DrawArea.FromX, buildArgs.DrawArea.FromY);
+
+    if (Scroll.Y < 0) Scroll.Y = 0;
+
     /*if (boundingBox.Width > buildArgs.DrawArea.Width)
     {
       boundingBox.ToX -= boundingBox.Width - buildArgs.DrawArea.Width;
     }*/
     // area += pa;
+
+    //var useClipRect = true;
+    //if (buildArgs.Parent == null) useClipRect = false;
+
+    /*if (useClipRect && !buildArgs.ClipRect.IsEmpty)
+    {
+      if (boundingBox.Width > buildArgs.ClipRect.Width)
+      {
+        boundingBox.ToX = buildArgs.ClipRect.ToX;
+      }
+
+      if (boundingBox.Height > buildArgs.ClipRect.Height)
+      {
+        boundingBox.ToY = buildArgs.ClipRect.ToY;
+      }
+    }*/
+
+    //boundingBox.FromY += Scroll.Y;
+    //boundingBox.ToY += Scroll.Y;
 
     // Инициализация коллизии
     var hasCollision = Events.OnMouseOver != null || Events.OnMouseOut != null || Events.OnClick != null;
@@ -334,6 +358,7 @@ public class IMGUI_Element
     var parentMargin = Margin();
     var parentGap = Gap();
     var marginOffsetY = 0f;
+    var rList = new List<RenderData>();
     for (var i = 0; i < Children.Count; i++)
     {
       /*var childBB = Children[i].BoundingBox() + new Vector2(buildArgs.DrawArea.FromX, buildArgs.DrawArea.FromY);
@@ -352,8 +377,9 @@ public class IMGUI_Element
       marginOffsetY += childMargin.Y;
 
       var finalLocalBB = localBB + new Vector2(0, yOffset);
+      var clipRect = new Rectangle();
 
-      // Отсекаем все что за областью
+      // Отсекаем все что за областью. Вроде работает
       if (!boundingBox.IsInsideOrIntersects(finalLocalBB))
       {
         continue;
@@ -361,15 +387,14 @@ public class IMGUI_Element
 
       if (boundingBox.IsIntersects(finalLocalBB))
       {
-        System.Console.WriteLine(finalLocalBB);
-        finalLocalBB = boundingBox.GetIntersection(finalLocalBB);
-        System.Console.WriteLine(finalLocalBB);
+        clipRect = boundingBox.GetIntersection(finalLocalBB);
       }
 
       var buildOut = Children[i].Build(new BuildIn
       {
         Parent = this,
         DrawArea = finalLocalBB,
+        ClipRect = clipRect,
         Delta = buildArgs.Delta,
         FontData = buildArgs.FontData
       });
@@ -379,8 +404,25 @@ public class IMGUI_Element
       if (i < Children.Count - 1) yOffset += parentGap;
 
       // Копируем содержимое чилда
-      RenderData.AddRange(Children[i].RenderData);
+      rList.AddRange(Children[i].RenderData);
     }
+
+    // if (yOffset < 0) yOffset = 0;
+
+    // System.Console.WriteLine($"{Scroll.Y} {boundingBox.Height} {yOffset}");
+    //var yyy = yOffset - boundingBox.Height + parentPadding.Y * 2 + marginOffsetY;
+    //if (Scroll.Y > yyy) Scroll.Y = yyy;
+
+    /*for (var i = 0; i < rList.Count; i++)
+    {
+      for (var j = 0; j < rList[i].Vertices.Count; j++)
+      {
+        rList[i].Vertices[j] -= new Vector2(0, Scroll.Y);
+      }
+    }*/
+
+    // Добавляем в основной список
+    RenderData.AddRange(rList);
 
     // Добавляем текстовый контент
     if (!string.IsNullOrEmpty(Text))

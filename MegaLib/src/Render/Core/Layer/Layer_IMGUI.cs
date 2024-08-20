@@ -34,11 +34,6 @@ public class Layer_IMGUI : Layer_Base
     {
       Style = new ElementStyle()
       {
-        //Width = "100",
-        //Height = "100",
-        //BackgroundColor = "red"
-        //Left = "10",
-        //Top = "5"
       }
     });
   }
@@ -101,16 +96,6 @@ public class Layer_IMGUI : Layer_Base
     };
     _currentContainer.Push(cnt);
     currentContainer.Elements.Add(cnt);
-  }
-
-  public void EndContainer()
-  {
-    _currentContainer.Pop();
-  }*/
-
-  /*public void EndWindow()
-  {
-    _currentWindow.Pop();
   }*/
 
   public void Add<T>(Action<T> onInit = null) where T : IMGUI_Element, new()

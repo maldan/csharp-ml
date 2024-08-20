@@ -1,14 +1,17 @@
 using System;
 using System.Threading.Tasks;
 using MegaLib.IO;
+using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS;
 using MegaLib.OS.Api;
 using MegaLib.Render.Camera;
+using MegaLib.Render.Color;
 using MegaLib.Render.Core;
 using MegaLib.Render.Core.Layer;
 using MegaLib.Render.IMGUI;
 using MegaLib.Render.Renderer.OpenGL;
+using MegaLib.Render.RenderObject;
 using NUnit.Framework;
 using Random = MegaLib.Mathematics.Random;
 
@@ -32,6 +35,11 @@ internal class TestScene2 : Render_Scene
     {
       Camera = new Camera_Orthographic()
     });
+    AddLayer("line", new Layer_Line()
+    {
+      Camera = new Camera_Orthographic(),
+      LineWidth = 2
+    });
 
     var imgui = GetLayer<Layer_IMGUI>();
 
@@ -45,6 +53,8 @@ internal class TestScene2 : Render_Scene
       t.Style.Gap = 5;
       t.Style.Width = 60;
       t.Style.Height = 60;
+      t.Style.Left = 10;
+      t.Style.Top = 10;
 
       imgui.Add<IMGUI_Element>(t =>
       {
@@ -92,10 +102,27 @@ internal class TestScene2 : Render_Scene
         t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
         t.Style.BorderWidth = 1;
         t.Style.Color = new Vector4(1, 1, 1, 1);
-        t.Text = "GAY";
+        t.Text = "SEX";
       });
+
+      t.Events.OnRender = f => { t.Scroll.Y = (float)Math.Sin(sex++ / 32f) * 60f; };
     });
   }
+
+  /*public override void OnBeforeRender()
+  {
+    var l = GetLayer<Layer_Line>();
+
+    var a = new Rectangle(10, 10, 244, 244);
+    var b = new Rectangle(80, 20, 280, 60);
+
+    l.DrawRectangle(a, new RGBA<float>(1, 1, 1, 1));
+    l.DrawRectangle(b, new RGBA<float>(1, 1, 1, 1));
+    if (b.IsIntersects(a))
+    {
+      l.DrawRectangle(a.GetIntersection(b), new RGBA<float>(1, 0, 0, 1));
+    }
+  }*/
 }
 
 internal class TestScene : Render_Scene
@@ -233,6 +260,15 @@ public class UITest
           c1.Camera.Top = 0;
           c1.Camera.Right = w;
           c1.Camera.Bottom = h;
+        }
+
+        var c2 = scene.GetLayer<Layer_Line>();
+        if (c2 != null)
+        {
+          c2.Camera.Left = 0;
+          c2.Camera.Top = 0;
+          c2.Camera.Right = w;
+          c2.Camera.Bottom = h;
         }
 
         OpenGL32.glViewport(0, 0, w, h);

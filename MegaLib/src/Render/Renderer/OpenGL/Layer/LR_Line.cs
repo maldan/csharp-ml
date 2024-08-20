@@ -77,8 +77,16 @@ public class LR_Line : LR_Base
     Shader.Enable(OpenGL32.GL_BLEND);
     Shader.Enable(OpenGL32.GL_DEPTH_TEST);
 
-    Shader.SetUniform("uProjectionMatrix", Scene.Camera.ProjectionMatrix);
-    Shader.SetUniform("uViewMatrix", Scene.Camera.ViewMatrix);
+    if (layer.Camera != null)
+    {
+      Shader.SetUniform("uProjectionMatrix", layer.Camera.ProjectionMatrix);
+      Shader.SetUniform("uViewMatrix", layer.Camera.ViewMatrix);
+    }
+    else
+    {
+      Shader.SetUniform("uProjectionMatrix", Scene.Camera.ProjectionMatrix);
+      Shader.SetUniform("uViewMatrix", Scene.Camera.ViewMatrix);
+    }
 
     if (layer.IsSmooth) OpenGL32.glEnable(OpenGL32.GL_LINE_SMOOTH);
     else OpenGL32.glDisable(OpenGL32.GL_LINE_SMOOTH);

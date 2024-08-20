@@ -1,5 +1,6 @@
 using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
+using MegaLib.Render.Camera;
 using MegaLib.Render.Color;
 using MegaLib.Render.RenderObject;
 
@@ -7,9 +8,15 @@ namespace MegaLib.Render.Core.Layer;
 
 public class Layer_Line : Layer_Base
 {
+  public Camera_Orthographic Camera;
   public float LineWidth = 1.0f;
   public bool IsSmooth = true;
   public bool IsYInverted = false;
+
+  public void DrawRectangle(Rectangle r, RGBA<float> color)
+  {
+    DrawRectangle(new Vector3(r.FromX, r.FromY, 0), new Vector3(r.ToX, r.ToX, 0), color);
+  }
 
   public void DrawRectangle(Vector3 lt, Vector3 rb, RGBA<float> color)
   {
