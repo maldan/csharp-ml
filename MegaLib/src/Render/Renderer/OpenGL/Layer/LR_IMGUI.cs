@@ -5,6 +5,7 @@ using MegaLib.OS.Api;
 using MegaLib.Render.Buffer;
 using MegaLib.Render.Core;
 using MegaLib.Render.Core.Layer;
+using MegaLib.Render.IMGUI;
 using MegaLib.Render.RenderObject;
 
 namespace MegaLib.Render.Renderer.OpenGL.Layer;
@@ -106,12 +107,16 @@ public class LR_IMGUI : LR_Base
         
         void main()
         {
-            if (vo_UV.x < 0.0) {
+            if (uMode == vec3(1, 0, 0)) {
                 color = vo_Color;
             } else {
-                vec4 texelColor = texture(uFontTexture, vo_UV) * vo_Color;
-                if (texelColor.a <= 0.01) discard;
-                color = texelColor;
+                if (vo_UV.x < 0.0) {
+                    color = vo_Color;
+                } else {
+                    vec4 texelColor = texture(uFontTexture, vo_UV) * vo_Color;
+                    if (texelColor.a <= 0.01) discard;
+                    color = texelColor;
+                }
             }
         }";
 
@@ -132,6 +137,89 @@ public class LR_IMGUI : LR_Base
 
     // Create vao
     OpenGL32.glGenVertexArrays(1, ref _vaoId);
+  }
+
+  private void RenderLines(RenderData rd)
+  {
+    var layer = (Layer_IMGUI)Layer;
+
+    _vertices.Clear();
+    _colors.Clear();
+
+    foreach (var line in rd.Lines)
+    {
+      _vertices.Add(line.From);
+      _vertices.Add(line.To);
+      _colors.Add(new Vector4(line.FromColor.R, line.FromColor.G, line.FromColor.B,
+        line.FromColor.A));
+      _colors.Add(new Vector4(line.ToColor.R, line.ToColor.G, line.ToColor.B,
+        line.ToColor.A));
+    }
+
+    // Загружаем на гпу
+    _vertices.Sync();
+    _colors.Sync();
+
+    // Биндим vao
+    OpenGL32.glBindVertexArray(_vaoId);
+
+    // Активируем атрибуты
+    Shader.EnableAttribute(_vertices, "aPosition");
+    Shader.EnableAttribute(_colors, "aColor");
+
+    Shader.SetUniform("uMode", new Vector3(1, 0, 0));
+
+    // Рисуем
+    OpenGL32.glDrawArrays(OpenGL32.GL_LINES, 0, rd.Lines.Count * 2);
+
+    // Разбиндим vao
+    OpenGL32.glBindVertexArray(0);
+  }
+
+  private void RenderMain(RenderData rd)
+  {
+    var layer = (Layer_IMGUI)Layer;
+
+    _vertices.Clear();
+    _uv.Clear();
+    _colors.Clear();
+    _indices.Clear();
+
+    _vertices.AddRange(rd.Vertices.ToArray());
+    _uv.AddRange(rd.UV.ToArray());
+    _colors.AddRange(rd.Colors.ToArray());
+    _indices.AddRange(rd.Indices.ToArray());
+
+    // Маппим текстуру шрифтов
+    Context.MapTexture(layer.FontTexture);
+
+    // Загружаем на гпу
+    _vertices.Sync();
+    _uv.Sync();
+    _colors.Sync();
+    _indices.Sync();
+
+    // Биндим vao
+    OpenGL32.glBindVertexArray(_vaoId);
+
+    // Активируем атрибуты
+    Shader.EnableAttribute(_vertices, "aPosition");
+    Shader.EnableAttribute(_uv, "aUV");
+    Shader.EnableAttribute(_colors, "aColor");
+
+    // Texture
+    Shader.ActivateTexture(layer.FontTexture, "uFontTexture", 0);
+
+    Shader.SetUniform("uMode", new Vector3(0, 0, 0));
+
+    // Биндим индексы
+    OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(_indices));
+
+    // Рисуем
+    OpenGL32.glDrawElements(OpenGL32.GL_TRIANGLES, _indices.Count, OpenGL32.GL_UNSIGNED_INT, IntPtr.Zero);
+
+    // Разбиндим vao
+    OpenGL32.glBindVertexArray(0);
   }
 
   public override void Render()
@@ -161,45 +249,31 @@ public class LR_IMGUI : LR_Base
     // Основной рендер
     renderData.ForEach(rd =>
     {
-      _vertices.Clear();
-      _uv.Clear();
-      _colors.Clear();
-      _indices.Clear();
-      // var (v, u, c, i) = layer.Build();
+      if (rd.IsStencilStop)
+      {
+        OpenGL32.glDisable(OpenGL32.GL_STENCIL_TEST);
+      }
+      else if (rd.IsStencilStart)
+      {
+        OpenGL32.glEnable(OpenGL32.GL_STENCIL_TEST);
+        OpenGL32.glStencilOp(OpenGL32.GL_KEEP, OpenGL32.GL_KEEP, OpenGL32.GL_REPLACE);
+        OpenGL32.glStencilFunc(OpenGL32.GL_ALWAYS, 1, 0xFF);
+        OpenGL32.glStencilMask(0xFF);
+        OpenGL32.glClear(OpenGL32.GL_STENCIL_BUFFER_BIT);
 
-      _vertices.AddRange(rd.Vertices.ToArray());
-      _uv.AddRange(rd.UV.ToArray());
-      _colors.AddRange(rd.Colors.ToArray());
-      _indices.AddRange(rd.Indices.ToArray());
+        RenderMain(rd);
 
-      // Маппим текстуру шрифтов
-      Context.MapTexture(layer.FontTexture);
-
-      // Загружаем на гпу
-      _vertices.Sync();
-      _uv.Sync();
-      _colors.Sync();
-      _indices.Sync();
-
-      // Биндим vao
-      OpenGL32.glBindVertexArray(_vaoId);
-
-      // Активируем атрибуты
-      Shader.EnableAttribute(_vertices, "aPosition");
-      Shader.EnableAttribute(_uv, "aUV");
-      Shader.EnableAttribute(_colors, "aColor");
-
-      // Texture
-      Shader.ActivateTexture(layer.FontTexture, "uFontTexture", 0);
-
-      // Биндим индексы
-      OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(_indices));
-
-      // Рисуем
-      OpenGL32.glDrawElements(OpenGL32.GL_TRIANGLES, _indices.Count, OpenGL32.GL_UNSIGNED_INT, IntPtr.Zero);
-
-      // Разбиндим vao
-      OpenGL32.glBindVertexArray(0);
+        OpenGL32.glStencilFunc(OpenGL32.GL_EQUAL, 1, 0xFF);
+        OpenGL32.glStencilMask(0x00);
+      }
+      else if (rd.IsLine)
+      {
+        RenderLines(rd);
+      }
+      else
+      {
+        RenderMain(rd);
+      }
     });
   }
 }

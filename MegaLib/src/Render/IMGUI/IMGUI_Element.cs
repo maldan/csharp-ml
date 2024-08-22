@@ -5,6 +5,7 @@ using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Color;
+using MegaLib.Render.RenderObject;
 
 namespace MegaLib.Render.IMGUI;
 
@@ -14,11 +15,32 @@ public class RenderData
   public List<Vector4> Colors = [];
   public List<Vector2> UV = [];
   public List<uint> Indices = [];
+  public List<RO_Line> Lines = [];
   private uint _indexOffset;
+  public bool IsText;
+  public bool IsLine;
+  public bool IsStencilStart;
+  public bool IsStencilStop;
+
+  private bool _isChanged;
+  private Rectangle _boundingBox;
+
+  public Rectangle BoundingBox
+  {
+    get
+    {
+      if (!_isChanged) return _boundingBox;
+      CalculateBoundingBox();
+      _isChanged = false;
+      return _boundingBox;
+    }
+  }
 
   // Очищаем вершины и прочий контент
   public void Clear()
   {
+    _isChanged = true;
+
     Vertices.Clear();
     Colors.Clear();
     UV.Clear();
@@ -28,6 +50,8 @@ public class RenderData
 
   public void DrawOutline(Rectangle area, float[] width, Vector4[] color)
   {
+    _isChanged = true;
+
     if (width[0] > 0)
     {
       DrawRectangle(
@@ -63,6 +87,8 @@ public class RenderData
 
   public void DrawRectangle(Rectangle area, Vector4 color)
   {
+    _isChanged = true;
+
     var pivot = new Vector3(0.5f, 0.5f, 0);
     var size = new Vector3(area.Width, area.Height, 1);
     var offset = new Vector2(area.FromX, area.FromY);
@@ -89,6 +115,36 @@ public class RenderData
     _indexOffset += 4;
   }
 
+  public void DrawDebugRectangle(Rectangle area, Vector4 color)
+  {
+    _isChanged = true;
+    IsLine = true;
+
+    Lines.Add(
+      new RO_Line(
+        new Vector3(area.FromX, area.FromY, 0),
+        new Vector3(area.ToX, area.FromY, 0),
+        new RGBA<float>(color.X, color.Y, color.Z, color.W)));
+
+    Lines.Add(
+      new RO_Line(
+        new Vector3(area.FromX, area.ToY, 0),
+        new Vector3(area.ToX, area.ToY, 0),
+        new RGBA<float>(color.X, color.Y, color.Z, color.W)));
+
+    Lines.Add(
+      new RO_Line(
+        new Vector3(area.ToX, area.FromY, 0),
+        new Vector3(area.ToX, area.ToY, 0),
+        new RGBA<float>(color.X, color.Y, color.Z, color.W)));
+
+    Lines.Add(
+      new RO_Line(
+        new Vector3(area.FromX, area.FromY, 0),
+        new Vector3(area.FromX, area.ToY, 0),
+        new RGBA<float>(color.X, color.Y, color.Z, color.W)));
+  }
+
   public Rectangle DrawText(
     string text,
     FontData fontData,
@@ -97,6 +153,7 @@ public class RenderData
     Rectangle drawArea
   )
   {
+    _isChanged = true;
     if (text == null) return new Rectangle();
     if (text.Length == 0) return new Rectangle();
 
@@ -174,6 +231,17 @@ public class RenderData
 
     return textSize;
   }
+
+  private void CalculateBoundingBox()
+  {
+    for (var i = 0; i < Vertices.Count; i++)
+    {
+      _boundingBox.FromX = Math.Min(Vertices[i].X, _boundingBox.FromX);
+      _boundingBox.FromY = Math.Min(Vertices[i].Y, _boundingBox.FromY);
+      _boundingBox.ToX = Math.Max(Vertices[i].X, _boundingBox.ToX);
+      _boundingBox.ToY = Math.Max(Vertices[i].Y, _boundingBox.ToY);
+    }
+  }
 }
 
 public class ElementStyle
@@ -211,12 +279,17 @@ public struct BuildIn
   public IMGUI_Element Parent;
   public float Delta;
   public Rectangle ClipRect;
+  public Vector2 ScrollOffset;
+
+  public Vector2 CursorPosition;
 }
 
 public struct BuildOut
 {
   public Rectangle DrawArea;
   public float ZIndex;
+
+  public Rectangle OutputBoundingBox;
 }
 
 public class IMGUI_Element
@@ -233,6 +306,9 @@ public class IMGUI_Element
   private bool _isMouseDown;
   private bool _isMouseOver;
   public Vector2 Scroll;
+  public bool IsDebug = false;
+  public bool Scrollable = false;
+  public Vector2 ParentScroll;
 
   public void InitCollision(Rectangle r)
   {
@@ -254,8 +330,8 @@ public class IMGUI_Element
   public bool CheckCollision()
   {
     var ray = new Ray(
-      new Vector3(Mouse.ClientClamped.X, Mouse.ClientClamped.Y, -10),
-      new Vector3(Mouse.ClientClamped.X, Mouse.ClientClamped.Y, 10)
+      new Vector3(Mouse.ClientClamped.X, Mouse.ClientClamped.Y + ParentScroll.Y, -10),
+      new Vector3(Mouse.ClientClamped.X, Mouse.ClientClamped.Y + ParentScroll.Y, 10)
     );
 
     for (var i = 0; i < Collision.Count; i++)
@@ -277,6 +353,162 @@ public class IMGUI_Element
   {
     Clear();
 
+    ParentScroll = buildArgs.ScrollOffset;
+
+    // Получаем bounding box у текущего объекта
+    var p = Position();
+    var boundingBox = Rectangle.FromLeftTopWidthHeight(p.X, p.Y, Width(), Height());
+    var contentBoundingBox = Rectangle.FromLeftTopWidthHeight(p.X, p.Y, Width(), Height());
+
+    // Помещаем его на позицию курсора
+    boundingBox += buildArgs.CursorPosition;
+
+    // Инициализация коллизии
+    var hasCollision = Scrollable || Events.OnMouseOver != null || Events.OnMouseOut != null || Events.OnClick != null;
+    if (hasCollision)
+    {
+      InitCollision(boundingBox);
+      if (CheckCollision())
+      {
+        if (!_isMouseOver)
+        {
+          _isMouseOver = true;
+          Events?.OnMouseOver?.Invoke();
+        }
+
+        if (Mouse.IsKeyDown(MouseKey.Left) && !_isMouseDown)
+        {
+          _isMouseDown = true;
+          // Events?.OnClick?.Invoke();
+        }
+
+        if (Mouse.IsKeyUp(MouseKey.Left) && _isMouseDown)
+        {
+          _isMouseDown = false;
+          Events?.OnClick?.Invoke();
+        }
+      }
+      else
+      {
+        if (_isMouseOver)
+        {
+          _isMouseOver = false;
+          Events?.OnMouseOut?.Invoke();
+        }
+
+        if (Mouse.IsKeyUp(MouseKey.Left))
+        {
+          _isMouseDown = false;
+        }
+      }
+    }
+
+    if (_isMouseOver && Scrollable) Scroll.Y -= Mouse.WheelDirection * 3f;
+
+    // Смещение курсора
+    var cursorOffset = new Vector2(0, 0);
+
+    // Проходимся по чилдам
+    if (Children.Count > 0)
+    {
+      var rList = new List<RenderData>();
+      for (var i = 0; i < Children.Count; i++)
+      {
+        var buildOut = Children[i].Build(new BuildIn
+        {
+          Parent = this,
+          Delta = buildArgs.Delta,
+          FontData = buildArgs.FontData,
+          CursorPosition = new Vector2(boundingBox.FromX, boundingBox.FromY) + cursorOffset,
+          ScrollOffset = new Vector2(0, Scroll.Y)
+        });
+
+        contentBoundingBox.ToY = Math.Max(contentBoundingBox.ToY, buildOut.OutputBoundingBox.MaxY);
+        contentBoundingBox.ToX = Math.Max(contentBoundingBox.ToX, buildOut.OutputBoundingBox.ToX);
+
+        // Отбросить то что за пределами контейнера
+        /*if (buildArgs.Parent != null)
+        {
+          if (!boundingBox.IsInsideOrIntersects(buildOut.OutputBoundingBox))
+          {
+            continue;
+          }
+        }*/
+
+        // Смещаем курсор вниз на высоту чилда
+        cursorOffset.Y += buildOut.OutputBoundingBox.Height;
+
+        // Копируем содержимое чилда
+        rList.AddRange(Children[i].RenderData);
+      }
+
+      for (var i = 0; i < rList.Count; i++)
+      {
+        for (var j = 0; j < rList[i].Vertices.Count; j++)
+        {
+          rList[i].Vertices[j] -= new Vector3(0, Scroll.Y, 0);
+        }
+      }
+
+      /*if (buildArgs.Parent != null)
+      {
+        for (var i = 0; i < rList.Count; i++)
+        {
+          var debugOutline = new RenderData();
+          debugOutline.DrawDebugRectangle(rList[i].BoundingBox, new Vector4(1, 1f, 0f, 1));
+          RenderData.Add(debugOutline);
+          System.Console.WriteLine(rList[i].BoundingBox);
+        }
+      }*/
+
+      // Добавляем в основной список
+      RenderData.AddRange(rList);
+    }
+
+    // Бэкграунд по bounding box
+    var background = new RenderData();
+    background.DrawRectangle(boundingBox, BackgroundColor());
+    RenderData.Insert(0, background);
+
+    if (contentBoundingBox.Width > background.BoundingBox.Width ||
+        contentBoundingBox.Height > background.BoundingBox.Height)
+    {
+      // Stencil
+      var stencil = new RenderData();
+      stencil.IsStencilStart = true;
+      stencil.DrawRectangle(boundingBox, new Vector4(1, 1, 1, 1));
+      RenderData.Insert(0, stencil);
+
+      // Stencil
+      stencil = new RenderData();
+      stencil.IsStencilStop = true;
+      stencil.DrawRectangle(boundingBox, new Vector4(1, 1, 1, 1));
+      RenderData.Add(stencil);
+    }
+
+    if (IsDebug)
+    {
+      var debugOutline = new RenderData();
+      debugOutline.DrawDebugRectangle(boundingBox, new Vector4(1, 1, 1, 1));
+      RenderData.Add(debugOutline);
+
+      debugOutline = new RenderData();
+      debugOutline.DrawDebugRectangle(contentBoundingBox, new Vector4(1, 0.5f, 0.5f, 1));
+      RenderData.Add(debugOutline);
+    }
+
+    Events?.OnRender?.Invoke(buildArgs.Delta);
+
+    return new BuildOut
+    {
+      OutputBoundingBox = boundingBox
+    };
+  }
+
+  public virtual BuildOut BuildX(BuildIn buildArgs)
+  {
+    Clear();
+
     // Рисуем основное тело
     var bg = BackgroundColor();
     var re = new RenderData();
@@ -285,31 +517,6 @@ public class IMGUI_Element
     boundingBox += new Vector2(buildArgs.DrawArea.FromX, buildArgs.DrawArea.FromY);
 
     if (Scroll.Y < 0) Scroll.Y = 0;
-
-    /*if (boundingBox.Width > buildArgs.DrawArea.Width)
-    {
-      boundingBox.ToX -= boundingBox.Width - buildArgs.DrawArea.Width;
-    }*/
-    // area += pa;
-
-    //var useClipRect = true;
-    //if (buildArgs.Parent == null) useClipRect = false;
-
-    /*if (useClipRect && !buildArgs.ClipRect.IsEmpty)
-    {
-      if (boundingBox.Width > buildArgs.ClipRect.Width)
-      {
-        boundingBox.ToX = buildArgs.ClipRect.ToX;
-      }
-
-      if (boundingBox.Height > buildArgs.ClipRect.Height)
-      {
-        boundingBox.ToY = buildArgs.ClipRect.ToY;
-      }
-    }*/
-
-    //boundingBox.FromY += Scroll.Y;
-    //boundingBox.ToY += Scroll.Y;
 
     // Инициализация коллизии
     var hasCollision = Events.OnMouseOver != null || Events.OnMouseOut != null || Events.OnClick != null;
@@ -382,7 +589,7 @@ public class IMGUI_Element
       // Отсекаем все что за областью. Вроде работает
       if (!boundingBox.IsInsideOrIntersects(finalLocalBB))
       {
-        continue;
+        // continue;
       }
 
       if (boundingBox.IsIntersects(finalLocalBB))
@@ -406,20 +613,6 @@ public class IMGUI_Element
       // Копируем содержимое чилда
       rList.AddRange(Children[i].RenderData);
     }
-
-    // if (yOffset < 0) yOffset = 0;
-
-    // System.Console.WriteLine($"{Scroll.Y} {boundingBox.Height} {yOffset}");
-    //var yyy = yOffset - boundingBox.Height + parentPadding.Y * 2 + marginOffsetY;
-    //if (Scroll.Y > yyy) Scroll.Y = yyy;
-
-    /*for (var i = 0; i < rList.Count; i++)
-    {
-      for (var j = 0; j < rList[i].Vertices.Count; j++)
-      {
-        rList[i].Vertices[j] -= new Vector2(0, Scroll.Y);
-      }
-    }*/
 
     // Добавляем в основной список
     RenderData.AddRange(rList);
@@ -464,6 +657,21 @@ public class IMGUI_Element
     );
 
     RenderData.Insert(0, re);
+
+    if (IsDebug)
+    {
+      // Основной размер
+      var dre = new RenderData();
+      dre.DrawDebugRectangle(boundingBox, new Vector4(1, 0, 0, 1));
+      RenderData.Add(dre);
+
+      // Внутренний размер
+      dre = new RenderData();
+      var bb = boundingBox;
+      bb.ToY += yOffset;
+      dre.DrawDebugRectangle(bb, new Vector4(0, 1, 0, 1));
+      RenderData.Add(dre);
+    }
 
     Events?.OnRender?.Invoke(buildArgs.Delta);
 

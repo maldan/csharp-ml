@@ -38,6 +38,18 @@ public static extern void glDepthFunc(GLenum func);
 
 // 
 [DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
+public static extern void glStencilMask(GLuint mask);
+
+// 
+[DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
+public static extern void glStencilFunc(GLenum func, GLint refs, GLuint mask);
+
+// 
+[DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
+public static extern void glStencilOp(GLenum sfail, GLenum dpfail, GLenum dppass);
+
+// 
+[DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
 public static extern void glPolygonMode(GLenum face, GLenum mode);
 
 // 

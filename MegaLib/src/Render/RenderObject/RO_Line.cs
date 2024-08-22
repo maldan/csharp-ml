@@ -20,6 +20,14 @@ public class RO_Line : RO_Base
     To = to;
   }
 
+  public RO_Line(Vector3 from, Vector3 to, RGBA<float> color)
+  {
+    From = from;
+    To = to;
+    FromColor = color;
+    ToColor = color;
+  }
+
   public RO_Line(float fx, float fy, float fz, float tx, float ty, float tz, RGBA<float> fc, RGBA<float> tc)
   {
     From = new Vector3(fx, fy, fz);

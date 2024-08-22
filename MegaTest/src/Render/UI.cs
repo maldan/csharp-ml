@@ -48,26 +48,63 @@ internal class TestScene2 : Render_Scene
 
     imgui.Add<IMGUI_Element>(t =>
     {
+      t.Scrollable = true;
+      t.IsDebug = true;
+
       t.Style.Padding = new Vector4(5, 5, 5, 5);
       t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
       t.Style.Gap = 5;
       t.Style.Width = 60;
-      t.Style.Height = 60;
+      t.Style.Height = 90;
       t.Style.Left = 10;
       t.Style.Top = 10;
 
-      imgui.Add<IMGUI_Element>(t =>
+      t.Events.OnMouseOver = () => { t.Style.BackgroundColor = new Vector4(0.25f, 0.25f, 0.25f, 1); };
+      t.Events.OnMouseOut = () => { t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1); };
+
+      /*t.Events.OnRender = f =>
       {
+        sex -= f;
+        t.Scroll.Y = sex;
+      };*/
+
+      /*imgui.Add<IMGUI_Element>(t =>
+      {
+        // t.IsDebug = true;
+
         t.Style.Width = 80;
         t.Style.Height = 30;
-        t.Style.BackgroundColor = new Vector4(0.35f, 0.35f, 0.35f, 1);
+        t.Style.BackgroundColor = new Vector4(0.9f, 0.1f, 0.1f, 1);
 
-        t.Events.OnMouseOver = () => { t.Style.BackgroundColor = new Vector4(1.0f, 0.5f, 0.5f, 1); };
-        t.Events.OnMouseOut = () => { t.Style.BackgroundColor = new Vector4(0.0f, 0.5f, 0.5f, 1); };
-        t.Events.OnClick = () => { t.Style.BackgroundColor = new Vector4(1.0f, 1.5f, 1.5f, 1); };
-      });
+        //t.Events.OnMouseOver = () => { t.Style.BackgroundColor = new Vector4(1.0f, 0.5f, 0.5f, 1); };
+        //t.Events.OnMouseOut = () => { t.Style.BackgroundColor = new Vector4(0.0f, 0.5f, 0.5f, 1); };
+        //t.Events.OnClick = () => { t.Style.BackgroundColor = new Vector4(1.0f, 1.5f, 1.5f, 1); };
+      });*/
 
-      imgui.Add<IMGUI_Element>(t =>
+      for (var i = 0; i < 4; i++)
+      {
+        imgui.Add<IMGUI_Element>(t =>
+        {
+          // t.IsDebug = true;
+
+          t.Style.Width = 80;
+          t.Style.Height = 30;
+          t.Style.BackgroundColor = new Vector4(0.1f + i * 0.4f, 0.5f + i * 0.2f, 0.1f, 1);
+
+          t.Events.OnMouseOver = () =>
+          {
+            t.Style.BackgroundColor = new Vector4(0.1f + i * 0.2f, 0.5f + i * 0.1f, 0.1f, 1);
+          };
+          t.Events.OnMouseOut = () =>
+          {
+            t.Style.BackgroundColor = new Vector4(0.1f + i * 0.4f, 0.5f + i * 0.2f, 0.1f, 1);
+          };
+
+          //t.Events.OnClick = () => { t.Style.BackgroundColor = new Vector4(1.0f, 1.5f, 1.5f, 1); };
+        });
+      }
+
+      /*imgui.Add<IMGUI_Element>(t =>
       {
         t.Style.Width = 80;
         t.Style.Height = 30;
@@ -103,9 +140,9 @@ internal class TestScene2 : Render_Scene
         t.Style.BorderWidth = 1;
         t.Style.Color = new Vector4(1, 1, 1, 1);
         t.Text = "SEX";
-      });
+      });*/
 
-      t.Events.OnRender = f => { t.Scroll.Y = (float)Math.Sin(sex++ / 32f) * 60f; };
+      // t.Events.OnRender = f => { t.Scroll.Y = (float)Math.Sin(sex++ / 32f) * 60f; };
     });
   }
 
@@ -234,6 +271,8 @@ public class UITest
   {
     var renderer = new OpenGL_Renderer();
     var scene = new TestScene2();
+
+    Mouse.Init();
 
     var win = new Window
     {

@@ -10,10 +10,16 @@ public struct Rectangle
   public float ToX;
   public float ToY;
 
-  public float Width => ToX - FromX;
-  public float Height => ToY - FromY;
+  public float Width => MaxX - MinX;
+  public float Height => MaxY - MinY;
 
   public bool IsEmpty => FromX == 0 && FromY == 0 && ToX == 0 && ToY == 0;
+
+  // Вспомогательные методы для получения правильных минимальных и максимальных значений
+  public float MinX => Math.Min(FromX, ToX);
+  public float MaxX => Math.Max(FromX, ToX);
+  public float MinY => Math.Min(FromY, ToY);
+  public float MaxY => Math.Max(FromY, ToY);
 
   public Rectangle(float x1, float y1, float x2, float y2)
   {
@@ -51,7 +57,7 @@ public struct Rectangle
   // Проверка, находится ли точка внутри прямоугольника
   public bool IsPointInside(float x, float y)
   {
-    return x >= FromX && x <= ToX && y >= FromY && y <= ToY;
+    return x >= MinX && x <= MaxX && y >= MinY && y <= MaxY;
   }
 
   public bool IsPointInside(Vector2 point)
@@ -63,14 +69,14 @@ public struct Rectangle
   public bool IsInsideOrIntersects(Rectangle other)
   {
     // Проверка, находятся ли углы одного прямоугольника внутри другого
-    return IsPointInside(other.FromX, other.FromY) ||
-           IsPointInside(other.FromX, other.ToY) ||
-           IsPointInside(other.ToX, other.FromY) ||
-           IsPointInside(other.ToX, other.ToY) ||
-           other.IsPointInside(FromX, FromY) ||
-           other.IsPointInside(FromX, ToY) ||
-           other.IsPointInside(ToX, FromY) ||
-           other.IsPointInside(ToX, ToY);
+    return IsPointInside(other.MinX, other.MinY) ||
+           IsPointInside(other.MinX, other.MaxY) ||
+           IsPointInside(other.MaxX, other.MinY) ||
+           IsPointInside(other.MaxX, other.MaxY) ||
+           other.IsPointInside(MinX, MinY) ||
+           other.IsPointInside(MinX, MaxY) ||
+           other.IsPointInside(MaxX, MinY) ||
+           other.IsPointInside(MaxX, MaxY);
   }
 
   // Метод для получения прямоугольника пересечения

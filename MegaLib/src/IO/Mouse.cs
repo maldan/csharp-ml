@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
@@ -20,10 +21,16 @@ public static class Mouse
 
   public static Vector2 Normalized { get; private set; }
 
+  public static float WheelDirection;
+
   private static byte[] _state =
   [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   ];
+
+  public static void Init()
+  {
+  }
 
   public static void Update()
   {

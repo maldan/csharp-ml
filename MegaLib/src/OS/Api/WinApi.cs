@@ -26,6 +26,7 @@ public static class WinApi
   public const int WM_SIZE = 0x0005;
   public const int WM_SHOWWINDOW = 0x0018;
   public const int WM_SETCURSOR = 0x0020;
+  public const int WM_MOUSEWHEEL = 0x020A;
 }
 
 public delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);

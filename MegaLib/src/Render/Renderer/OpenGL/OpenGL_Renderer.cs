@@ -24,7 +24,7 @@ public class OpenGL_Renderer : IRenderer
 
   private void Clear()
   {
-    OpenGL32.glClear(OpenGL32.GL_COLOR_BUFFER_BIT | OpenGL32.GL_DEPTH_BUFFER_BIT);
+    OpenGL32.glClear(OpenGL32.GL_COLOR_BUFFER_BIT | OpenGL32.GL_DEPTH_BUFFER_BIT | OpenGL32.GL_STENCIL_BUFFER_BIT);
     OpenGL32.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   }
 

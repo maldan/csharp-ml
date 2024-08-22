@@ -2,7 +2,9 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using MegaLib.Crypto;
+using MegaLib.IO;
 using MegaLib.OS.Api;
+using Console = System.Console;
 
 namespace MegaLib.OS;
 
@@ -150,6 +152,7 @@ public class Window
         _timer.Restart();
         _delta = (float)deltaTime.TotalMilliseconds / 1000f;
         if (_delta > 0.05) _delta = 0.05f;
+        Mouse.WheelDirection = 0;
         return IntPtr.Zero;
       case WinApi.WM_CLOSE:
         OnClose?.Invoke();
@@ -169,6 +172,12 @@ public class Window
         var hCursor = User32.LoadCursor(IntPtr.Zero, IDC_ARROW);
         User32.SetCursor(hCursor);
         return IntPtr.Zero;*/
+      case WinApi.WM_MOUSEWHEEL:
+        int delta = (short)((wParam.ToInt64() >> 16) & 0xFFFF);
+        var direction = delta > 0 ? 1 : -1;
+        // OnMouseWheel?.Invoke(direction);
+        Mouse.WheelDirection = direction;
+        return IntPtr.Zero;
       default:
         return User32.DefWindowProc(hWnd, msg, wParam, lParam);
     }
