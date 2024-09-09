@@ -39,10 +39,6 @@ public class Layer_Skybox : Layer_Base
 {
 }
 
-public class Layer_Point : Layer_Base
-{
-}
-
 public class Layer_Capture : Layer_Base
 {
   public List<string> LayerNames = [];

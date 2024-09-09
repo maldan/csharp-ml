@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using MegaLib.Ext;
 using MegaLib.IO;
 using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
@@ -22,6 +23,11 @@ internal class TestScene : Render_Scene
 {
   private float _time;
   private float _x;
+  private float _scaleX = 1;
+  private VerletPoint _vp = new(new Vector3(0, 1, 0), 1.0f);
+  private VerletPoint _vp2 = new(new Vector3(), 1.0f);
+  private DistanceConstraint _constraint;
+  private VerletLine _vl;
 
   public override void OnInit()
   {
@@ -35,16 +41,64 @@ internal class TestScene : Render_Scene
     Camera = _camera;
 
     // Добавляем слои
+    AddLayer("imgui", new Layer_IMGUI()
+    {
+      Camera = new Camera_Orthographic()
+    });
     AddLayer("dynamicPoint", new Layer_Point() { });
-    AddLayer("dynamicLine", new Layer_Line() { });
+    AddLayer("dynamicLine", new Layer_Line() { LineWidth = 2f });
+
+    var imgui = GetLayer<Layer_IMGUI>();
+    imgui.Add<IMGUI_Element>(t =>
+    {
+      t.Scrollable = true;
+      t.IsDebug = true;
+
+      t.Style.Padding = new Vector4(5, 5, 5, 5);
+      t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
+      t.Style.Gap = 5;
+      t.Style.Width = 60;
+      t.Style.Height = 90;
+      t.Style.Left = 10;
+      t.Style.Top = 10;
+
+      //t.Events.OnMouseOver = () => { t.Style.BackgroundColor = new Vector4(0.25f, 0.25f, 0.25f, 1); };
+      //t.Events.OnMouseOut = () => { t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1); };
+
+      imgui.Add<IMGUI_Element>(t =>
+      {
+        t.Style.Width = 80;
+        t.Style.Height = 30;
+        t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1) * 1.2f;
+        t.Events.OnClick = () => { _scaleX += 0.1f; };
+      });
+      imgui.Add<IMGUI_Element>(t =>
+      {
+        t.Style.Width = 80;
+        t.Style.Height = 30;
+        t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1) * 1.2f;
+        t.Events.OnClick = () => { _scaleX -= 0.1f; };
+      });
+    });
+
+    _vp.IsStatic = true;
+    _constraint = new DistanceConstraint(_vp, _vp2, 0);
+
+    _vl = new VerletLine(new Vector3(0, 1, 0), new Vector3(), 10, 1, true, false);
   }
 
   public override void OnBeforeUpdate(float delta)
   {
     _time += delta;
-    _x = (float)Math.Sin(_time) * 1;
+    // _x = (float)Math.Sin(_time / 2f) * 1;
+    // _scaleX = Math.Abs((float)Math.Sin(_time) * 2).Clamp(0.2f, 1);
 
     Camera.BasicMovement(delta);
+
+    if (Keyboard.IsKeyDown(KeyboardKey.I)) _x -= delta;
+    if (Keyboard.IsKeyDown(KeyboardKey.O)) _x += delta;
+
+    VerletLine(delta);
   }
 
   public override void OnBeforeRender()
@@ -65,10 +119,38 @@ internal class TestScene : Render_Scene
         new RO_Line(new Vector3(-4, 4, i - 3.5f), new Vector3(4, 4, i - 3.5f)));
     }
 
-
     /**/
+  }
 
-    Box();
+  private void VerletPoint(float delta)
+  {
+    var point = GetLayer<Layer_Point>("dynamicPoint");
+
+    point.Draw(_vp, new RGBA<float>(1, 0, 0, 1), 4);
+    point.Draw(_vp2, new RGBA<float>(1, 0, 0, 1), 4);
+
+    _vp.Position = new Vector3(_x, 1, 0);
+    _vp2.ApplyForce(new Vector3(0, -9.8f, 0));
+
+    _vp2.Tick(delta);
+    _constraint.Tick();
+  }
+
+  private void VerletLine(float delta)
+  {
+    var layerLine = GetLayer<Layer_Line>("dynamicLine");
+
+    layerLine.Draw(_vl, new RGBA<float>(1, 0, 0, 1));
+
+    _vl.Start.Position = new Vector3(_x, 1, 0);
+    _vl.ApplyForce(new Vector3(0, -9.8f, 0));
+    _vl.Tick(delta);
+
+    /*_vp.Position = new Vector3(_x, 1, 0);
+    _vp2.ApplyForce(new Vector3(0, -9.8f, 0));
+
+    _vp2.Tick(delta);
+    _constraint.Tick();*/
   }
 
   private void Sphere()
@@ -77,7 +159,8 @@ internal class TestScene : Render_Scene
     var sc = new SphereCollider();
     sc.Radius = 1f / 2f;
     sc.Transform.Position = new Vector3(-_x, 0, 0);
-    sc.Transform.Rotation = Quaternion.FromEuler(0, _time * 45f, 0, "deg");
+    sc.Transform.Scale = new Vector3(_scaleX, 1, 1);
+    sc.Transform.Rotation = Quaternion.FromEuler(_time * 45f, _time * 45f, _time * 45f, "deg");
     line.Draw(sc, new RGBA<float>(0, 1, 0, 1));
 
     var ray = new Ray(new Vector3(_x, 0, -1), new Vector3(_x, 0, 1));
@@ -106,7 +189,8 @@ internal class TestScene : Render_Scene
     var box = new BoxCollider();
     box.Size = new Vector3(1, 1, 1);
     box.Transform.Position = new Vector3(-_x, 0, 0);
-    box.Transform.Rotation = Quaternion.FromEuler(0, _time * 45f, 0, "deg");
+    box.Transform.Scale = new Vector3(_scaleX, 1, 1);
+    box.Transform.Rotation = Quaternion.FromEuler(_time * 45f, _time * 45f, 0, "deg");
     line.Draw(box, new RGBA<float>(0, 1, 0, 1));
 
     var ray = new Ray(new Vector3(_x, 0, -1), new Vector3(_x, 0, 1));
@@ -155,6 +239,15 @@ public class PhysicsTest
         if (scene.Camera is Camera_Perspective p)
         {
           p.AspectRatio = w / (float)h;
+        }
+
+        var c1 = scene.GetLayer<Layer_IMGUI>();
+        if (c1 != null)
+        {
+          c1.Camera.Left = 0;
+          c1.Camera.Top = 0;
+          c1.Camera.Right = w;
+          c1.Camera.Bottom = h;
         }
 
         OpenGL32.glViewport(0, 0, w, h);

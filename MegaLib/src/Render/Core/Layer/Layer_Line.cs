@@ -15,6 +15,14 @@ public class Layer_Line : Layer_Base
   public bool IsSmooth = true;
   public bool IsYInverted = false;
 
+  public void Draw(VerletLine line, RGBA<float> color)
+  {
+    for (var i = 0; i < line.Points.Count - 1; i++)
+    {
+      Add(new RO_Line(line.Points[i].Position, line.Points[i + 1].Position, color));
+    }
+  }
+
   public void Draw(Ray ray, RGBA<float> color)
   {
     Add(new RO_Line(ray.Start, ray.End, color));

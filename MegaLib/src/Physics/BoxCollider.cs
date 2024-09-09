@@ -14,18 +14,15 @@ public class BoxCollider : BaseCollider
     isHit = false;
     point = Vector3.Zero;
 
-    // Получаем половину размеров бокса (центр бокса находится в его середине)
-    var halfSize = Size / 2.0f;
+    // Получаем инвертированную матрицу трансформации бокса
+    var inverseTransform = Transform.Matrix.Inverted;
 
     // Преобразуем луч в локальные координаты бокса
-    // Вывод матрицы до инверсии
-    //Console.WriteLine(Transform.Matrix);
-    var inverseTransform = Transform.Matrix.Inverted;
-    //Console.WriteLine(inverseTransform);
-
-    var localRayOrigin = ray.Position * inverseTransform;
+    var localRayOrigin = Vector3.Transform(ray.Position, inverseTransform);
     var localRayDirection = Vector3.TransformNormal(ray.Direction, inverseTransform).Normalized;
 
+    // Получаем половину размеров бокса (учитывая масштабирование по каждой оси)
+    var halfSize = Size / 2.0f;
 
     // Мин и макс координаты бокса в локальных координатах
     var boxMin = -halfSize;
@@ -42,10 +39,7 @@ public class BoxCollider : BaseCollider
 
     // Если диапазоны не пересекаются, пересечения нет
     if (tmin > tymax || tymin > tmax)
-    {
-      Debug.WriteLine("Пересечения по осям X и Y нет.");
       return;
-    }
 
     // Определяем диапазон пересечения по Y
     if (tymin > tmin)
@@ -59,10 +53,7 @@ public class BoxCollider : BaseCollider
 
     // Если диапазоны не пересекаются, пересечения нет
     if (tmin > tzmax || tzmin > tmax)
-    {
-      Debug.WriteLine("Пересечения по оси Z нет.");
       return;
-    }
 
     // Определяем диапазон пересечения по Z
     if (tzmin > tmin)
@@ -71,15 +62,17 @@ public class BoxCollider : BaseCollider
       tmax = tzmax;
 
     // Проверяем, попадает ли пересечение на ограниченный отрезок луча
-    if (tmin < 0 || tmin > ray.Length)
-    {
-      Debug.WriteLine("Пересечение находится за пределами длины луча.");
+    var localRayEnd = Vector3.Transform(ray.End, inverseTransform);
+    var transformedRayLength = (localRayEnd - localRayOrigin).Length;
+
+    if (tmin < 0 || tmin > transformedRayLength)
       return;
-    }
 
     // Вычисляем точку пересечения
-    point = ray.Position + ray.Direction * tmin;
+    point = localRayOrigin + localRayDirection * tmin;
+
+    // Преобразуем точку пересечения обратно в мировые координаты
+    point = Vector3.Transform(point, Transform.Matrix);
     isHit = true;
-    Debug.WriteLine($"Пересечение произошло в точке {point}");
   }
 }
