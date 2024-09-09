@@ -42,7 +42,7 @@ internal class TestScene : Render_Scene
   public override void OnBeforeUpdate(float delta)
   {
     _time += delta;
-    _x = (float)Math.Sin(_time * 2f) * 1;
+    _x = (float)Math.Sin(_time) * 1;
 
     Camera.BasicMovement(delta);
   }
@@ -65,13 +65,52 @@ internal class TestScene : Render_Scene
         new RO_Line(new Vector3(-4, 4, i - 3.5f), new Vector3(4, 4, i - 3.5f)));
     }
 
+
+    /**/
+
+    Box();
+  }
+
+  private void Sphere()
+  {
     var line = GetLayer<Layer_Line>("dynamicLine");
     var sc = new SphereCollider();
     sc.Radius = 1f / 2f;
-    line.Draw(sc, RGBA<float>.White);
+    sc.Transform.Position = new Vector3(-_x, 0, 0);
+    sc.Transform.Rotation = Quaternion.FromEuler(0, _time * 45f, 0, "deg");
+    line.Draw(sc, new RGBA<float>(0, 1, 0, 1));
 
     var ray = new Ray(new Vector3(_x, 0, -1), new Vector3(_x, 0, 1));
     sc.RayIntersection(ray, out var point, out var isHit);
+    if (isHit)
+    {
+      ray = new Ray(new Vector3(_x, 0, -1), point);
+      line.Draw(ray, new RGBA<float>(1, 0, 0, 1));
+      Add("dynamicPoint", new RO_Point()
+      {
+        Position = point,
+        Size = 8,
+        Color = new RGBA<float>(0, 1, 1, 1)
+      });
+    }
+    else
+    {
+      line.Draw(ray, new RGBA<float>(1, 0, 0, 1));
+    }
+  }
+
+  private void Box()
+  {
+    var line = GetLayer<Layer_Line>("dynamicLine");
+
+    var box = new BoxCollider();
+    box.Size = new Vector3(1, 1, 1);
+    box.Transform.Position = new Vector3(-_x, 0, 0);
+    box.Transform.Rotation = Quaternion.FromEuler(0, _time * 45f, 0, "deg");
+    line.Draw(box, new RGBA<float>(0, 1, 0, 1));
+
+    var ray = new Ray(new Vector3(_x, 0, -1), new Vector3(_x, 0, 1));
+    box.RayIntersection(ray, out var point, out var isHit);
     if (isHit)
     {
       ray = new Ray(new Vector3(_x, 0, -1), point);

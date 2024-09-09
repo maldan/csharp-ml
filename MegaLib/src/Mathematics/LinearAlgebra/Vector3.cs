@@ -86,6 +86,24 @@ public struct Vector3
     return new Vector3(r.RangeFloat(-x, x), r.RangeFloat(-y, y), r.RangeFloat(-z, z));
   }
 
+  public static Vector3 TransformNormal(Vector3 vector, Matrix4x4 matrix)
+  {
+    Vector3 result;
+    result.X = matrix.M00 * vector.X + matrix.M10 * vector.Y + matrix.M20 * vector.Z;
+    result.Y = matrix.M01 * vector.X + matrix.M11 * vector.Y + matrix.M21 * vector.Z;
+    result.Z = matrix.M02 * vector.X + matrix.M12 * vector.Y + matrix.M22 * vector.Z;
+    return result;
+  }
+
+  public static Vector3 Transform(Vector3 vector, Matrix4x4 matrix)
+  {
+    Vector3 result;
+    result.X = matrix.M00 * vector.X + matrix.M10 * vector.Y + matrix.M20 * vector.Z + matrix.M30;
+    result.Y = matrix.M01 * vector.X + matrix.M11 * vector.Y + matrix.M21 * vector.Z + matrix.M31;
+    result.Z = matrix.M02 * vector.X + matrix.M12 * vector.Y + matrix.M22 * vector.Z + matrix.M32;
+    return result;
+  }
+
   #endregion
 
   #region Operators
@@ -190,6 +208,11 @@ public struct Vector3
   public static bool operator !=(Vector3 v1, Vector3 v2)
   {
     return !(v1 == v2);
+  }
+
+  public static Vector3 operator -(Vector3 v)
+  {
+    return new Vector3(-v.X, -v.Y, -v.Z);
   }
 
   #endregion

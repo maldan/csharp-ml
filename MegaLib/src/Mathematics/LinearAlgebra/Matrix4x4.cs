@@ -109,32 +109,29 @@ public struct Matrix4x4
 
       // Calculate the determinant
       var det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
-      if (det == 0) return new Matrix4x4();
+      if (det == 0) return new Matrix4x4(); // Возвращаем нулевую матрицу в случае вырожденности
 
       det = 1.0f / det;
 
-      var m = new Matrix4x4();
-      M00 = (M11 * b11 - M12 * b10 + M13 * b09) * det;
-      M01 = (M02 * b10 - M01 * b11 - M03 * b09) * det;
-      M02 = (M31 * b05 - M32 * b04 + M33 * b03) * det;
-      M03 = (M22 * b04 - M21 * b05 - M23 * b03) * det;
-
-      M10 = (M12 * b08 - M10 * b11 - M13 * b07) * det;
-      M11 = (M00 * b11 - M02 * b08 + M03 * b07) * det;
-      M12 = (M32 * b02 - M30 * b05 - M33 * b01) * det;
-      M13 = (M20 * b05 - M22 * b02 + M23 * b01) * det;
-
-      M20 = (M10 * b10 - M11 * b08 + M13 * b06) * det;
-      M21 = (M01 * b08 - M00 * b10 - M03 * b06) * det;
-      M22 = (M30 * b04 - M31 * b02 + M33 * b00) * det;
-      M23 = (M21 * b02 - M20 * b04 - M23 * b00) * det;
-
-      M30 = (M11 * b07 - M10 * b09 - M12 * b06) * det;
-      M31 = (M00 * b09 - M01 * b07 + M02 * b06) * det;
-      M32 = (M31 * b01 - M30 * b03 - M32 * b00) * det;
-      M33 = (M20 * b03 - M21 * b01 + M22 * b00) * det;
-
-      return m;
+      return new Matrix4x4
+      {
+        M00 = (M11 * b11 - M12 * b10 + M13 * b09) * det,
+        M01 = (M02 * b10 - M01 * b11 - M03 * b09) * det,
+        M02 = (M31 * b05 - M32 * b04 + M33 * b03) * det,
+        M03 = (M22 * b04 - M21 * b05 - M23 * b03) * det,
+        M10 = (M12 * b08 - M10 * b11 - M13 * b07) * det,
+        M11 = (M00 * b11 - M02 * b08 + M03 * b07) * det,
+        M12 = (M32 * b02 - M30 * b05 - M33 * b01) * det,
+        M13 = (M20 * b05 - M22 * b02 + M23 * b01) * det,
+        M20 = (M10 * b10 - M11 * b08 + M13 * b06) * det,
+        M21 = (M01 * b08 - M00 * b10 - M03 * b06) * det,
+        M22 = (M30 * b04 - M31 * b02 + M33 * b00) * det,
+        M23 = (M21 * b02 - M20 * b04 - M23 * b00) * det,
+        M30 = (M11 * b07 - M10 * b09 - M12 * b06) * det,
+        M31 = (M00 * b09 - M01 * b07 + M02 * b06) * det,
+        M32 = (M31 * b01 - M30 * b03 - M32 * b00) * det,
+        M33 = (M20 * b03 - M21 * b01 + M22 * b00) * det
+      };
     }
   }
 

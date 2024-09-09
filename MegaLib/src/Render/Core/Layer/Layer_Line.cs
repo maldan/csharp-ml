@@ -20,6 +20,48 @@ public class Layer_Line : Layer_Base
     Add(new RO_Line(ray.Start, ray.End, color));
   }
 
+  public void Draw(BoxCollider box, RGBA<float> color)
+  {
+    // Получаем размеры бокса
+    var halfSize = box.Size / 2.0f;
+    var transform = box.Transform;
+
+    // Вершины бокса в локальных координатах (8 вершин куба)
+    var vertices = new Vector3[]
+    {
+      new(-halfSize.X, -halfSize.Y, -halfSize.Z), // V0
+      new(halfSize.X, -halfSize.Y, -halfSize.Z), // V1
+      new(halfSize.X, halfSize.Y, -halfSize.Z), // V2
+      new(-halfSize.X, halfSize.Y, -halfSize.Z), // V3
+      new(-halfSize.X, -halfSize.Y, halfSize.Z), // V4
+      new(halfSize.X, -halfSize.Y, halfSize.Z), // V5
+      new(halfSize.X, halfSize.Y, halfSize.Z), // V6
+      new(-halfSize.X, halfSize.Y, halfSize.Z) // V7
+    };
+
+    // Преобразование вершин в мировые координаты с учетом трансформации
+    for (var i = 0; i < vertices.Length; i++)
+    {
+      vertices[i] *= transform.Matrix;
+    }
+
+    // Линии между вершинами бокса (12 линий для 8 вершин)
+    Add(new RO_Line(vertices[0], vertices[1], color)); // Нижняя сторона
+    Add(new RO_Line(vertices[1], vertices[2], color));
+    Add(new RO_Line(vertices[2], vertices[3], color));
+    Add(new RO_Line(vertices[3], vertices[0], color));
+
+    Add(new RO_Line(vertices[4], vertices[5], color)); // Верхняя сторона
+    Add(new RO_Line(vertices[5], vertices[6], color));
+    Add(new RO_Line(vertices[6], vertices[7], color));
+    Add(new RO_Line(vertices[7], vertices[4], color));
+
+    Add(new RO_Line(vertices[0], vertices[4], color)); // Вертикальные линии
+    Add(new RO_Line(vertices[1], vertices[5], color));
+    Add(new RO_Line(vertices[2], vertices[6], color));
+    Add(new RO_Line(vertices[3], vertices[7], color));
+  }
+
   public void Draw(SphereCollider sphere, RGBA<float> color)
   {
     var longitudeSegments = 16 / 2;
