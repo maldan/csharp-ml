@@ -81,24 +81,28 @@ internal class TestScene2 : Render_Scene
         //t.Events.OnClick = () => { t.Style.BackgroundColor = new Vector4(1.0f, 1.5f, 1.5f, 1); };
       });*/
 
-      for (var i = 0; i < 4; i++)
+      var colors = new Vector4[]
       {
+        new(0.1f, 0.5f, 0.1f, 2),
+        new(0.5f, 0.1f, 0.1f, 2),
+        new(0.5f, 0.5f, 0.1f, 2),
+        new(0.8f, 0.5f, 0.3f, 2)
+      };
+
+      for (var i = 0; i < colors.Length; i++)
+      {
+        var i1 = i;
+
         imgui.Add<IMGUI_Element>(t =>
         {
           // t.IsDebug = true;
 
           t.Style.Width = 80;
           t.Style.Height = 30;
-          t.Style.BackgroundColor = new Vector4(0.1f + i * 0.4f, 0.5f + i * 0.2f, 0.1f, 1);
+          t.Style.BackgroundColor = colors[i1];
 
-          t.Events.OnMouseOver = () =>
-          {
-            t.Style.BackgroundColor = new Vector4(0.1f + i * 0.2f, 0.5f + i * 0.1f, 0.1f, 1);
-          };
-          t.Events.OnMouseOut = () =>
-          {
-            t.Style.BackgroundColor = new Vector4(0.1f + i * 0.4f, 0.5f + i * 0.2f, 0.1f, 1);
-          };
+          t.Events.OnMouseOver = () => { t.Style.BackgroundColor = colors[i1] * 1.2f; };
+          t.Events.OnMouseOut = () => { t.Style.BackgroundColor = colors[i1]; };
 
           //t.Events.OnClick = () => { t.Style.BackgroundColor = new Vector4(1.0f, 1.5f, 1.5f, 1); };
         });

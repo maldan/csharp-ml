@@ -403,7 +403,11 @@ public class IMGUI_Element
       }
     }
 
-    if (_isMouseOver && Scrollable) Scroll.Y -= Mouse.WheelDirection * 3f;
+    if (_isMouseOver && Scrollable)
+    {
+      Scroll.Y -= Mouse.WheelDirection * 3f;
+      if (Scroll.Y < 0) Scroll.Y = 0;
+    }
 
     // Смещение курсора
     var cursorOffset = new Vector2(0, 0);
@@ -463,6 +467,12 @@ public class IMGUI_Element
 
       // Добавляем в основной список
       RenderData.AddRange(rList);
+    }
+
+    if (_isMouseOver && Scrollable)
+    {
+      if (Scroll.Y >= contentBoundingBox.Height - boundingBox.Height)
+        Scroll.Y = contentBoundingBox.Height - boundingBox.Height;
     }
 
     // Бэкграунд по bounding box

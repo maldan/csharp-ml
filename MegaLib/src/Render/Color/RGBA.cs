@@ -19,6 +19,13 @@ public readonly struct RGBA<T>
     A = a;
   }
 
+  public static RGBA<T> White => new(
+    (T)Convert.ChangeType(Convert.ToSingle(1), typeof(T)),
+    (T)Convert.ChangeType(Convert.ToSingle(1), typeof(T)),
+    (T)Convert.ChangeType(Convert.ToSingle(1), typeof(T)),
+    (T)Convert.ChangeType(Convert.ToSingle(1), typeof(T))
+  );
+
   // Add
   public static RGBA<T> operator +(RGBA<T> a, RGBA<float> b)
   {
