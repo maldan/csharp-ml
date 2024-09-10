@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using MegaLib.Mathematics.LinearAlgebra;
+using MegaLib.Render.Color;
 
 namespace MegaLib.Physics;
 
@@ -11,6 +12,7 @@ public class VerletPoint
   public float Mass { get; set; } // Масса точки
   public float Damping { get; set; } = 0.99f; // Коэффициент демпфирования для затухания
   public bool IsStatic;
+  public RGBA<float> Color;
 
   public VerletPoint(Vector3 position, float mass)
   {

@@ -12,6 +12,7 @@ using MegaLib.Render.Core.Layer;
 using MegaLib.Render.IMGUI;
 using MegaLib.Render.Renderer.OpenGL;
 using MegaLib.Render.RenderObject;
+using MegaLib.Render.Scene;
 using NUnit.Framework;
 using Random = MegaLib.Mathematics.Random;
 

@@ -6,6 +6,7 @@ using MegaLib.Render.Core;
 using MegaLib.Render.Core.Layer;
 using MegaLib.Render.Renderer.OpenGL;
 using MegaLib.Render.RenderObject;
+using MegaLib.Render.Scene;
 using MegaLib.Render.Texture;
 using NUnit.Framework;
 using Console = MegaLib.IO.Console;

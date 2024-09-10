@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using MegaLib.Render.Camera;
@@ -7,7 +6,7 @@ using MegaLib.Render.Light;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Texture;
 
-namespace MegaLib.Render.Core;
+namespace MegaLib.Render.Scene;
 
 public class Render_Scene
 {
@@ -24,6 +23,17 @@ public class Render_Scene
   public float DeltaTime;
 
   public Layer_PostProcess PostProcessLayer = new();
+
+  public Texture_2D<float> LightTexture;
+
+  public Render_Scene()
+  {
+    LightTexture = new Texture_2D<float>(64, 64);
+    LightTexture.Options.FiltrationMode = TextureFiltrationMode.Nearest;
+    LightTexture.Options.WrapMode = TextureWrapMode.Clamp;
+    LightTexture.Options.Format = TextureFormat.R32F;
+    LightTexture.Options.UseMipMaps = false;
+  }
 
   public void AddLayer(string name, Layer_Base layer)
   {
@@ -104,6 +114,39 @@ public class Render_Scene
     OnAfterUpdate(delta);
   }
 
+  private void CalculateLight()
+  {
+    var id = 0;
+
+    // Количество источников света
+    LightTexture.RAW[id++] = Lights.Count;
+
+    foreach (var light in Lights)
+    {
+      if (light is LightDirection ld)
+      {
+        LightTexture.RAW[id++] = 1;
+        LightTexture.RAW[id++] = ld.Direction.X;
+        LightTexture.RAW[id++] = ld.Direction.Y;
+        LightTexture.RAW[id++] = ld.Direction.Z;
+      }
+
+      if (light is LightPoint lp)
+      {
+        LightTexture.RAW[id++] = 2;
+        LightTexture.RAW[id++] = light.Position.X;
+        LightTexture.RAW[id++] = light.Position.Y;
+        LightTexture.RAW[id++] = light.Position.Z;
+      }
+
+      LightTexture.RAW[id++] = light.Intensity;
+
+      LightTexture.RAW[id++] = light.Color.R;
+      LightTexture.RAW[id++] = light.Color.G;
+      LightTexture.RAW[id++] = light.Color.B;
+    }
+  }
+
   public void Render()
   {
     _mutex.WaitOne();
@@ -112,6 +155,7 @@ public class Render_Scene
 
     if (UsePostprocess) PostProcessLayer.LayerRenderer.BeforeRender();
 
+    CalculateLight();
     foreach (var layer in Pipeline) layer.Render();
     if (UsePostprocess)
     {

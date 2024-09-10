@@ -14,6 +14,7 @@ using MegaLib.Render.Core.Layer;
 using MegaLib.Render.IMGUI;
 using MegaLib.Render.Renderer.OpenGL;
 using MegaLib.Render.RenderObject;
+using MegaLib.Render.Scene;
 using MegaTest.Render;
 using NUnit.Framework;
 
@@ -22,12 +23,14 @@ namespace MegaTest;
 internal class TestScene : Render_Scene
 {
   private float _time;
-  private float _x;
+  private float _x = -1;
   private float _scaleX = 1;
   private VerletPoint _vp = new(new Vector3(0, 1, 0), 1.0f);
   private VerletPoint _vp2 = new(new Vector3(), 1.0f);
   private DistanceConstraint _constraint;
   private VerletLine _vl;
+  private SphereCollider _sphereCollider = new();
+  private BoxCollider _boxCollider = new();
 
   public override void OnInit()
   {
@@ -83,8 +86,13 @@ internal class TestScene : Render_Scene
 
     _vp.IsStatic = true;
     _constraint = new DistanceConstraint(_vp, _vp2, 0);
+    _sphereCollider = new SphereCollider();
+    _sphereCollider.Radius = 0.5f;
 
-    _vl = new VerletLine(new Vector3(0, 1, 0), new Vector3(), 10, 1, true, false);
+    _boxCollider = new BoxCollider();
+    _boxCollider.Size = new Vector3(1, 1, 1);
+
+    _vl = new VerletLine(new Vector3(0, 1, 0), new Vector3(0, -1, 0), 32, 1, true, false);
   }
 
   public override void OnBeforeUpdate(float delta)
@@ -140,11 +148,44 @@ internal class TestScene : Render_Scene
   {
     var layerLine = GetLayer<Layer_Line>("dynamicLine");
 
-    layerLine.Draw(_vl, new RGBA<float>(1, 0, 0, 1));
 
     _vl.Start.Position = new Vector3(_x, 1, 0);
     _vl.ApplyForce(new Vector3(0, -9.8f, 0));
     _vl.Tick(delta);
+
+    _sphereCollider.Transform.Scale = new Vector3(_scaleX, 1, 1);
+    // _boxCollider.Transform.Rotation = Quaternion.FromEuler(0, _time * 45f, 0, "deg");
+
+    for (var i = 0; i < _vl.Points.Count; i++)
+    {
+      _vl.Points[i].Color = new RGBA<float>(1, 0, 0, 1);
+
+      //_boxCollider.ResolveCollision(_vl.Points[i]);
+      //_boxCollider.ResolveCollision(_vl.Points[i]);
+
+      _sphereCollider.ResolveCollision(_vl.Points[i]);
+
+      /*var ray = new Ray(_vl.Points[i].PreviousPosition, _vl.Points[i].Position);
+      _sphereCollider.RayIntersection(ray, out var hitPoint, out var isHit);
+      if (isHit)
+      {
+        _vl.Points[i].Position = hitPoint;
+        _vl.Points[i].PreviousPosition = hitPoint;
+      }*/
+
+      /*_sphereCollider.PointIntersection(_vl.Points[i].Position, out var isHit);
+      if (isHit)
+      {
+        _vl.Points[i].Color = new RGBA<float>(0, 1, 1, 1);
+      }
+      else
+      {
+        _vl.Points[i].Color = new RGBA<float>(1, 0, 0, 1);
+      }*/
+    }
+
+    layerLine.Draw(_sphereCollider, new RGBA<float>(0, 1, 0, 1));
+    layerLine.Draw(_vl);
 
     /*_vp.Position = new Vector3(_x, 1, 0);
     _vp2.ApplyForce(new Vector3(0, -9.8f, 0));

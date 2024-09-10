@@ -7,6 +7,7 @@ using MegaLib.Render.Core;
 using MegaLib.Render.Core.Layer;
 using MegaLib.Render.IMGUI;
 using MegaLib.Render.RenderObject;
+using MegaLib.Render.Scene;
 
 namespace MegaLib.Render.Renderer.OpenGL.Layer;
 

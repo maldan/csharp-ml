@@ -4,6 +4,7 @@ using MegaLib.OS.Api;
 using MegaLib.Render.Core;
 using MegaLib.Render.Core.Layer;
 using MegaLib.Render.RenderObject;
+using MegaLib.Render.Scene;
 
 namespace MegaLib.Render.Renderer.OpenGL.Layer;
 
@@ -52,7 +53,16 @@ public class LR_Mesh : LR_Base
         }
         
         void main() {
-            gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPosition.xyz, 1.0);
+            mat4 modelViewMatrix = uViewMatrix * uModelMatrix;
+            mat4 projectionMatrix = uProjectionMatrix;
+    
+            // Инвертируем ось Z в матрице проекции
+             // Инвертируем ось Z в проекционной матрице
+            //projectionMatrix[2][2] *= -1.0;
+            //projectionMatrix[2][3] *= -1.0; // Инвертируем также смещение для оси Z
+
+            // Применяем модифицированную матрицу проекции
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(aPosition.xyz, 1.0);
             
             // TBN Matrix
             mat4 modelMatrix = identity();
@@ -95,6 +105,7 @@ public class LR_Mesh : LR_Base
         uniform sampler2D uRoughnessTexture;
         uniform sampler2D uMetallicTexture;
         
+        uniform sampler2D uLightTexture;
         uniform samplerCube uSkybox;
         
         uniform vec4 uTint;
@@ -307,17 +318,50 @@ public class LR_Mesh : LR_Base
             
             return light;
         }
+
+        ivec2 getLightTexelById(uint id, int ch) {
+            int pixel = 1 + (int(id) * 8 + ch);
+            return ivec2(pixel % 64, pixel / 64);
+        }
+        
+        int getLightAmount() {
+            vec4 m1 = texelFetch(uLightTexture, ivec2(0, 0), 0);
+            return int(m1.r);
+        }
+
+        Light getLight(uint id) {
+            float type = texelFetch(uLightTexture, getLightTexelById(id, 0), 0).r;
+            
+            float posX = texelFetch(uLightTexture, getLightTexelById(id, 1), 0).r;
+            float posY = texelFetch(uLightTexture, getLightTexelById(id, 2), 0).r;
+            float posZ = texelFetch(uLightTexture, getLightTexelById(id, 3), 0).r;
+            
+            float intensity = texelFetch(uLightTexture, getLightTexelById(id, 4), 0).r;
+            
+            float colorR = texelFetch(uLightTexture, getLightTexelById(id, 5), 0).r;
+            float colorG = texelFetch(uLightTexture, getLightTexelById(id, 6), 0).r;
+            float colorB = texelFetch(uLightTexture, getLightTexelById(id, 7), 0).r;
+            
+            return createLight(vec3(posX, posY, posZ), vec3(colorR, colorG, colorB), intensity, type < 2.0);
+        }
         
         void main()
         {
             Material mat = getMaterial();
 
-            Light light1 = createLight(vec3(0.0, 1.0, 1.0), vec3(1.0), 0.5, true);
+            vec3 finalColor = vec3(0.0);
+            int lightAmount = getLightAmount();
+            for (int i = 0; i < lightAmount; i++) {
+               Light light1 = getLight(uint(i));
+               finalColor += calcPbr(mat, light1);
+            }
+            
+            //
             //Light light2 = createLight(vec3(-1.0, 1.0, 1.0), vec3(1.0), 0.5, true);
             //Light light3 = createLight(vec3(0.0, 1.0, 1.0), vec3(1.0), 1.5, true);
             
-            vec3 finalColor = vec3(0.0);
-            finalColor += calcPbr(mat, light1);
+            //
+            //finalColor += calcPbr(mat, light1);
             //finalColor += calcPbr(mat, light2);
             //finalColor += calcPbr(mat, light3);
             
@@ -344,16 +388,18 @@ public class LR_Mesh : LR_Base
     var layer = (Layer_StaticMesh)Layer;
 
     Shader.Use();
+    //OpenGL32.glDepthRange(1.0, 0.0); // Инвертируем диапазон глубины
     Shader.Enable(OpenGL32.GL_BLEND);
     Shader.Enable(OpenGL32.GL_DEPTH_TEST);
+    //OpenGL32.glDepthFunc(OpenGL32.GL_GREATER);
 
-    var cp = Scene.Camera.Position;
-    cp.Z *= -1;
+    //var cp = Scene.Camera.Position;
+    //cp.Z *= -1;
     // cp.Y *= -1;
     // Shader.SetUniform("uCameraPosition", cp);
     Shader.SetUniform("uProjectionMatrix", Scene.Camera.ProjectionMatrix);
     Shader.SetUniform("uViewMatrix", Scene.Camera.ViewMatrix);
-    Shader.ActivateTexture(Scene.Skybox, "uSkybox", 10);
+    if (Scene.Skybox != null) Shader.ActivateTexture(Scene.Skybox, "uSkybox", 10);
 
     // Draw each mesh
     layer.ForEach<RO_Mesh>(mesh =>
@@ -371,10 +417,14 @@ public class LR_Mesh : LR_Base
       Shader.EnableAttribute(mesh.BiTangentList, "aBiTangent");
 
       // Texture
-      Shader.ActivateTexture(mesh.AlbedoTexture, "uAlbedoTexture", 0);
-      Shader.ActivateTexture(mesh.NormalTexture, "uNormalTexture", 1);
-      Shader.ActivateTexture(mesh.RoughnessTexture, "uRoughnessTexture", 2);
-      Shader.ActivateTexture(mesh.MetallicTexture, "uMetallicTexture", 3);
+      if (mesh.AlbedoTexture != null) Shader.ActivateTexture(mesh.AlbedoTexture, "uAlbedoTexture", 0);
+      if (mesh.NormalTexture != null) Shader.ActivateTexture(mesh.NormalTexture, "uNormalTexture", 1);
+      if (mesh.RoughnessTexture != null) Shader.ActivateTexture(mesh.RoughnessTexture, "uRoughnessTexture", 2);
+      if (mesh.MetallicTexture != null) Shader.ActivateTexture(mesh.MetallicTexture, "uMetallicTexture", 3);
+
+      // Текстура с источниками света
+      Context.MapTexture(Scene.LightTexture);
+      Shader.ActivateTexture(Scene.LightTexture, "uLightTexture", 12);
 
       Shader.SetUniform("uModelMatrix", mesh.Transform.Matrix);
       Shader.SetUniform("uTint", new Vector4(mesh.Tint.R, mesh.Tint.G, mesh.Tint.B, mesh.Tint.A));

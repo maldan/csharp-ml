@@ -8,6 +8,7 @@ using GLsizei = System.Int32;
 using GLuint = System.UInt32;
 using GLbitfield = System.UInt32;
 using GLfloat = System.Single;
+using GLdouble = System.Double;
 using GLsizeiptr = System.IntPtr;
 namespace MegaLib.OS.Api
   {
@@ -47,6 +48,10 @@ public static extern void glStencilFunc(GLenum func, GLint refs, GLuint mask);
 // 
 [DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
 public static extern void glStencilOp(GLenum sfail, GLenum dpfail, GLenum dppass);
+
+// 
+[DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
+public static extern void glDepthRange(GLdouble nearVal, GLdouble farVal);
 
 // 
 [DllImport("opengl32.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = true)]

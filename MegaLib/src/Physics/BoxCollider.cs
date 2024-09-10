@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using MegaLib.IO;
 using MegaLib.Mathematics.Geometry;
@@ -74,5 +75,55 @@ public class BoxCollider : BaseCollider
     // Преобразуем точку пересечения обратно в мировые координаты
     point = Vector3.Transform(point, Transform.Matrix);
     isHit = true;
+  }
+
+  // Метод для разрешения коллизии между верле-точкой и боксом
+  public void ResolveCollision(VerletPoint point)
+  {
+    // Получаем инвертированную матрицу трансформации бокса
+    var inverseTransform = Transform.Matrix.Inverted;
+
+    // Преобразуем позицию точки в локальные координаты бокса
+    var localPoint = Vector3.Transform(point.Position, inverseTransform);
+
+    // Получаем половину размеров бокса (бокс симметричен относительно центра)
+    var halfSize = Size / 2.0f;
+
+    // Определяем, находится ли точка внутри бокса
+    var isInsideX = localPoint.X > -halfSize.X && localPoint.X < halfSize.X;
+    var isInsideY = localPoint.Y > -halfSize.Y && localPoint.Y < halfSize.Y;
+    var isInsideZ = localPoint.Z > -halfSize.Z && localPoint.Z < halfSize.Z;
+
+    // Если точка внутри бокса
+    if (isInsideX && isInsideY && isInsideZ)
+    {
+      // Определяем, насколько точка "внутри" бокса по каждой оси
+      var dx = halfSize.X - Math.Abs(localPoint.X);
+      var dy = halfSize.Y - Math.Abs(localPoint.Y);
+      var dz = halfSize.Z - Math.Abs(localPoint.Z);
+
+      // Найдем ближайшую поверхность (выбираем по минимальному значению)
+      if (dx < dy && dx < dz)
+      {
+        // Выталкиваем по оси X
+        localPoint.X = localPoint.X > 0 ? halfSize.X : -halfSize.X;
+      }
+      else if (dy < dz)
+      {
+        // Выталкиваем по оси Y
+        localPoint.Y = localPoint.Y > 0 ? halfSize.Y : -halfSize.Y;
+      }
+      else
+      {
+        // Выталкиваем по оси Z
+        localPoint.Z = localPoint.Z > 0 ? halfSize.Z : -halfSize.Z;
+      }
+
+      // Преобразуем точку обратно в мировые координаты
+      point.Position = Vector3.Transform(localPoint, Transform.Matrix);
+
+      // Чтобы избежать "прыжков", синхронизируем с предыдущей позицией
+      point.PreviousPosition = point.Position;
+    }
   }
 }

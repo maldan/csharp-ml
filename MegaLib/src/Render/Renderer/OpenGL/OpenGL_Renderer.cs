@@ -9,6 +9,7 @@ using MegaLib.Render.Camera;
 using MegaLib.Render.Core;
 using MegaLib.Render.Core.Layer;
 using MegaLib.Render.Renderer.OpenGL.Layer;
+using MegaLib.Render.Scene;
 using MegaLib.VR;
 using Console = System.Console;
 

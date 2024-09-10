@@ -111,8 +111,25 @@ public class Camera_Perspective : Camera_Base
     }
   }
 
+  private void CalculateProjectionReversedZ()
+  {
+    var f = 1.0f / (float)Math.Tan(FOV * 0.5f * Math.PI / 180.0f); // Вычисляем тангенс половины угла обзора
+
+    _projectionMatrix = new Matrix4x4
+    {
+      M00 = f / AspectRatio,
+      M11 = f,
+      M22 = Near / (Far - Near), // Инвертируем Z для Reversed Z
+      M23 = 1.0f,
+      M32 = -(Far * Near) / (Far - Near),
+      M33 = 0.0f
+    };
+  }
+
   private void CalculateProjection()
   {
+    CalculateProjectionReversedZ();
+    return;
     //var tanHalfFov = (float)Math.Tan(_fov.DegToRad() * 0.5f);
     //var range = _near - _far;
     var f = (float)(1.0 / Math.Tan(_fov.DegToRad() / 2.0));

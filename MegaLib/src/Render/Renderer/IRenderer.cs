@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using MegaLib.Render.Core;
 using MegaLib.Render.Light;
+using MegaLib.Render.Scene;
 using MegaLib.VR;
 
 namespace MegaLib.Render.Renderer;

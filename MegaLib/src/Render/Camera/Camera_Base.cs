@@ -45,15 +45,18 @@ public class Camera_Base
 
   private void CalculateView()
   {
+    // Матрица вида начинается с единичной матрицы
     _viewMatrix = Matrix4x4.Identity;
-    var p = _position;
-    if (IsXInverted) p.X *= -1;
-    if (IsYInverted) p.Y *= -1;
-    if (IsZInverted) p.Z *= -1;
-    // p.Z *= -1;
 
-    _viewMatrix = _viewMatrix.Rotate(_rotation);
-    _viewMatrix = _viewMatrix.Translate(p);
+    // Инвертируем поворот по оси Y (yaw)
+    var invertedRotation = Quaternion.FromEuler(new Vector3(-_rotation.X, -_rotation.Y, -_rotation.Z), "rad");
+
+    // Применяем поворот камеры
+    _viewMatrix = _viewMatrix.Rotate(invertedRotation); // Убеждаемся, что это матрица поворота
+
+    // Применяем трансляцию камеры, но с отрицательными значениями для обратного смещения
+    var p = -_position; // Обратное смещение, так как это камера
+    _viewMatrix = _viewMatrix.Translate(p); // Камера перемещает мир в противоположную сторону
   }
 
   public void OffsetPosition(float x = 0f, float y = 0f, float z = 0f)
@@ -81,10 +84,13 @@ public class Camera_Base
     if (Keyboard.IsKeyDown(KeyboardKey.W)) OffsetPosition(z: delta);
     if (Keyboard.IsKeyDown(KeyboardKey.S)) OffsetPosition(z: -delta);
 
+    if (Keyboard.IsKeyDown(KeyboardKey.ArrowUp)) OffsetPosition(y: delta);
+    if (Keyboard.IsKeyDown(KeyboardKey.ArrowDown)) OffsetPosition(y: -delta);
+
     if (Keyboard.IsKeyDown(KeyboardKey.Q)) Rotation = Rotation.RotateEuler(0f, -delta, 0f, "rad");
     if (Keyboard.IsKeyDown(KeyboardKey.E)) Rotation = Rotation.RotateEuler(0f, delta, 0f, "rad");
 
-    if (Keyboard.IsKeyDown(KeyboardKey.ArrowUp)) OffsetPosition(y: delta);
-    if (Keyboard.IsKeyDown(KeyboardKey.ArrowDown)) OffsetPosition(y: -delta);
+    if (Keyboard.IsKeyDown(KeyboardKey.ArrowLeft)) Rotation = Rotation.RotateEuler(-delta, 0f, 0f, "rad");
+    if (Keyboard.IsKeyDown(KeyboardKey.ArrowRight)) Rotation = Rotation.RotateEuler(delta, 0f, 0f, "rad");
   }
 }

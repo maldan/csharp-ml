@@ -6,6 +6,7 @@ using MegaLib.Render.Buffer;
 using MegaLib.Render.Core;
 using MegaLib.Render.Core.Layer;
 using MegaLib.Render.RenderObject;
+using MegaLib.Render.Scene;
 
 namespace MegaLib.Render.Renderer.OpenGL.Layer;
 
@@ -100,14 +101,14 @@ public class LR_Line : LR_Base
       var from = line.From;
       var to = line.To;
 
-      if (layer.IsYInverted)
+      /*if (layer.IsYInverted)
       {
         from.Y *= -1;
         to.Y *= -1;
       }
 
       from.Z *= -1;
-      to.Z *= -1;
+      to.Z *= -1;*/
 
       if (line.Transform != null)
       {

@@ -36,47 +36,6 @@ public class RO_Mesh : RO_Base
     Transform = new Transform();
   }
 
-  /*public override dynamic GetDataByName(RO_DataType type, string name)
-  {
-    switch (type)
-    {
-      case RO_DataType.Buffer:
-        switch (name)
-        {
-          case "vertex":
-            return VertexList;
-          case "normal":
-            return NormalList;
-          case "uv0":
-            return UV0List;
-          case "tangent":
-            return TangentList;
-          case "biTangent":
-            return BiTangentList;
-          case "index":
-            return IndexList;
-        }
-
-        break;
-      case RO_DataType.Texture:
-        switch (name)
-        {
-          case "albedo":
-            return AlbedoTexture;
-          case "normal":
-            return NormalTexture;
-          case "roughness":
-            return RoughnessTexture;
-          case "metallic":
-            return MetallicTexture;
-        }
-
-        break;
-    }
-
-    throw new Exception($"Type {type} with Name {name} - Not found");
-  }*/
-
   public void CalculateTangent()
   {
     var tangentList = new Vector3[VertexList.Count];
@@ -125,6 +84,51 @@ public class RO_Mesh : RO_Base
 
     foreach (var v in tangentList) TangentList.Add(v);
     foreach (var v in biTangentList) BiTangentList.Add(v);
+  }
+
+  public void InitDefaultTextures()
+  {
+    var albedo = new Texture_2D<RGBA<byte>>(2, 2)
+    {
+      RAW =
+      {
+        [0] = new RGBA<byte>(255, 255, 255, 255),
+        [1] = new RGBA<byte>(128, 128, 128, 255),
+        [2] = new RGBA<byte>(128, 128, 128, 255),
+        [3] = new RGBA<byte>(255, 255, 255, 255)
+      }
+    };
+    albedo.Options.FiltrationMode = TextureFiltrationMode.Nearest;
+    AlbedoTexture = albedo;
+
+    var normal = new Texture_2D<RGBA<byte>>(1, 1)
+    {
+      RAW =
+      {
+        [0] = new RGBA<byte>(128, 128, 255, 255)
+      }
+    };
+    NormalTexture = normal;
+
+    var roughness = new Texture_2D<RGBA<byte>>(1, 1)
+    {
+      RAW =
+      {
+        [0] = new RGBA<byte>(128, 128, 128, 255)
+      }
+    };
+    RoughnessTexture = roughness;
+
+    var metalic = new Texture_2D<RGBA<byte>>(1, 1)
+    {
+      RAW =
+      {
+        [0] = new RGBA<byte>(128, 128, 128, 255)
+      }
+    };
+    MetallicTexture = metalic;
+
+    CalculateTangent();
   }
 
   public static RO_Mesh GenerateUVSphere(float radius, int longitudeSegments, int latitudeSegments)
@@ -264,6 +268,14 @@ public class RO_Mesh : RO_Base
 
 public static class MeshEx
 {
+  public static void FromMesh(this RO_Mesh mesh, Mesh.Mesh mesh2)
+  {
+    mesh.VertexList = new ListGPU<Vector3>(mesh2.VertexList);
+    mesh.UV0List = new ListGPU<Vector2>(mesh2.UV0List);
+    mesh.NormalList = new ListGPU<Vector3>(mesh2.NormalList);
+    mesh.IndexList = new ListGPU<uint>(mesh2.IndexList);
+  }
+
   public static void FromGLTF(this RO_Mesh mesh, GLTF_MeshPrimitive gltfMeshPrimitive)
   {
     mesh.VertexList = new ListGPU<Vector3>(gltfMeshPrimitive.Vertices);
