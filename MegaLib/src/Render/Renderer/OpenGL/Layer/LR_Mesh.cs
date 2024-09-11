@@ -160,8 +160,9 @@ public class LR_Mesh : LR_Base
 
             // Диффузное освещение (Lambertian reflectance)
             vec3 F0 = vec3(0.04);  // Значение F0 для неметаллов
-            F0 = mix(F0, mat.albedo, mat.isMetallic ? 1.0 : 0.0);  // Для металлов F0 равен альбедо
-
+            //F0 = mix(F0, mat.albedo, mat.isMetallic ? 1.0 : 0.0);  // Для металлов F0 равен альбедо
+            if (mat.isMetallic) F0 = mat.albedo;
+            
             // Интенсивность света с учётом затухания
             vec3 radiance = light.color * light.intensity * attenuation;
 
@@ -183,9 +184,26 @@ public class LR_Mesh : LR_Base
             // Диффузное освещение
             float NdotL = max(dot(N, L), 0.0);
             vec3 diffuse = kD * mat.albedo / PI;
-
-            // Финальный результат
+            
+             // Основное освещение
             vec3 color = (diffuse + specular) * radiance * NdotL;
+            
+            // Добавляем отражение с кубической карты
+            vec3 R = reflect(-V, N);  // Отражение вектора взгляда относительно нормали
+            vec3 environmentReflection = texture(uSkybox, R).rgb;
+
+            // Учет шероховатости: чем выше roughness, тем меньше резкость отражения
+            vec3 reflectionContribution = environmentReflection * (kS * (1.0 - mat.roughness));
+
+            // Учет металличности: для металлов сильнее отражение, а для диэлектриков отражение меньше
+            if (mat.isMetallic) {
+                // Металлы почти полностью зависят от отражений
+                color = reflectionContribution;
+            } else {
+                // Для диэлектриков добавляем как диффузное, так и отраженное освещение
+                color = (diffuse + specular) * radiance * NdotL;
+                color += reflectionContribution;
+            }
             
             return color;
         }
@@ -228,7 +246,7 @@ public class LR_Mesh : LR_Base
             mat.roughness = roughness;
             
             // Metallic
-            mat.isMetallic = texture(uMetallicTexture, vo_UV).r >= 0.0;
+            mat.isMetallic = texture(uMetallicTexture, vo_UV).r > 0.0;
             
             return mat;
         }
@@ -391,7 +409,7 @@ public class LR_Mesh : LR_Base
     // Shader.SetUniform("uCameraPosition", cp);
     Shader.SetUniform("uProjectionMatrix", Scene.Camera.ProjectionMatrix);
     Shader.SetUniform("uViewMatrix", Scene.Camera.ViewMatrix);
-    // if (Scene.Skybox != null) Shader.ActivateTexture(Scene.Skybox, "uSkybox", 10);
+    if (Scene.Skybox != null) Shader.ActivateTexture(Scene.Skybox, "uSkybox", 10);
 
     // Draw each mesh
     layer.ForEach<RO_Mesh>(mesh =>

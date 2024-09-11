@@ -167,7 +167,7 @@ public static partial class OpenGL32
     // Вывод информации об ошибке или предупреждении
     if (type == GL_DEBUG_TYPE_ERROR)
       Console.WriteLine($"OpenGL Error: [type={type}, severity={severity}] {msg}");
-    else Console.WriteLine($"OpenGL Debug Message: [type={type}, severity={severity}] {msg}");
+    // else Console.WriteLine($"OpenGL Debug Message: [type={type}, severity={severity}] {msg}");
   }
 
   public static void InitDebugCallback()

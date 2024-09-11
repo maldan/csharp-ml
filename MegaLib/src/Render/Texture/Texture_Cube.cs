@@ -30,7 +30,7 @@ public class Texture_Cube
       Format = TextureFormat.RGB8,
       FiltrationMode = TextureFiltrationMode.Linear,
       WrapMode = TextureWrapMode.Clamp,
-      UseMipMaps = false
+      UseMipMaps = true
     };
 
     TOP = new ImageGPU<RGB<byte>>(4, 4);
