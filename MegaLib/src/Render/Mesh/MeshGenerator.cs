@@ -67,14 +67,14 @@ public static class MeshGenerator
     vertices.Add(new Vector3(1.0f, -1.0f, -1.0f));
     vertices.Add(new Vector3(1.0f, 1.0f, -1.0f));
     vertices.Add(new Vector3(-1.0f, 1.0f, -1.0f));
-    for (var i = 0; i < 4; i++) normals.Add(new Vector3(0.0f, 0.0f, 1.0f));
+    for (var i = 0; i < 4; i++) normals.Add(new Vector3(0.0f, 0.0f, -1.0f));
 
     // Back
     vertices.Add(new Vector3(-1.0f, -1.0f, 1.0f));
     vertices.Add(new Vector3(-1.0f, 1.0f, 1.0f));
     vertices.Add(new Vector3(1.0f, 1.0f, 1.0f));
     vertices.Add(new Vector3(1.0f, -1.0f, 1.0f));
-    for (var i = 0; i < 4; i++) normals.Add(new Vector3(0.0f, 0.0f, -1.0f));
+    for (var i = 0; i < 4; i++) normals.Add(new Vector3(0.0f, 0.0f, 1.0f));
 
     // Top
     vertices.Add(new Vector3(-1.0f, 1.0f, -1.0f));

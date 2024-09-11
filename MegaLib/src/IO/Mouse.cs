@@ -17,6 +17,7 @@ public static class Mouse
 {
   public static Vector2 Screen { get; private set; }
   public static Vector2 Client { get; private set; }
+  public static Vector2 ClientDelta { get; private set; }
   public static Vector2 ClientClamped { get; private set; }
 
   public static Vector2 Normalized { get; private set; }
@@ -47,7 +48,9 @@ public static class Mouse
         var clientCursorPos = p;
         if (User32.ScreenToClient(hWnd, ref clientCursorPos))
         {
+          var oldClient = Client;
           Client = new Vector2(clientCursorPos.X, clientCursorPos.Y);
+          ClientDelta = Client - oldClient;
 
           // Получение размеров клиентской области активного окна
           if (User32.GetClientRect(hWnd, out var clientRect))

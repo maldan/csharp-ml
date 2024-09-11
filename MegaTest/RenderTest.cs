@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using MegaLib.AssetLoader.GLTF;
 using MegaLib.Ext;
 using MegaLib.IO;
 using MegaLib.Mathematics.Geometry;
@@ -26,6 +27,9 @@ namespace MegaTest;
 
 internal class RenderTestScene : Render_Scene
 {
+  private float _x;
+  private RO_Mesh _cube;
+
   public override void OnInit()
   {
     // Инициализируем камеру
@@ -46,18 +50,45 @@ internal class RenderTestScene : Render_Scene
     AddLayer("dynamicLine", new Layer_Line() { LineWidth = 2f });
     AddLayer("staticMesh", new Layer_StaticMesh() { });
 
+    // 
+    /*var gltf = GLTF.FromFile("C:\\Users\\black\\Desktop\\untitled.gltf");
+    foreach (var gltfMesh in gltf.MeshList)
+    {
+      foreach (var primitive in gltfMesh.Primitives)
+      {
+        var mm = new RO_Mesh();
+        mm.FromGLTF(primitive);
+        mm.InitDefaultTextures();
+        Add("staticMesh", mm);
+      }
+    }*/
+
     var cubeMesh = MeshGenerator.Cube(1);
-    var roCubeMesh = new RO_Mesh();
-    roCubeMesh.FromMesh(cubeMesh);
-    Add("staticMesh", roCubeMesh);
+    _cube = new RO_Mesh();
+    _cube.FromMesh(cubeMesh);
+    Add("staticMesh", _cube);
 
-    roCubeMesh.InitDefaultTextures();
+    _cube.InitDefaultTextures();
 
-    var ld = new LightDirection();
-    ld.Direction = new Vector3(0, 0, 1);
+    var ld = new LightPoint();
+    ld.Position = new Vector3(-1, 0, 0);
     ld.Color = new RGBA<float>(1, 1, 1, 1);
-    ld.Intensity = 1;
+    ld.Intensity = 2.1f;
+    ld.Radius = 0.6f;
     Lights.Add(ld);
+
+    ld = new LightPoint();
+    ld.Position = new Vector3(1, 0, 0);
+    ld.Color = new RGBA<float>(1, 1, 1, 1);
+    ld.Intensity = 2.1f;
+    ld.Radius = 1f;
+    Lights.Add(ld);
+
+    /*var ld = new LightDirection();
+    ld.Direction = new Vector3(0, 0, 1);
+    ld.Color = new RGBA<float>(1, 0, 0, 1);
+    ld.Intensity = 1;
+    Lights.Add(ld);*/
 
     var imgui = GetLayer<Layer_IMGUI>();
     imgui.Add<IMGUI_Element>(t =>
@@ -75,11 +106,18 @@ internal class RenderTestScene : Render_Scene
 
       t.Text = "SAS";
     });
+
+    var id = 0;
+    Console.WriteLine($"ID: {id++}");
+    Console.WriteLine($"ID: {id++}");
   }
 
   public override void OnBeforeUpdate(float delta)
   {
     Camera.BasicMovement(delta);
+    _x += delta;
+
+    _cube.Transform.Rotation = Quaternion.FromEuler(_x * 5.0f, 0, 0, "deg");
 
     Console.WriteLine($"{Camera.Rotation.Euler.ToDegrees}");
   }
@@ -102,6 +140,15 @@ internal class RenderTestScene : Render_Scene
         new RO_Line(new Vector3(-4, 4, i - 3.5f), new Vector3(4, 4, i - 3.5f)));
     }
 
+    var lineLayer = GetLayer<Layer_Line>("dynamicLine");
+    // lineLayer.DrawSphere();
+    foreach (var light in Lights)
+    {
+      if (light is LightPoint lp)
+      {
+        lineLayer.DrawSphere(lp.Position, lp.Radius, new RGBA<float>(1, 0, 0, 1));
+      }
+    }
     /**/
   }
 }

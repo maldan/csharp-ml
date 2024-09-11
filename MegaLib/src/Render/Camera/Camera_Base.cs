@@ -1,3 +1,4 @@
+using System;
 using MegaLib.IO;
 using MegaLib.Mathematics.LinearAlgebra;
 
@@ -49,10 +50,10 @@ public class Camera_Base
     _viewMatrix = Matrix4x4.Identity;
 
     // Инвертируем поворот по оси Y (yaw)
-    var invertedRotation = Quaternion.FromEuler(new Vector3(-_rotation.X, -_rotation.Y, -_rotation.Z), "rad");
+    // var invertedRotation = Quaternion.FromEuler(new Vector3(-_rotation.X, -_rotation.Y, _rotation.Z), "rad");
 
     // Применяем поворот камеры
-    _viewMatrix = _viewMatrix.Rotate(invertedRotation); // Убеждаемся, что это матрица поворота
+    _viewMatrix = _viewMatrix.Rotate(_rotation.Inverted); // Убеждаемся, что это матрица поворота
 
     // Применяем трансляцию камеры, но с отрицательными значениями для обратного смещения
     var p = -_position; // Обратное смещение, так как это камера

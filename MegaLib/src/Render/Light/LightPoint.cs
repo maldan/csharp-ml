@@ -5,5 +5,5 @@ namespace MegaLib.Render.Light;
 
 public class LightPoint : LightBase
 {
-  public float Radius;
+  public float Radius = 1f;
 }

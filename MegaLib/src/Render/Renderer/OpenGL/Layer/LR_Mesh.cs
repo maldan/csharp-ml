@@ -53,30 +53,33 @@ public class LR_Mesh : LR_Base
         }
         
         void main() {
+            // Применяем модельную и видовую матрицы для позиции
             mat4 modelViewMatrix = uViewMatrix * uModelMatrix;
             mat4 projectionMatrix = uProjectionMatrix;
-    
-            // Инвертируем ось Z в матрице проекции
-             // Инвертируем ось Z в проекционной матрице
-            //projectionMatrix[2][2] *= -1.0;
-            //projectionMatrix[2][3] *= -1.0; // Инвертируем также смещение для оси Z
-
+            
             // Применяем модифицированную матрицу проекции
             gl_Position = projectionMatrix * modelViewMatrix * vec4(aPosition.xyz, 1.0);
             
-            // TBN Matrix
-            mat4 modelMatrix = identity();
-            vec3 T = normalize(vec3(modelMatrix * vec4(aTangent,   1.0)));
-            vec3 B = normalize(vec3(modelMatrix * vec4(aBiTangent, 1.0)));
-            vec3 N = normalize(vec3(modelMatrix * vec4(aNormal,    1.0)));
+            // Преобразуем нормали с использованием матрицы модели
+            mat3 normalMatrix = transpose(inverse(mat3(uModelMatrix)));
             
-            // Out
+            // Рассчитываем TBN матрицу (Tangent, Bitangent, Normal)
+            vec3 T = normalize(normalMatrix * aTangent);   // Преобразуем тангенс
+            vec3 B = normalize(normalMatrix * aBiTangent); // Преобразуем битангенс
+            vec3 N = normalize(normalMatrix * aNormal);    // Преобразуем нормаль
+            
+            // Передаём нормализованную TBN-матрицу в фрагментный шейдер
+            vo_TBN = mat3(T, B, N);
+            
+            // Позиция камеры в мировых координатах
             vec4 cameraPosition = vec4(0.0, 0.0, 0.0, 1.0);
             vo_CameraPosition = (inverse(uViewMatrix) * cameraPosition).xyz;
             
+            // Преобразование позиции вершины в мировые координаты
             vo_Position = (uModelMatrix * vec4(aPosition.xyz, 1.0)).xyz;
+            
+            // Передаём текстурные координаты
             vo_UV = aUV;
-            vo_TBN = mat3(T, B, N);
         }";
 
     #endregion
@@ -84,39 +87,115 @@ public class LR_Mesh : LR_Base
     #region fragment
 
     // language=glsl
-    var fragment = @"
-        #version 330 core
-        precision highp float;
-        precision highp int;
-        precision highp sampler2D;
+    var pbrFunctions = @"
+        vec3 fresnelSchlick(float cosTheta, vec3 F0)
+        {
+            return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+        }
 
-        in vec3 vo_Position;
-        in vec2 vo_UV;
-        in mat3 vo_TBN;
-        in vec3 vo_CameraPosition;
-        
-        out vec4 color;
+        float DistributionGGX(vec3 N, vec3 H, float roughness)
+        {
+            float a = roughness * roughness;
+            float a2 = a * a;
+            float NdotH = max(dot(N, H), 0.0);
+            float NdotH2 = NdotH * NdotH;
 
-        uniform vec3 uLightPosition;
-        // uniform vec3 uCameraPosition;
-        
-        uniform sampler2D uAlbedoTexture;
-        uniform sampler2D uNormalTexture;
-        uniform sampler2D uRoughnessTexture;
-        uniform sampler2D uMetallicTexture;
-        
-        uniform sampler2D uLightTexture;
-        uniform samplerCube uSkybox;
-        
-        uniform vec4 uTint;
+            float num = a2;
+            float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+            denom = PI * denom * denom;
 
-        //const float PI = 3.1415;
-        const float PI = 3.141592653589793;
+            return num / denom;
+        }
+
+        float GeometrySchlickGGX(float NdotV, float roughness)
+        {
+            float r = (roughness + 1.0);
+            float k = (r * r) / 8.0;
+
+            float num = NdotV;
+            float denom = NdotV * (1.0 - k) + k;
+
+            return num / denom;
+        }
+
+        float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+        {
+            float NdotV = max(dot(N, V), 0.0);
+            float NdotL = max(dot(N, L), 0.0);
+            float ggx2 = GeometrySchlickGGX(NdotV, roughness);
+            float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+
+            return ggx1 * ggx2;
+        }
         
+        vec3 PBR(Material mat, Light light) {
+            // Нормализуем входные данные
+            vec3 N = normalize(mat.normal);  // Нормаль к поверхности
+            vec3 V = normalize(vo_CameraPosition - vo_Position);  // Направление к камере
+
+            // Определяем тип источника света
+            vec3 L;
+            float attenuation = 1.0;
+
+            if (light.isDirection) {
+                // Направленный свет
+                L = normalize(light.vector);  // Направление света, инвертированное
+            } else {
+                // Точечный свет (Point Light)
+                L = normalize(light.vector - vo_Position);  // Направление к источнику света
+
+                // Рассчитываем расстояние от источника света до объекта
+                float distance = length(light.vector - vo_Position);
+
+                // Проверяем, находится ли объект внутри радиуса действия света
+                if (distance < light.radius) {
+                    // Модель затухания с учётом радиуса
+                    attenuation = light.intensity * (1.0 - distance / light.radius) / (distance * distance);
+                } else {
+                    attenuation = 0.0;  // Если объект за пределами радиуса, свет не воздействует
+                }
+            }
+
+            vec3 H = normalize(V + L);  // Полу-угловой вектор
+
+            // Диффузное освещение (Lambertian reflectance)
+            vec3 F0 = vec3(0.04);  // Значение F0 для неметаллов
+            F0 = mix(F0, mat.albedo, mat.isMetallic ? 1.0 : 0.0);  // Для металлов F0 равен альбедо
+
+            // Интенсивность света с учётом затухания
+            vec3 radiance = light.color * light.intensity * attenuation;
+
+            // Cook-Torrance BRDF
+            float NDF = DistributionGGX(N, H, mat.roughness);  // Нормализованное распределение микрофасеток
+            float G = GeometrySmith(N, V, L, mat.roughness);  // Геометрический термин
+            vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);  // Френель
+
+            vec3 numerator = NDF * G * F;
+            float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001;
+            vec3 specular = numerator / denominator;
+
+            // kS - Спекулярный коэффициент, kD - диффузный коэффициент
+            vec3 kS = F;
+            vec3 kD = vec3(1.0) - kS;  // Энергосбережение: диффузное и спекулярное освещение вместе
+
+            kD *= 1.0 - (mat.isMetallic ? 1.0 : 0.0);  // У металлов нет диффузного отражения
+
+            // Диффузное освещение
+            float NdotL = max(dot(N, L), 0.0);
+            vec3 diffuse = kD * mat.albedo / PI;
+
+            // Финальный результат
+            vec3 color = (diffuse + specular) * radiance * NdotL;
+            
+            return color;
+        }
+    ";
+
+    // language=glsl
+    var baseStructs = @"
         struct Material {
             vec3 albedo;
             vec3 normal;
-            vec3 softNormal;
             float roughness;
             bool isMetallic;
             float alpha;
@@ -127,38 +206,80 @@ public class LR_Mesh : LR_Base
             vec3 vector;
             float intensity;
             vec3 color;  
+            float radius;
         };
 
-        float ggxDistribution(float roughness, float nDotH) {
-            float alpha2 = roughness * roughness * roughness * roughness;
-            float d = nDotH * nDotH * (alpha2 - 1.0) + 1.0;
-            return alpha2 / max((PI * d * d), 0.000001);
-        }
-
-        float geomSmith(float roughness, float dp) {
-            float k = (roughness + 1.0) * (roughness + 1.0) / 8.0;
-            float denom = max(dp * (1.0 - k) + k, 0.000001);
-            return dp / denom;
+        Material getMaterial() {
+            Material mat;
+            
+            // Read albedo
+            vec4 texelColor = texture(uAlbedoTexture, vo_UV);
+            if (texelColor.a <= 0.01) discard;
+            mat.albedo = sRGBToLinear(texelColor.rgb);
+            mat.alpha = texelColor.a;
+            
+            // Read normal
+            vec3 normal = texture(uNormalTexture, vo_UV).xyz * 2.0 - 1.0;
+            mat.normal = normalize(vo_TBN * normal);
+            
+            // Roughness
+            float roughness = texture(uRoughnessTexture, vo_UV).r;
+            if (roughness < 0.06) roughness = 0.06;
+            mat.roughness = roughness;
+            
+            // Metallic
+            mat.isMetallic = texture(uMetallicTexture, vo_UV).r >= 0.0;
+            
+            return mat;
         }
         
-        vec3 schlickFresnel(vec3 F0, float vDotH) {
-            return F0 + (1.0 - F0) * pow(clamp(1.0 - vDotH, 0.0, 1.0), 5.0);
-        }
-
-        vec3 blurReflection(vec3 viewDirection, vec3 normal, float power) {
-            vec3 finalColor = vec3(0.0);
-            for (int i = -1; i < 2; i++) {
-              for (int j = -1; j < 2; j++) {
-                vec3 reflectedDir = reflect(viewDirection, normal + vec3(float(i) * power, float(j) * power, 0.0));
-                reflectedDir.y *= -1.0;
-                reflectedDir.x *= -1.0;
-                finalColor += textureLod(uSkybox, reflectedDir, power * 128.0).rgb;
-              }
-            }
+        Light createLight(vec3 pos, vec3 color, float intensity, bool isDir) {
+            Light light;
             
-            return finalColor / 9.0;
+            light.intensity = intensity;
+            light.isDirection = isDir;
+            if (isDir) light.vector = normalize(pos);
+            else light.vector = pos;
+            light.color = color;
+            
+            return light;
         }
+    ";
 
+    // language=glsl
+    var lightHelpers = @"
+        ivec2 getLightTexelById(uint id, int offset) {
+            int pixel = 1 + int(id) * 9 + offset;
+            return ivec2(pixel % 64, pixel / 64);
+        }
+        
+        int getLightAmount() {
+            vec4 m1 = texelFetch(uLightTexture, ivec2(0, 0), 0);
+            return int(m1.r);
+        }
+        
+        Light getLight(uint id) {
+            float type = texelFetch(uLightTexture, getLightTexelById(id, 0), 0).r;
+            
+            float posX = texelFetch(uLightTexture, getLightTexelById(id, 1), 0).r;
+            float posY = texelFetch(uLightTexture, getLightTexelById(id, 2), 0).r;
+            float posZ = texelFetch(uLightTexture, getLightTexelById(id, 3), 0).r;
+            
+            float radius = texelFetch(uLightTexture, getLightTexelById(id, 4), 0).r;
+            float intensity = texelFetch(uLightTexture, getLightTexelById(id, 5), 0).r;
+            
+            float colorR = texelFetch(uLightTexture, getLightTexelById(id, 6), 0).r;
+            float colorG = texelFetch(uLightTexture, getLightTexelById(id, 7), 0).r;
+            float colorB = texelFetch(uLightTexture, getLightTexelById(id, 8), 0).r;
+            
+            Light ll = createLight(vec3(posX, posY, posZ), vec3(colorR, colorG, colorB), intensity, type <= 1.0);
+            ll.radius = radius;
+            return ll;
+        }
+    ";
+
+    // language=glsl
+    var otherHelpers = @"
         float remap(float value, float fromMin, float fromMax, float toMin, float toMax) {
             float normalizedValue = (value - fromMin) / (fromMax - fromMin);
             return mix(toMin, toMax, normalizedValue);
@@ -187,191 +308,62 @@ public class LR_Mesh : LR_Base
             }
             return colorLinear;
         }
+    ";
+
+    // language=glsl
+    var fragment = @"
+        #version 330 core
+        precision highp float;
+        precision highp int;
+        precision highp sampler2D;
+
+        in vec3 vo_Position;
+        in vec2 vo_UV;
+        in mat3 vo_TBN;
+        in vec3 vo_CameraPosition;
         
-        vec3 calcPbr(Material mat, Light light) {
-            if (!light.isDirection) {
-                vec3 l = light.vector - vo_Position;
-                float dist = length(l);
-                l = normalize(l);
-                light.intensity /= (dist * dist);
-                light.vector = l;
-            }
-            
-            // Vectors
-            vec3 viewDirection = normalize(vo_CameraPosition - vo_Position);
-            vec3 halfDir = normalize(light.vector + viewDirection);
-            
-            // lightDirection = reflect(-viewDirection, normal);
-            // lightIntensity = textureLod(uSkybox, lightDirection, 1.0).rgb * (1.0 - roughness);
-            
-            // Dots
-            /*float softNDotL = dot(mat.softNormal, light.vector);
-            if (softNDotL < 0.1) {
-                softNDotL = mix(0.1, 0.0, (0.1 - softNDotL) / (0.1 + 1.0));
-            }
-            mat.normal = mix(mat.normal, mat.softNormal, 1.0 - softNDotL);*/
-            
-            float nDotL = dot(mat.normal, light.vector);
-            if (nDotL < 0.1) {
-                nDotL = mix(0.1, 0.0, (0.1 - nDotL) / (0.1 + 1.0));
-            }  
-            
-            
-            float nDotH = max(dot(mat.normal, halfDir), 0.001);
-            float vDotH = max(dot(viewDirection, halfDir), 0.001);
-            float nDotV = max(dot(mat.normal, viewDirection), 0.001);
+        out vec4 color;
 
-            // if (nDotL <= 0.05) nDotL = 0.05;
-            
-            // Reflection
-            /*vec3 reflectedDir = reflect(viewDirection, normal);
-            reflectedDir.y *= -1.0;
-            reflectedDir.x *= -1.0;
-            vec3 reflectedColor = textureLod(uSkybox, reflectedDir, roughness * 32.0).rgb;*/
-            
-            float sex = remap(mat.roughness, 0.0, 1.0, 0.0, 4.0);
-            vec3 reflectedColor = blurReflection(viewDirection, mat.normal, sex * 0.02);
-
-            // PBR
-            vec3 FO = vec3(0.04);
-            
-            if (mat.isMetallic) {
-                FO = mat.albedo;
-            }
-            
-            vec3 F = schlickFresnel(FO, vDotH);
-            vec3 kS = F;
-            vec3 kD = vec3(1.0) - kS;
-            
-            vec3 specBRDF_nom = ggxDistribution(mat.roughness, nDotH) * 
-                F * 
-                geomSmith(mat.roughness, nDotL) * 
-                geomSmith(mat.roughness, nDotV);
-            float specBRDF_denom = 4.0 * nDotV * nDotL;
-            vec3 specBRDF = (specBRDF_nom / max(specBRDF_denom, 0.00001));
-            
-            vec3 fLambert = vec3(0.0);
-            if (!mat.isMetallic) {
-                fLambert = mat.albedo;
-            }
-            vec3 diffuseBRDF = kD * fLambert / PI;
-            
-            // Reflection
-            if (!mat.isMetallic) {
-              reflectedColor *= pow(1.0 - mat.roughness, 3.0) * 0.65;
-              float cosTheta = dot(mat.normal, viewDirection);
-              float fresnelFactor = pow(1.0 - abs(cosTheta), 5.0);
-              if (fresnelFactor < 0.2) fresnelFactor = 0.2;
-              reflectedColor *= fresnelFactor;
-            } else {
-              float cosTheta = dot(mat.normal, viewDirection);
-              float fresnelFactor = pow(1.0 - abs(cosTheta), (mat.roughness) * 4.0 + 1.0);
-              if (fresnelFactor < 0.05) fresnelFactor = 0.05;
-              reflectedColor *= fresnelFactor;
-            }
-
-            float xxx = remap(mat.roughness, 0.0, 1.0, 0.0, 2.0);
-            if (xxx > 1.0) xxx = 1.0;
-            
-            // specBRDF += vec3(1.0, 0.0, 0.0) * ((1.0 - nDotL) * 0.25);
-            
-            vec3 lightColor = light.color * light.intensity;
-            vec3 finalColor = (diffuseBRDF + specBRDF + reflectedColor) * lightColor * nDotL;
-            
-            return finalColor;
-        }
+        uniform vec3 uLightPosition;
+        // uniform vec3 uCameraPosition;
         
-        Material getMaterial() {
-            Material mat;
-            
-            // Read albedo
-            vec4 texelColor = texture(uAlbedoTexture, vo_UV);
-            if (texelColor.a <= 0.01) discard;
-            mat.albedo = sRGBToLinear(texelColor.rgb);
-            mat.alpha = texelColor.a;
-            
-            // Read normal
-            vec3 normal = texture(uNormalTexture, vo_UV).xyz * 2.0 - 1.0;
-            mat.normal = normalize(vo_TBN * normal);
-            vec3 softNormal = textureLod(uNormalTexture, vo_UV, 10.0).xyz * 2.0 - 1.0;
-            mat.softNormal = normalize(vo_TBN * softNormal);
-            
-            // Roughness
-            float roughness = texture(uRoughnessTexture, vo_UV).r;
-            if (roughness < 0.06) roughness = 0.06;
-            mat.roughness = roughness;
-            
-            // Metallic
-            mat.isMetallic = texture(uMetallicTexture, vo_UV).r >= 0.5;
-            
-            return mat;
-        }
+        uniform sampler2D uAlbedoTexture;
+        uniform sampler2D uNormalTexture;
+        uniform sampler2D uRoughnessTexture;
+        uniform sampler2D uMetallicTexture;
         
-        Light createLight(vec3 pos, vec3 color, float intensity, bool isDir) {
-            Light light;
-            
-            light.intensity = intensity;
-            light.isDirection = isDir;
-            if (isDir) light.vector = normalize(pos);
-            else light.vector = pos;
-            light.color = color;
-            
-            return light;
-        }
-
-        ivec2 getLightTexelById(uint id, int ch) {
-            int pixel = 1 + (int(id) * 8 + ch);
-            return ivec2(pixel % 64, pixel / 64);
-        }
+        uniform sampler2D uLightTexture;
+        uniform samplerCube uSkybox;
         
-        int getLightAmount() {
-            vec4 m1 = texelFetch(uLightTexture, ivec2(0, 0), 0);
-            return int(m1.r);
-        }
+        uniform vec4 uTint;
+        
+        const float PI = 3.141592653589793;
+        
+        " + otherHelpers + @"
+        
+        " + baseStructs + @"
 
-        Light getLight(uint id) {
-            float type = texelFetch(uLightTexture, getLightTexelById(id, 0), 0).r;
-            
-            float posX = texelFetch(uLightTexture, getLightTexelById(id, 1), 0).r;
-            float posY = texelFetch(uLightTexture, getLightTexelById(id, 2), 0).r;
-            float posZ = texelFetch(uLightTexture, getLightTexelById(id, 3), 0).r;
-            
-            float intensity = texelFetch(uLightTexture, getLightTexelById(id, 4), 0).r;
-            
-            float colorR = texelFetch(uLightTexture, getLightTexelById(id, 5), 0).r;
-            float colorG = texelFetch(uLightTexture, getLightTexelById(id, 6), 0).r;
-            float colorB = texelFetch(uLightTexture, getLightTexelById(id, 7), 0).r;
-            
-            return createLight(vec3(posX, posY, posZ), vec3(colorR, colorG, colorB), intensity, type < 2.0);
-        }
+        " + lightHelpers + @"
+        
+        " + pbrFunctions + @"
         
         void main()
         {
             Material mat = getMaterial();
 
+            // Light
             vec3 finalColor = vec3(0.0);
             int lightAmount = getLightAmount();
             for (int i = 0; i < lightAmount; i++) {
                Light light1 = getLight(uint(i));
-               finalColor += calcPbr(mat, light1);
+               finalColor += PBR(mat, light1);
             }
-            
-            //
-            //Light light2 = createLight(vec3(-1.0, 1.0, 1.0), vec3(1.0), 0.5, true);
-            //Light light3 = createLight(vec3(0.0, 1.0, 1.0), vec3(1.0), 1.5, true);
-            
-            //
-            //finalColor += calcPbr(mat, light1);
-            //finalColor += calcPbr(mat, light2);
-            //finalColor += calcPbr(mat, light3);
             
             // HDR
             finalColor = finalColor / (finalColor + vec3(1.0));
             
             // Gamma
             finalColor = pow(finalColor, vec3(1.0/2.2));
-            
-            // finalColor += uAlbedoTexture;
             
             color = vec4(finalColor, mat.alpha) * uTint;
         }";

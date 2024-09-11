@@ -108,27 +108,28 @@ public class RO_Mesh : RO_Base
         [0] = new RGBA<byte>(128, 128, 255, 255)
       }
     };
+    normal.Options.FiltrationMode = TextureFiltrationMode.Linear;
     NormalTexture = normal;
 
     var roughness = new Texture_2D<RGBA<byte>>(1, 1)
     {
       RAW =
       {
-        [0] = new RGBA<byte>(128, 128, 128, 255)
+        [0] = new RGBA<byte>(255, 255, 255, 255)
       }
     };
+    roughness.Options.FiltrationMode = TextureFiltrationMode.Linear;
     RoughnessTexture = roughness;
 
     var metalic = new Texture_2D<RGBA<byte>>(1, 1)
     {
       RAW =
       {
-        [0] = new RGBA<byte>(128, 128, 128, 255)
+        [0] = new RGBA<byte>(0, 0, 0, 255)
       }
     };
+    metalic.Options.FiltrationMode = TextureFiltrationMode.Linear;
     MetallicTexture = metalic;
-
-    CalculateTangent();
   }
 
   public static RO_Mesh GenerateUVSphere(float radius, int longitudeSegments, int latitudeSegments)
@@ -274,6 +275,7 @@ public static class MeshEx
     mesh.UV0List = new ListGPU<Vector2>(mesh2.UV0List);
     mesh.NormalList = new ListGPU<Vector3>(mesh2.NormalList);
     mesh.IndexList = new ListGPU<uint>(mesh2.IndexList);
+    mesh.CalculateTangent();
   }
 
   public static void FromGLTF(this RO_Mesh mesh, GLTF_MeshPrimitive gltfMeshPrimitive)

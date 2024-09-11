@@ -128,7 +128,8 @@ public class Render_Scene
         LightTexture.RAW[id++] = 1;
         LightTexture.RAW[id++] = ld.Direction.X;
         LightTexture.RAW[id++] = ld.Direction.Y;
-        LightTexture.RAW[id++] = ld.Direction.Z;
+        LightTexture.RAW[id++] = -ld.Direction.Z;
+        LightTexture.RAW[id++] = 0;
       }
 
       if (light is LightPoint lp)
@@ -137,6 +138,7 @@ public class Render_Scene
         LightTexture.RAW[id++] = light.Position.X;
         LightTexture.RAW[id++] = light.Position.Y;
         LightTexture.RAW[id++] = light.Position.Z;
+        LightTexture.RAW[id++] = lp.Radius;
       }
 
       LightTexture.RAW[id++] = light.Intensity;
