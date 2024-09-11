@@ -128,7 +128,7 @@ public class OpenGL_Renderer : IRenderer
     set
     {
       _scene = value;
-
+      _scene.OnInit();
       _context.MapTexture(_scene.Skybox);
 
       foreach (var layer in value.Pipeline)

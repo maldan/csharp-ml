@@ -240,6 +240,14 @@ public class OpenGL_Shader
   {
     var textureId = Context.GetTextureId(texture);
 
+    // Sync if changed
+    texture.FRONT.Sync();
+    texture.BACK.Sync();
+    texture.TOP.Sync();
+    texture.BOTTOM.Sync();
+    texture.LEFT.Sync();
+    texture.RIGHT.Sync();
+
     // Activate slot texture
     OpenGL32.glActiveTexture(OpenGL32.GL_TEXTURE0 + slot);
 

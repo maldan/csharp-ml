@@ -117,6 +117,7 @@ public class OpenGL_Context
   public void MapTexture(Texture_Cube texture)
   {
     if (texture == null) return;
+    if (_cubeTextureList.ContainsKey(texture.Id)) return;
 
     // Create gl texture
     uint textureId = 0;
@@ -131,21 +132,6 @@ public class OpenGL_Context
       var id = sideId++;
       side.OnSync = pixels =>
       {
-        // Copy as huilo
-        /*var tvar = new byte[side.Width * side.Height * 3];
-        var toIndex = 0;
-        for (var y = 0; y < side.Height; y++)
-        {
-          for (var x = 0; x < side.Width; x++)
-          {
-            var fromIndex = (y * side.Width + x);
-            var p = pixels[fromIndex];
-            tvar[toIndex++] = p.R;
-            tvar[toIndex++] = p.G;
-            tvar[toIndex++] = p.B;
-          }
-        }*/
-
         // Get type
         var (internalFormat, srcFormat, srcType) = GetTextureType(texture.Options);
 
@@ -177,8 +163,11 @@ public class OpenGL_Context
     // On destroy
     texture.OnDestroy += (sender, id) =>
     {
-      OpenGL32.glDeleteTextures([textureId]);
-      _cubeTextureList.Remove(id);
+      //OpenGL32.glDeleteTextures([textureId]);
+      //_cubeTextureList.Remove(id);
+      _mutex.WaitOne();
+      _removeTextureQueue.Add(_cubeTextureList[id]);
+      _mutex.ReleaseMutex();
     };
 
     // Do shit
@@ -426,14 +415,17 @@ public class OpenGL_Context
       case TextureWrapMode.Clamp:
         OpenGL32.glTexParameteri(target, OpenGL32.GL_TEXTURE_WRAP_S, (int)OpenGL32.GL_CLAMP_TO_EDGE);
         OpenGL32.glTexParameteri(target, OpenGL32.GL_TEXTURE_WRAP_T, (int)OpenGL32.GL_CLAMP_TO_EDGE);
+        OpenGL32.glTexParameteri(target, OpenGL32.GL_TEXTURE_WRAP_R, (int)OpenGL32.GL_CLAMP_TO_EDGE);
         break;
       case TextureWrapMode.Repeat:
         OpenGL32.glTexParameteri(target, OpenGL32.GL_TEXTURE_WRAP_S, (int)OpenGL32.GL_REPEAT);
         OpenGL32.glTexParameteri(target, OpenGL32.GL_TEXTURE_WRAP_T, (int)OpenGL32.GL_REPEAT);
+        OpenGL32.glTexParameteri(target, OpenGL32.GL_TEXTURE_WRAP_R, (int)OpenGL32.GL_REPEAT);
         break;
       case TextureWrapMode.Mirror:
         OpenGL32.glTexParameteri(target, OpenGL32.GL_TEXTURE_WRAP_S, (int)OpenGL32.GL_MIRRORED_REPEAT);
         OpenGL32.glTexParameteri(target, OpenGL32.GL_TEXTURE_WRAP_T, (int)OpenGL32.GL_MIRRORED_REPEAT);
+        OpenGL32.glTexParameteri(target, OpenGL32.GL_TEXTURE_WRAP_R, (int)OpenGL32.GL_MIRRORED_REPEAT);
         break;
       default:
         throw new ArgumentOutOfRangeException(nameof(mode), mode, null);

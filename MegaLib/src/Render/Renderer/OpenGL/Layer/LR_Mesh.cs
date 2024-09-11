@@ -391,7 +391,7 @@ public class LR_Mesh : LR_Base
     // Shader.SetUniform("uCameraPosition", cp);
     Shader.SetUniform("uProjectionMatrix", Scene.Camera.ProjectionMatrix);
     Shader.SetUniform("uViewMatrix", Scene.Camera.ViewMatrix);
-    if (Scene.Skybox != null) Shader.ActivateTexture(Scene.Skybox, "uSkybox", 10);
+    // if (Scene.Skybox != null) Shader.ActivateTexture(Scene.Skybox, "uSkybox", 10);
 
     // Draw each mesh
     layer.ForEach<RO_Mesh>(mesh =>

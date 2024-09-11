@@ -29,6 +29,7 @@ internal class RenderTestScene : Render_Scene
 {
   private float _x;
   private RO_Mesh _cube;
+  private RO_Mesh _sphere;
 
   public override void OnInit()
   {
@@ -49,6 +50,10 @@ internal class RenderTestScene : Render_Scene
     AddLayer("dynamicPoint", new Layer_Point() { });
     AddLayer("dynamicLine", new Layer_Line() { LineWidth = 2f });
     AddLayer("staticMesh", new Layer_StaticMesh() { });
+    AddLayer("skybox", new Layer_Skybox() { });
+
+    Skybox = new Texture_Cube();
+    Skybox.Options.FiltrationMode = TextureFiltrationMode.Nearest;
 
     // 
     /*var gltf = GLTF.FromFile("C:\\Users\\black\\Desktop\\untitled.gltf");
@@ -67,28 +72,45 @@ internal class RenderTestScene : Render_Scene
     _cube = new RO_Mesh();
     _cube.FromMesh(cubeMesh);
     Add("staticMesh", _cube);
-
     _cube.InitDefaultTextures();
+    _cube.Transform.Position = new Vector3(0, 0.5f, 0);
 
-    var ld = new LightPoint();
-    ld.Position = new Vector3(-1, 0, 0);
+    var gridMesh = new RO_Mesh();
+    gridMesh.FromMesh(MeshGenerator.Grid(2, 2, 4));
+    gridMesh.InitDefaultTextures();
+    Add("staticMesh", gridMesh);
+
+    _sphere = new RO_Mesh();
+    _sphere.FromMesh(MeshGenerator.UVSphere(16, 16, 0.5f));
+    _sphere.InitDefaultTextures();
+    _sphere.Transform.Position = new Vector3(1, 0.5f, -1f);
+    Add("staticMesh", _sphere);
+
+    /*var ld = new LightPoint();
+    ld.Position = new Vector3(-1, 1, -1);
     ld.Color = new RGBA<float>(1, 1, 1, 1);
     ld.Intensity = 2.1f;
-    ld.Radius = 0.6f;
+    ld.Radius = 1.6f;
     Lights.Add(ld);
 
     ld = new LightPoint();
-    ld.Position = new Vector3(1, 0, 0);
+    ld.Position = new Vector3(1, 1, -1);
     ld.Color = new RGBA<float>(1, 1, 1, 1);
     ld.Intensity = 2.1f;
     ld.Radius = 1f;
-    Lights.Add(ld);
-
-    /*var ld = new LightDirection();
-    ld.Direction = new Vector3(0, 0, 1);
-    ld.Color = new RGBA<float>(1, 0, 0, 1);
-    ld.Intensity = 1;
     Lights.Add(ld);*/
+
+    var ld2 = new LightDirection();
+    ld2.Direction = new Vector3(0, 1, 1);
+    ld2.Color = new RGBA<float>(1, 1, 1, 1);
+    ld2.Intensity = 1;
+    Lights.Add(ld2);
+
+    ld2 = new LightDirection();
+    ld2.Direction = new Vector3(0, 1, -1);
+    ld2.Color = new RGBA<float>(1, 0, 1, 1);
+    ld2.Intensity = 1;
+    Lights.Add(ld2);
 
     var imgui = GetLayer<Layer_IMGUI>();
     imgui.Add<IMGUI_Element>(t =>
@@ -117,14 +139,15 @@ internal class RenderTestScene : Render_Scene
     Camera.BasicMovement(delta);
     _x += delta;
 
-    _cube.Transform.Rotation = Quaternion.FromEuler(_x * 5.0f, 0, 0, "deg");
+    _cube.Transform.Rotation = Quaternion.FromEuler(0, _x * 5.0f, 0, "deg");
+    _sphere.Transform.Rotation = Quaternion.FromEuler(_x * 45.0f, 0, 0, "deg");
 
     Console.WriteLine($"{Camera.Rotation.Euler.ToDegrees}");
   }
 
   public override void OnBeforeRender()
   {
-    for (var i = 0; i < 8; i++)
+    /*for (var i = 0; i < 8; i++)
     {
       Add("dynamicLine",
         new RO_Line(new Vector3(i - 3.5f, 0f, -4f), new Vector3(i - 3.5f, 0f, 4f)));
@@ -138,7 +161,7 @@ internal class RenderTestScene : Render_Scene
         new RO_Line(new Vector3(-4, 0, i - 3.5f), new Vector3(4, 0, i - 3.5f)));
       Add("dynamicLine",
         new RO_Line(new Vector3(-4, 4, i - 3.5f), new Vector3(4, 4, i - 3.5f)));
-    }
+    }*/
 
     var lineLayer = GetLayer<Layer_Line>("dynamicLine");
     // lineLayer.DrawSphere();
@@ -196,7 +219,7 @@ public class RenderTest
 
     win.InitOpenGL();
 
-    scene.OnInit();
+    // scene.OnInit();
     Task.Run(() => { scene.OnLoad(); });
     if (scene.Camera is Camera_Orthographic c)
     {

@@ -3,6 +3,7 @@ using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Core;
 using MegaLib.Render.Core.Layer;
+using MegaLib.Render.Mesh;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Scene;
 
@@ -27,13 +28,14 @@ public class LR_Skybox : LR_Base
         
         uniform mat4 uProjectionMatrix;
         uniform mat4 uViewMatrix;
-        uniform mat4 uModelMatrix;
-
+        
         out vec3 vUV;
         
         void main() {
-            gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPosition.xyz, 1.0);
+            // Преобразуем позицию вершины в пространство вида (без трансляции, только вращение)
             vUV = aPosition;
+            vec4 pos = uProjectionMatrix * mat4(mat3(uViewMatrix)) * vec4(aPosition, 1.0);
+            gl_Position = pos.xyww; // Применяем перспективу, но сохраняем W для корректного отображения
         }";
 
     // language=glsl
@@ -49,7 +51,7 @@ public class LR_Skybox : LR_Base
 
         void main()
         {
-            color = texture(uSkybox, vUV);
+            color = vec4(texture(uSkybox, vUV).rgb, 1.0);
         }";
 
     Shader.ShaderCode["vertex"] = vertex;
@@ -57,9 +59,9 @@ public class LR_Skybox : LR_Base
     Shader.Compile();
 
     // Base
-    var skyboxCube = RO_Mesh.GenerateCube(32);
-    skyboxCube.Transform = new Transform();
-    Layer.Add(skyboxCube);
+    var skybox = new RO_Mesh();
+    skybox.FromMesh(MeshGenerator.Cube(32));
+    Layer.Add(skybox);
   }
 
   public override void Render()
@@ -76,6 +78,8 @@ public class LR_Skybox : LR_Base
     // Shader.SetUniform("uCameraPosition", cp);
     Shader.SetUniform("uProjectionMatrix", Scene.Camera.ProjectionMatrix);
     Shader.SetUniform("uViewMatrix", Scene.Camera.ViewMatrix);
+
+    Context.MapTexture(Scene.Skybox);
     Shader.ActivateTexture(Scene.Skybox, "uSkybox", 10);
 
     // Draw each mesh
@@ -83,9 +87,9 @@ public class LR_Skybox : LR_Base
     {
       // Move mesh
       var p = Scene.Camera.Position;
-      p.Z *= -1;
-      mesh.Transform.Position = p;
-      mesh.Transform.Scale = new Vector3(1.0f, 1.0f, -1.0f);
+      //p.Z *= -1;
+      //mesh.Transform.Position = p;
+      //mesh.Transform.Scale = new Vector3(1.0f, 1.0f, -1.0f);
 
       Context.MapObject(mesh);
 
@@ -94,7 +98,8 @@ public class LR_Skybox : LR_Base
 
       // Buffer
       Shader.EnableAttribute(mesh.VertexList, "aPosition");
-      Shader.SetUniform("uModelMatrix", mesh.Transform.Matrix);
+      //Shader.EnableAttribute(mesh.UV0List, "aUV");
+      // Shader.SetUniform("uModelMatrix", mesh.Transform.Matrix);
 
       // Bind indices
       OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(mesh.IndexList));
