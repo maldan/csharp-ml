@@ -47,15 +47,32 @@ internal class TestScene3 : Render_Scene
     easyUi.Add<EasyUI_Element>(t =>
     {
       t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
-      t.Style.Width = 60;
-      t.Style.Height = 90;
-      t.Style.X = 10;
-      t.Style.Y = 10;
+      t.Style.SetArea(10, 10, 60, 90);
+      t.Style.TextAlign = "center";
 
       t.Events.OnMouseOver = () => { t.Style.BackgroundColor = new Vector4(0.25f, 0.25f, 0.25f, 1); };
       t.Events.OnMouseOut = () => { t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1); };
 
       t.Text = "GAS";
+
+      easyUi.Add<EasyUI_Element>(t =>
+      {
+        t.Style.BackgroundColor = new Vector4(0.2f, 0.2f, 0.2f, 1);
+        t.Style.SetArea(10, 10, 32, 32);
+        t.Text = "XX";
+        t.Style.TextAlign = "center";
+      });
+    });
+
+    easyUi.Add<EasyUI_Element>(t =>
+    {
+      t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
+      t.Style.SetArea(100, 10, 60, 90);
+
+      t.Events.OnMouseOver = () => { t.Style.BackgroundColor = new Vector4(0.25f, 0.25f, 0.25f, 1); };
+      t.Events.OnMouseOut = () => { t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1); };
+
+      t.Text = "BLA BLA BL\nDFDFDF\nXX";
     });
   }
 }

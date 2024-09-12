@@ -79,8 +79,8 @@ public class EasyUI_RenderData
 
   public Rectangle DrawText(
     string text,
+    string textAlign,
     FontData fontData,
-    Vector2 position,
     Vector4 color,
     Rectangle drawArea
   )
@@ -91,6 +91,7 @@ public class EasyUI_RenderData
 
     var maxLineHeight = 0f;
     var offset = new Vector2(0, 0);
+    var position = new Vector2(drawArea.FromX, drawArea.FromY);
     // uint indexOffset = 0;
 
     var textSize = new Rectangle(float.MaxValue, float.MaxValue, float.MinValue, float.MinValue);
@@ -153,10 +154,13 @@ public class EasyUI_RenderData
       maxLineHeight = Math.Max(maxLineHeight, area.TextureArea.Height);
     }
 
-    for (var i = 0; i < vectorList.Count; i++)
+    if (textAlign == "center")
     {
-      vectorList[i] += new Vector3(drawArea.Width / 2f, drawArea.Height / 2f, 0);
-      vectorList[i] -= new Vector3(textSize.Width / 2f, textSize.Height / 2f, 0);
+      for (var i = 0; i < vectorList.Count; i++)
+      {
+        vectorList[i] += new Vector3(drawArea.Width / 2f, drawArea.Height / 2f, 0);
+        vectorList[i] -= new Vector3(textSize.Width / 2f, textSize.Height / 2f, 0);
+      }
     }
 
     Vertices.AddRange(vectorList);

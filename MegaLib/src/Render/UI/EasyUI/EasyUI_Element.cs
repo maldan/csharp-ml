@@ -21,15 +21,10 @@ public struct EasyUI_BuildIn
   public FontData FontData;
   public EasyUI_Element Parent;
   public float Delta;
-  public Vector2 CursorPosition;
 }
 
 public struct EasyUI_BuildOut
 {
-  public Rectangle DrawArea;
-  public float ZIndex;
-
-  public Rectangle OutputBoundingBox;
 }
 
 public class EasyUI_Element
@@ -88,19 +83,17 @@ public class EasyUI_Element
   {
     Clear();
 
-    // Получаем bounding box у текущего объекта
-    var p = Position();
-    var boundingBox = Rectangle.FromLeftTopWidthHeight(p.X, p.Y, Width(), Height());
-    var contentBoundingBox = Rectangle.FromLeftTopWidthHeight(p.X, p.Y, Width(), Height());
+    // Получаем bounding box текущего объекта в локальных координатах
+    var elementBoundingBox = BoundingBox();
 
-    // Помещаем его на позицию курсора
-    boundingBox += buildArgs.CursorPosition;
+    // Смещаем относительно родителя
+    if (buildArgs.Parent != null) elementBoundingBox += buildArgs.Parent.Position();
 
     // Инициализация коллизии
     var hasCollision = Events.OnMouseOver != null || Events.OnMouseOut != null || Events.OnClick != null;
     if (hasCollision)
     {
-      InitCollision(boundingBox);
+      InitCollision(elementBoundingBox);
       if (CheckCollision())
       {
         if (!_isMouseOver)
@@ -136,28 +129,17 @@ public class EasyUI_Element
       }
     }
 
-    // Смещение курсора
-    var cursorOffset = new Vector2(0, 0);
-
     // Проходимся по чилдам
     if (Children.Count > 0)
     {
       var rList = new List<EasyUI_RenderData>();
       for (var i = 0; i < Children.Count; i++)
       {
-        var buildOut = Children[i].Build(new EasyUI_BuildIn
+        Children[i].Build(new EasyUI_BuildIn
         {
           Parent = this,
-          Delta = buildArgs.Delta,
-          FontData = buildArgs.FontData,
-          CursorPosition = new Vector2(boundingBox.FromX, boundingBox.FromY) + cursorOffset
+          FontData = buildArgs.FontData
         });
-
-        contentBoundingBox.ToY = Math.Max(contentBoundingBox.ToY, buildOut.OutputBoundingBox.MaxY);
-        contentBoundingBox.ToX = Math.Max(contentBoundingBox.ToX, buildOut.OutputBoundingBox.ToX);
-
-        // Смещаем курсор вниз на высоту чилда
-        cursorOffset.Y += buildOut.OutputBoundingBox.Height;
 
         // Копируем содержимое чилда
         rList.AddRange(Children[i].RenderData);
@@ -169,21 +151,27 @@ public class EasyUI_Element
 
     // Бэкграунд по bounding box
     var background = new EasyUI_RenderData();
-    background.DrawRectangle(boundingBox, BackgroundColor());
+    background.DrawRectangle(elementBoundingBox, BackgroundColor());
     RenderData.Insert(0, background);
 
     if (Text != "")
     {
       var textData = new EasyUI_RenderData();
-      textData.DrawText(Text, buildArgs.FontData, new Vector2(10, 10), new Vector4(1, 1, 1, 1), boundingBox);
+      textData.DrawText(
+        Text,
+        Style.TextAlign,
+        buildArgs.FontData,
+        new Vector4(1, 1, 1, 1),
+        elementBoundingBox
+      );
       RenderData.Add(textData);
     }
 
+    // Событие рендера
     Events?.OnRender?.Invoke(buildArgs.Delta);
 
     return new EasyUI_BuildOut
     {
-      OutputBoundingBox = boundingBox
     };
   }
 
