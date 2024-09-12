@@ -415,5 +415,24 @@ public struct Quaternion
     return new Quaternion(0, 0, 0, 0) - value;
   }
 
+  // Метод создания кватерниона из оси и угла вращения
+  public static Quaternion CreateFromAxisAngle(Vector3 axis, float angle)
+  {
+    // Нормализация оси вращения
+    axis = axis.Normalized;
+
+    // Половина угла и синус для вычисления
+    var halfAngle = angle * 0.5f;
+    var sin = (float)Math.Sin(halfAngle);
+
+    return new Quaternion
+    {
+      X = axis.X * sin,
+      Y = axis.Y * sin,
+      Z = axis.Z * sin,
+      W = (float)Math.Cos(halfAngle)
+    };
+  }
+
   #endregion
 }

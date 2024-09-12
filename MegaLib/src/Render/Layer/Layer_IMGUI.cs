@@ -1,16 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.Intrinsics.X86;
-using MegaLib.IO;
-using MegaLib.Mathematics.Geometry;
-using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Camera;
 using MegaLib.Render.Color;
+using MegaLib.Render.Core.Layer;
 using MegaLib.Render.IMGUI;
 using MegaLib.Render.Texture;
 
-namespace MegaLib.Render.Core.Layer;
+namespace MegaLib.Render.Layer;
 
 public class Layer_IMGUI : Layer_Base
 {

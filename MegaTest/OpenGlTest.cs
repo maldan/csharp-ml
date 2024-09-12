@@ -9,7 +9,6 @@ using MegaLib.Render.RenderObject;
 using MegaLib.Render.Scene;
 using MegaLib.Render.Texture;
 using NUnit.Framework;
-using Console = MegaLib.IO.Console;
 
 namespace MegaTest;
 

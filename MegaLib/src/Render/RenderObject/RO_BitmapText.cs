@@ -6,7 +6,6 @@ using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.Render.Buffer;
 using MegaLib.Render.Color;
 using MegaLib.Render.Text;
-using Console = MegaLib.IO.Console;
 
 namespace MegaLib.Render.RenderObject;
 

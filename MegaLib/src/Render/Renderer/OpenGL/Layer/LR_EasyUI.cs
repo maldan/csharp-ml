@@ -9,10 +9,11 @@ using MegaLib.Render.IMGUI;
 using MegaLib.Render.Layer;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Scene;
+using MegaLib.Render.UI.EasyUI;
 
 namespace MegaLib.Render.Renderer.OpenGL.Layer;
 
-public class LR_IMGUI : LR_Base
+public class LR_EasyUI : LR_Base
 {
   private ListGPU<Vector3> _vertices;
   private ListGPU<uint> _indices;
@@ -21,7 +22,7 @@ public class LR_IMGUI : LR_Base
   private uint _vaoId;
   private Matrix4x4 _mx = Matrix4x4.Identity;
 
-  public LR_IMGUI(OpenGL_Context context, Layer_Base layer, Render_Scene scene) : base(context, layer, scene)
+  public LR_EasyUI(OpenGL_Context context, Layer_Base layer, Render_Scene scene) : base(context, layer, scene)
   {
   }
 
@@ -141,9 +142,9 @@ public class LR_IMGUI : LR_Base
     OpenGL32.glGenVertexArrays(1, ref _vaoId);
   }
 
-  private void RenderLines(RenderData rd)
+  private void RenderLines(EasyUI_RenderData rd)
   {
-    var layer = (Layer_IMGUI)Layer;
+    var layer = (Layer_EasyUI)Layer;
 
     _vertices.Clear();
     _colors.Clear();
@@ -178,9 +179,9 @@ public class LR_IMGUI : LR_Base
     OpenGL32.glBindVertexArray(0);
   }
 
-  private void RenderMain(RenderData rd)
+  private void RenderMain(EasyUI_RenderData rd)
   {
-    var layer = (Layer_IMGUI)Layer;
+    var layer = (Layer_EasyUI)Layer;
 
     _vertices.Clear();
     _uv.Clear();
@@ -226,7 +227,7 @@ public class LR_IMGUI : LR_Base
 
   public override void Render()
   {
-    var layer = (Layer_IMGUI)Layer;
+    var layer = (Layer_EasyUI)Layer;
     var renderData = layer.Build(Scene.DeltaTime);
 
     Shader.Use();
@@ -251,24 +252,7 @@ public class LR_IMGUI : LR_Base
     // Основной рендер
     renderData.ForEach(rd =>
     {
-      if (rd.IsStencilStop)
-      {
-        OpenGL32.glDisable(OpenGL32.GL_STENCIL_TEST);
-      }
-      else if (rd.IsStencilStart)
-      {
-        OpenGL32.glEnable(OpenGL32.GL_STENCIL_TEST);
-        OpenGL32.glStencilOp(OpenGL32.GL_KEEP, OpenGL32.GL_KEEP, OpenGL32.GL_REPLACE);
-        OpenGL32.glStencilFunc(OpenGL32.GL_ALWAYS, 1, 0xFF);
-        OpenGL32.glStencilMask(0xFF);
-        OpenGL32.glClear(OpenGL32.GL_STENCIL_BUFFER_BIT);
-
-        RenderMain(rd);
-
-        OpenGL32.glStencilFunc(OpenGL32.GL_EQUAL, 1, 0xFF);
-        OpenGL32.glStencilMask(0x00);
-      }
-      else if (rd.IsLine)
+      if (rd.IsLine)
       {
         RenderLines(rd);
       }

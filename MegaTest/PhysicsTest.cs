@@ -12,6 +12,7 @@ using MegaLib.Render.Color;
 using MegaLib.Render.Core;
 using MegaLib.Render.Core.Layer;
 using MegaLib.Render.IMGUI;
+using MegaLib.Render.Layer;
 using MegaLib.Render.Renderer.OpenGL;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Scene;
@@ -31,6 +32,7 @@ internal class TestScene : Render_Scene
   private VerletLine _vl;
   private SphereCollider _sphereCollider = new();
   private BoxCollider _boxCollider = new();
+  private RigidBody _rigidBody;
 
   public override void OnInit()
   {
@@ -93,6 +95,8 @@ internal class TestScene : Render_Scene
     _boxCollider.Size = new Vector3(1, 1, 1);
 
     _vl = new VerletLine(new Vector3(0, 1, 0), new Vector3(0, -1, 0), 32, 1, true, false);
+
+    _rigidBody = new RigidBody(1, 2.0f / 5.0f * 1 * 0.5f * 0.5f, new Vector3(), new Vector3());
   }
 
   public override void OnBeforeUpdate(float delta)
@@ -106,7 +110,7 @@ internal class TestScene : Render_Scene
     if (Keyboard.IsKeyDown(KeyboardKey.I)) _x -= delta;
     if (Keyboard.IsKeyDown(KeyboardKey.O)) _x += delta;
 
-    VerletLine(delta);
+    Sphere2(delta);
   }
 
   public override void OnBeforeRender()
@@ -252,6 +256,52 @@ internal class TestScene : Render_Scene
       line.Draw(ray, new RGBA<float>(1, 0, 0, 1));
     }
   }
+
+  private void Sphere2(float delta)
+  {
+    var line = GetLayer<Layer_Line>("dynamicLine");
+
+    //_rigidBody.ApplyForce(new Vector3(0, -1, 0), new Vector3(-0.4f, 0.4f, 0));
+    _rigidBody.ApplyForce(new Vector3(0, 0.001f, 0), new Vector3(-0.4f, 0.4f, 0));
+    _rigidBody.Update(delta);
+
+    Console.WriteLine(_rigidBody.Position);
+
+    //Console.WriteLine(_rigidBody.AngularVelocity);
+
+    var sc = new SphereCollider();
+    sc.Radius = 1f / 2f;
+    sc.Transform.Position = _rigidBody.Position;
+    sc.Transform.Scale = new Vector3(1, 1, 1);
+    sc.Transform.Rotation = _rigidBody.Rotation;
+    line.Draw(sc, new RGBA<float>(0, 1, 0, 1));
+
+    /*var line = GetLayer<Layer_Line>("dynamicLine");
+    var sc = new SphereCollider();
+    sc.Radius = 1f / 2f;
+    sc.Transform.Position = new Vector3(-_x, 0, 0);
+    sc.Transform.Scale = new Vector3(_scaleX, 1, 1);
+    sc.Transform.Rotation = Quaternion.FromEuler(_time * 45f, _time * 45f, _time * 45f, "deg");
+    line.Draw(sc, new RGBA<float>(0, 1, 0, 1));
+
+    var ray = new Ray(new Vector3(_x, 0, -1), new Vector3(_x, 0, 1));
+    sc.RayIntersection(ray, out var point, out var isHit);
+    if (isHit)
+    {
+      ray = new Ray(new Vector3(_x, 0, -1), point);
+      line.Draw(ray, new RGBA<float>(1, 0, 0, 1));
+      Add("dynamicPoint", new RO_Point()
+      {
+        Position = point,
+        Size = 8,
+        Color = new RGBA<float>(0, 1, 1, 1)
+      });
+    }
+    else
+    {
+      line.Draw(ray, new RGBA<float>(1, 0, 0, 1));
+    }*/
+  }
 }
 
 public class PhysicsTest
@@ -297,8 +347,7 @@ public class PhysicsTest
 
     win.InitOpenGL();
 
-    scene.OnInit();
-    Task.Run(() => { scene.OnLoad(); });
+
     if (scene.Camera is Camera_Orthographic c)
     {
       c.Left = 0;
@@ -308,6 +357,7 @@ public class PhysicsTest
     }
 
     renderer.Scene = scene;
+    Task.Run(() => { scene.OnLoad(); });
 
     win.Center();
     win.Show();

@@ -5,7 +5,6 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Console = MegaLib.IO.Console;
 
 namespace MegaLib.Audio;
 

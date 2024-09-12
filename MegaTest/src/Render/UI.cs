@@ -10,6 +10,7 @@ using MegaLib.Render.Color;
 using MegaLib.Render.Core;
 using MegaLib.Render.Core.Layer;
 using MegaLib.Render.IMGUI;
+using MegaLib.Render.Layer;
 using MegaLib.Render.Renderer.OpenGL;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Scene;
@@ -49,7 +50,7 @@ internal class TestScene2 : Render_Scene
 
     imgui.Add<IMGUI_Element>(t =>
     {
-      t.Scrollable = true;
+      // t.Scrollable = true;
       t.IsDebug = true;
 
       t.Style.Padding = new Vector4(5, 5, 5, 5);
@@ -62,6 +63,8 @@ internal class TestScene2 : Render_Scene
 
       t.Events.OnMouseOver = () => { t.Style.BackgroundColor = new Vector4(0.25f, 0.25f, 0.25f, 1); };
       t.Events.OnMouseOut = () => { t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1); };
+
+      t.Text = "GAS";
 
       /*t.Events.OnRender = f =>
       {
@@ -82,7 +85,7 @@ internal class TestScene2 : Render_Scene
         //t.Events.OnClick = () => { t.Style.BackgroundColor = new Vector4(1.0f, 1.5f, 1.5f, 1); };
       });*/
 
-      var colors = new Vector4[]
+      /*var colors = new Vector4[]
       {
         new(0.1f, 0.5f, 0.1f, 2),
         new(0.5f, 0.1f, 0.1f, 2),
@@ -96,6 +99,7 @@ internal class TestScene2 : Render_Scene
 
         imgui.Add<IMGUI_Element>(t =>
         {
+          t.Text = "GAS";
           // t.IsDebug = true;
 
           t.Style.Width = 80;
@@ -107,7 +111,7 @@ internal class TestScene2 : Render_Scene
 
           //t.Events.OnClick = () => { t.Style.BackgroundColor = new Vector4(1.0f, 1.5f, 1.5f, 1); };
         });
-      }
+      }*/
 
       /*imgui.Add<IMGUI_Element>(t =>
       {
@@ -321,8 +325,8 @@ public class UITest
 
     win.InitOpenGL();
 
-    scene.OnInit();
-    Task.Run(() => { scene.OnLoad(); });
+    // scene.OnInit();
+
     if (scene.Camera is Camera_Orthographic c)
     {
       c.Left = 0;
@@ -332,6 +336,7 @@ public class UITest
     }
 
     renderer.Scene = scene;
+    Task.Run(() => { scene.OnLoad(); });
 
     win.Center();
     win.Show();

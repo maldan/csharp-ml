@@ -20,7 +20,8 @@ public struct Vector3
 
   #region Properties
 
-  public float Length => (float)Math.Sqrt(X * X + Y * Y + Z * Z);
+  public float LengthSquared => (float)(X * X + Y * Y + Z * Z);
+  public float Length => (float)MathF.Sqrt(X * X + Y * Y + Z * Z);
   public Vector3 Inverted => new(-X, -Y, -Z);
   public Vector3 ToDegrees => new(X.RadToDeg(), Y.RadToDeg(), Z.RadToDeg());
   public Vector3 ToRadians => new(X.DegToRad(), Y.DegToRad(), Z.DegToRad());
