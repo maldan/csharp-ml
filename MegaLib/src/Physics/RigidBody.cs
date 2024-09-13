@@ -169,11 +169,20 @@ public class RigidBody
     LocalCenterOfMass = Vector3.Zero;
   }
 
+  public void InitializeInertiaTensor(float mass, float radius)
+  {
+    var inertiaValue = 2.0f / 5.0f * mass * radius * radius;
+    InertiaTensor = Matrix4x4.Identity * inertiaValue;
+    InverseInertiaTensor = InertiaTensor.Inverted;
+  }
+
   // Установка массы
   public void SetMass(float mass)
   {
     Mass = mass;
     InverseMass = mass > 0 ? 1.0f / mass : 0.0f;
+
+    InitializeInertiaTensor(mass, 0.5f);
   }
 
   // Применение силы

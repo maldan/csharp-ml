@@ -303,6 +303,17 @@ public struct Matrix4x4
     return m;*/
   }
 
+  public static Matrix4x4 operator *(Matrix4x4 matrix, float scalar)
+  {
+    return new Matrix4x4
+    {
+      M00 = matrix.M00 * scalar, M01 = matrix.M01 * scalar, M02 = matrix.M02 * scalar, M03 = matrix.M03,
+      M10 = matrix.M10 * scalar, M11 = matrix.M11 * scalar, M12 = matrix.M12 * scalar, M13 = matrix.M13,
+      M20 = matrix.M20 * scalar, M21 = matrix.M21 * scalar, M22 = matrix.M22 * scalar, M23 = matrix.M23,
+      M30 = matrix.M30 * scalar, M31 = matrix.M31 * scalar, M32 = matrix.M32 * scalar, M33 = matrix.M33
+    };
+  }
+
   public override string ToString()
   {
     return $@"Matrix4x4(

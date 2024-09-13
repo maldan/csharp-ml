@@ -7,6 +7,7 @@ using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS;
 using MegaLib.OS.Api;
 using MegaLib.Physics;
+using MegaLib.Physics.Collider;
 using MegaLib.Render.Camera;
 using MegaLib.Render.Color;
 using MegaLib.Render.Core;
@@ -66,11 +67,24 @@ internal class TestScene : Render_Scene
       easyUi.Add<EasyUI_Slider>(t =>
       {
         t.Value = 0;
-        t.Min = 0;
-        t.Max = 2;
+        t.Min = -1;
+        t.Max = 1;
         t.Events.OnChange = o =>
         {
-          if (o is float f) _physicsWorld.RigidBodies[1].Position = new Vector3(f, 0, 0);
+          if (o is float f) _physicsWorld.RigidBodies[0].Position = new Vector3(0, f, 0);
+        };
+      });
+
+      easyUi.Add<EasyUI_Slider>(t =>
+      {
+        t.Style.Y = 32;
+        t.Value = 0;
+        t.Min = -45;
+        t.Max = 45;
+        t.Events.OnChange = o =>
+        {
+          if (o is float f)
+            _physicsWorld.RigidBodies[2].Rotation = Quaternion.FromEuler(f, 0, 0, "deg");
         };
       });
 
@@ -80,8 +94,8 @@ internal class TestScene : Render_Scene
         t.Style.Y = 60;
         t.Events.OnClick += () =>
         {
-          _physicsWorld.RigidBodies[0].AddImpulse(new Vector3(3f, 0, 0));
-          //_physicsWorld.RigidBodies[0].ApplyForceAtPoint(new Vector3(300f, 0, 0), new Vector3(0, 0, 0.4f));
+          //_physicsWorld.RigidBodies[0].AddImpulse(new Vector3(3f, 0, 0));
+          _physicsWorld.RigidBodies[0].ApplyForceAtPoint(new Vector3(300f, 0, 0), new Vector3(0, 0, 0.4f));
         };
       });
 
@@ -131,17 +145,28 @@ internal class TestScene : Render_Scene
     //_rigidBody.UseGravity = false;
 
     var rb1 = new RigidBody(1);
+    rb1.UseGravity = true;
     var sc1 = new SphereCollider();
+    rb1.Position = new Vector3(0, 1, 0);
     sc1.Radius = 0.5f;
     rb1.Colliders.Add(sc1);
     _physicsWorld.Add(rb1);
 
     var rb2 = new RigidBody(1);
-    rb2.Position = new Vector3(1.2f, 0, 0);
+    rb2.Position = new Vector3(0.2f, 2, 0);
+    rb2.UseGravity = true;
     var sc2 = new SphereCollider();
     sc2.Radius = 0.5f;
     rb2.Colliders.Add(sc2);
     _physicsWorld.Add(rb2);
+
+    var rb3 = new RigidBody(1);
+    rb3.IsKinematic = true;
+    rb3.SetMass(0);
+    rb3.Rotation = Quaternion.FromEuler(-12, 0, 0, "deg");
+    var sc3 = new PlaneCollider();
+    rb3.Colliders.Add(sc3);
+    _physicsWorld.Add(rb3);
   }
 
   public override void OnBeforeUpdate(float delta)
@@ -331,7 +356,7 @@ internal class TestScene : Render_Scene
 
     foreach (var collisionData in _physicsWorld.Collisions)
     {
-      pointLayer.Draw(collisionData.ContactPoint, new RGBA<float>(1, 0, 0, 1), 5f);
+      pointLayer.Draw(collisionData.ContactPoint, new RGBA<float>(1, 0, 0, 1), 8f);
     }
 
     /*var line = GetLayer<Layer_Line>("dynamicLine");

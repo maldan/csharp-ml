@@ -4,76 +4,6 @@ using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Physics;
 
-public static class CollisionDetection
-{
-  public static bool Detect(
-    BaseCollider colliderA,
-    RigidBody bodyA,
-    BaseCollider colliderB,
-    RigidBody bodyB,
-    out CollisionData collisionData)
-  {
-    if (colliderA is SphereCollider ca && colliderB is SphereCollider cb)
-    {
-      return Detect(ca, bodyA, cb, bodyB, out collisionData);
-    }
-
-    collisionData = null;
-    return false;
-  }
-
-  public static bool Detect(
-    SphereCollider colliderA,
-    RigidBody bodyA,
-    SphereCollider colliderB,
-    RigidBody bodyB,
-    out CollisionData collisionData)
-  {
-    collisionData = null;
-
-    var positionA = bodyA.Position + colliderA.Transform.Position;
-    var positionB = bodyB.Position + colliderB.Transform.Position;
-
-    var delta = positionB - positionA;
-    var distanceSquared = delta.LengthSquared;
-    var radiusSum = colliderA.Radius + colliderB.Radius;
-
-    if (distanceSquared <= radiusSum * radiusSum)
-    {
-      var distance = MathF.Sqrt(distanceSquared);
-      var collisionNormal = distance > 0 ? delta / distance : new Vector3(1, 0, 0);
-      var penetrationDepth = radiusSum - distance;
-      var contactPoint = positionA + collisionNormal * (colliderA.Radius - penetrationDepth * 0.5f);
-
-      collisionData = new CollisionData
-      {
-        ColliderA = colliderA,
-        BodyA = bodyA,
-        ColliderB = colliderB,
-        BodyB = bodyB,
-        ContactPoint = contactPoint,
-        CollisionNormal = collisionNormal,
-        PenetrationDepth = penetrationDepth
-      };
-
-      return true;
-    }
-
-    return false;
-  }
-}
-
-public class CollisionData
-{
-  public SphereCollider ColliderA;
-  public SphereCollider ColliderB;
-  public RigidBody BodyA;
-  public RigidBody BodyB;
-  public Vector3 ContactPoint;
-  public Vector3 CollisionNormal;
-  public float PenetrationDepth;
-}
-
 public class PhysicsWorld
 {
   public List<RigidBody> RigidBodies { get; private set; } = [];
@@ -143,11 +73,14 @@ public class PhysicsWorld
     const float correctionPercent = 0.8f; // Процент коррекции
     const float slop = 0.01f; // Допустимое проникновение
 
-    var correction = collision.CollisionNormal * (Math.Max(collision.PenetrationDepth - slop, 0.0f) /
-                                                  (bodyA.InverseMass + bodyB.InverseMass)) * correctionPercent;
+    var totalInverseMass = (bodyA.IsKinematic ? 0 : bodyA.InverseMass) + (bodyB.IsKinematic ? 0 : bodyB.InverseMass);
+    if (totalInverseMass == 0) return; // Оба тела неподвижны
 
-    bodyA.Position -= correction * bodyA.InverseMass;
-    bodyB.Position += correction * bodyB.InverseMass;
+    var correction = collision.CollisionNormal *
+                     (Math.Max(collision.PenetrationDepth - slop, 0.0f) / totalInverseMass) * correctionPercent;
+
+    if (!bodyA.IsKinematic) bodyA.Position -= correction * bodyA.InverseMass;
+    if (!bodyB.IsKinematic) bodyB.Position += correction * bodyB.InverseMass;
   }
 
   private void ApplyImpulse(RigidBody bodyA, RigidBody bodyB, CollisionData collision)
@@ -163,25 +96,34 @@ public class PhysicsWorld
     var restitution = Math.Min(bodyA.Restitution, bodyB.Restitution);
 
     // Рычаги (векторы от центра масс до точки контакта)
-    var ra = collision.ContactPoint - bodyA.Position;
+    var ra = collision.ContactPoint - bodyA.Position; // Вектор от центра масс до точки касания
     var rb = collision.ContactPoint - bodyB.Position;
+
+    // Инверсная масса
+    var totalInverseMass = (bodyA.IsKinematic ? 0 : bodyA.InverseMass) + (bodyB.IsKinematic ? 0 : bodyB.InverseMass);
+    if (totalInverseMass == 0) return; // Оба тела кинематические, не применяем импульс
 
     // Линейная часть импульса
     var impulseScalar = -(1 + restitution) * velocityAlongNormal;
-    impulseScalar /= bodyA.InverseMass + bodyB.InverseMass;
+    impulseScalar /= totalInverseMass;
 
     var impulse = impulseScalar * collision.CollisionNormal;
 
     // Применяем линейный импульс
-    bodyA.Velocity -= impulse * bodyA.InverseMass;
-    bodyB.Velocity += impulse * bodyB.InverseMass;
+    if (!bodyA.IsKinematic) bodyA.Velocity -= impulse * bodyA.InverseMass;
+    if (!bodyB.IsKinematic) bodyB.Velocity += impulse * bodyB.InverseMass;
 
     // 1. Рассчитываем момент импульса для каждого тела
-    var angularImpulseA = Vector3.Cross(ra, impulse);
-    var angularImpulseB = Vector3.Cross(rb, impulse);
+    if (!bodyA.IsKinematic && ra.Length > 0)
+    {
+      var angularImpulseA = Vector3.Cross(ra, impulse);
+      bodyA.AngularVelocity += Vector3.Transform(angularImpulseA, bodyA.InverseInertiaTensor);
+    }
 
-    // 2. Обновляем угловую скорость на основе момента импульса и инерционного тензора
-    bodyA.AngularVelocity += Vector3.Transform(angularImpulseA, bodyA.InverseInertiaTensor);
-    bodyB.AngularVelocity += Vector3.Transform(angularImpulseB, bodyB.InverseInertiaTensor);
+    if (!bodyB.IsKinematic && rb.Length > 0)
+    {
+      var angularImpulseB = Vector3.Cross(rb, impulse);
+      bodyB.AngularVelocity += Vector3.Transform(angularImpulseB, bodyB.InverseInertiaTensor);
+    }
   }
 }

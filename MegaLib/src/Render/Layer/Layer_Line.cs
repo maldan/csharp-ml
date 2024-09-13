@@ -2,11 +2,13 @@ using System;
 using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.Physics;
+using MegaLib.Physics.Collider;
 using MegaLib.Render.Camera;
 using MegaLib.Render.Color;
+using MegaLib.Render.Core.Layer;
 using MegaLib.Render.RenderObject;
 
-namespace MegaLib.Render.Core.Layer;
+namespace MegaLib.Render.Layer;
 
 public class Layer_Line : Layer_Base
 {
@@ -238,7 +240,40 @@ public class Layer_Line : Layer_Base
         var tr2 = new Transform(tr.Matrix * collider.Transform.Matrix);
         DrawSphere(tr2, sphereCollider.Radius, new RGBA<float>(0, 1, 0, 1));
       }
+
+      if (collider is PlaneCollider planeCollider)
+      {
+        var tr2 = new Transform(tr.Matrix * collider.Transform.Matrix);
+        DrawPlane(tr2, 4, new RGBA<float>(0, 1, 0, 1));
+
+        var p = planeCollider.Transform.Position;
+        var n = planeCollider.Transform.Position + planeCollider.Normal;
+
+        Add(new RO_Line(p * tr2.Matrix, n * tr2.Matrix, new RGBA<float>(0, 1, 0, 1)));
+      }
     }
+  }
+
+  public void DrawPlane(Transform t, float size, RGBA<float> color)
+  {
+    // Центр плоскости
+    var center = t.Position;
+
+    // Вектор правого направления (ось X) и вперед (ось Z) с учетом вращения
+    var right = Vector3.Transform(Vector3.Right * size / 2, t.Rotation);
+    var forward = Vector3.Transform(Vector3.Forward * size / 2, t.Rotation);
+
+    // Вершины плоскости
+    var p1 = center - right - forward; // Левый нижний
+    var p2 = center - right + forward; // Левый верхний
+    var p3 = center + right + forward; // Правый верхний
+    var p4 = center + right - forward; // Правый нижний
+
+    // Рисуем 4 линии для плоскости
+    Add(new RO_Line(p1.X, p1.Y, p1.Z, p2.X, p2.Y, p2.Z, color, color)); // Левый нижний - левый верхний
+    Add(new RO_Line(p2.X, p2.Y, p2.Z, p3.X, p3.Y, p3.Z, color, color)); // Левый верхний - правый верхний
+    Add(new RO_Line(p3.X, p3.Y, p3.Z, p4.X, p4.Y, p4.Z, color, color)); // Правый верхний - правый нижний
+    Add(new RO_Line(p4.X, p4.Y, p4.Z, p1.X, p1.Y, p1.Z, color, color)); // Правый нижний - левый нижний
   }
 
   public void Draw(SphereCollider sphere, RGBA<float> color)
