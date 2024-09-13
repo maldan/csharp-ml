@@ -15,6 +15,14 @@ public class Transform
     _matrix = _matrix.Scale(scale);
   }
 
+  public Transform(Matrix4x4 matrix)
+  {
+    _position = matrix.Position;
+    _rotation = matrix.Rotation;
+    _scale = matrix.Scaling;
+    Calculate();
+  }
+
   public Transform Clone()
   {
     return new Transform

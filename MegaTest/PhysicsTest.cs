@@ -16,6 +16,7 @@ using MegaLib.Render.Layer;
 using MegaLib.Render.Renderer.OpenGL;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Scene;
+using MegaLib.Render.UI.EasyUI;
 using MegaTest.Render;
 using NUnit.Framework;
 
@@ -32,7 +33,9 @@ internal class TestScene : Render_Scene
   private VerletLine _vl;
   private SphereCollider _sphereCollider = new();
   private BoxCollider _boxCollider = new();
-  private RigidBody _rigidBody;
+
+  private PhysicsWorld _physicsWorld = new();
+  // private RigidBody _rigidBody;
 
   public override void OnInit()
   {
@@ -46,44 +49,72 @@ internal class TestScene : Render_Scene
     Camera = _camera;
 
     // Добавляем слои
-    AddLayer("imgui", new Layer_IMGUI()
+
+    AddLayer("dynamicPoint", new Layer_Point() { });
+    AddLayer("dynamicLine", new Layer_Line() { LineWidth = 2f });
+    AddLayer("easyui", new Layer_EasyUI()
     {
       Camera = new Camera_Orthographic()
     });
-    AddLayer("dynamicPoint", new Layer_Point() { });
-    AddLayer("dynamicLine", new Layer_Line() { LineWidth = 2f });
 
-    var imgui = GetLayer<Layer_IMGUI>();
-    imgui.Add<IMGUI_Element>(t =>
+    var easyUi = GetLayer<Layer_EasyUI>();
+    easyUi.Add<EasyUI_Element>(t =>
     {
-      t.Scrollable = true;
-      t.IsDebug = true;
+      t.Style.BackgroundColor = new Vector4(0.25f, 0.25f, 0.25f, 1);
+      t.Style.SetArea(10, 10, 240, 120);
 
-      t.Style.Padding = new Vector4(5, 5, 5, 5);
-      t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
-      t.Style.Gap = 5;
-      t.Style.Width = 60;
-      t.Style.Height = 90;
-      t.Style.Left = 10;
-      t.Style.Top = 10;
-
-      //t.Events.OnMouseOver = () => { t.Style.BackgroundColor = new Vector4(0.25f, 0.25f, 0.25f, 1); };
-      //t.Events.OnMouseOut = () => { t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1); };
-
-      imgui.Add<IMGUI_Element>(t =>
+      easyUi.Add<EasyUI_Slider>(t =>
       {
-        t.Style.Width = 80;
-        t.Style.Height = 30;
-        t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1) * 1.2f;
-        t.Events.OnClick = () => { _scaleX += 0.1f; };
+        t.Value = 0;
+        t.Min = 0;
+        t.Max = 2;
+        t.Events.OnChange = o =>
+        {
+          if (o is float f) _physicsWorld.RigidBodies[1].Position = new Vector3(f, 0, 0);
+        };
       });
-      imgui.Add<IMGUI_Element>(t =>
+
+      easyUi.Add<EasyUI_Button>(t =>
       {
-        t.Style.Width = 80;
-        t.Style.Height = 30;
-        t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1) * 1.2f;
-        t.Events.OnClick = () => { _scaleX -= 0.1f; };
+        t.Text = "FUCK1";
+        t.Style.Y = 60;
+        t.Events.OnClick += () =>
+        {
+          _physicsWorld.RigidBodies[0].AddImpulse(new Vector3(3f, 0, 0));
+          //_physicsWorld.RigidBodies[0].ApplyForceAtPoint(new Vector3(300f, 0, 0), new Vector3(0, 0, 0.4f));
+        };
       });
+
+      easyUi.Add<EasyUI_Button>(t =>
+      {
+        t.Text = "FUCK2";
+        t.Style.Y = 90;
+        t.Events.OnClick += () =>
+        {
+          // _physicsWorld.RigidBodies[1].ApplyForceAtPoint(new Vector3(-300f, 0, 0), new Vector3(0, 0, 0.4f));
+          _physicsWorld.RigidBodies[1].AddImpulse(new Vector3(-3f, 0, 0));
+        };
+      });
+
+      /*t.Events.OnRender = (delta) =>
+      {
+        t.Text = string.Join("\n", [
+          $"Pos: {_rigidBody.Position}",
+          $"Rot: {_rigidBody.Rotation}",
+          $"Vel: {_rigidBody.Velocity}",
+          $"AngVel: {_rigidBody.AngularVelocity}",
+          "2"
+        ]);
+      };*/
+
+      /*easyUi.Add<EasyUI_Button>(t =>
+      {
+        t.Text = "FUCK";
+        t.Style.Y = 100;
+        t.Events.OnClick += () => { _rigidBody.ApplyForceAtPoint(new Vector3(0, 0, 10f), new Vector3(-0.5f, 0, 0)); };
+      });*/
+
+      //
     });
 
     _vp.IsStatic = true;
@@ -96,7 +127,21 @@ internal class TestScene : Render_Scene
 
     _vl = new VerletLine(new Vector3(0, 1, 0), new Vector3(0, -1, 0), 32, 1, true, false);
 
-    _rigidBody = new RigidBody(1, 2.0f / 5.0f * 1 * 0.5f * 0.5f, new Vector3(), new Vector3());
+    //_rigidBody = new RigidBody(1);
+    //_rigidBody.UseGravity = false;
+
+    var rb1 = new RigidBody(1);
+    var sc1 = new SphereCollider();
+    sc1.Radius = 0.5f;
+    rb1.Colliders.Add(sc1);
+    _physicsWorld.Add(rb1);
+
+    var rb2 = new RigidBody(1);
+    rb2.Position = new Vector3(1.2f, 0, 0);
+    var sc2 = new SphereCollider();
+    sc2.Radius = 0.5f;
+    rb2.Colliders.Add(sc2);
+    _physicsWorld.Add(rb2);
   }
 
   public override void OnBeforeUpdate(float delta)
@@ -260,21 +305,34 @@ internal class TestScene : Render_Scene
   private void Sphere2(float delta)
   {
     var line = GetLayer<Layer_Line>("dynamicLine");
+    var pointLayer = GetLayer<Layer_Point>("dynamicPoint");
+
+    _physicsWorld.Update(delta);
 
     //_rigidBody.ApplyForce(new Vector3(0, -1, 0), new Vector3(-0.4f, 0.4f, 0));
-    _rigidBody.ApplyForce(new Vector3(0, 0.001f, 0), new Vector3(-0.4f, 0.4f, 0));
-    _rigidBody.Update(delta);
 
-    Console.WriteLine(_rigidBody.Position);
+    // _rigidBody.Update(delta);
+
+    // Console.WriteLine(_rigidBody.Position);
 
     //Console.WriteLine(_rigidBody.AngularVelocity);
 
-    var sc = new SphereCollider();
+    /*var sc = new SphereCollider();
     sc.Radius = 1f / 2f;
     sc.Transform.Position = _rigidBody.Position;
     sc.Transform.Scale = new Vector3(1, 1, 1);
     sc.Transform.Rotation = _rigidBody.Rotation;
-    line.Draw(sc, new RGBA<float>(0, 1, 0, 1));
+    line.Draw(sc, new RGBA<float>(0, 1, 0, 1));*/
+
+    foreach (var body in _physicsWorld.RigidBodies)
+    {
+      line.DrawRigidBody(body, new RGBA<float>(1, 0, 0, 1));
+    }
+
+    foreach (var collisionData in _physicsWorld.Collisions)
+    {
+      pointLayer.Draw(collisionData.ContactPoint, new RGBA<float>(1, 0, 0, 1), 5f);
+    }
 
     /*var line = GetLayer<Layer_Line>("dynamicLine");
     var sc = new SphereCollider();
@@ -332,7 +390,7 @@ public class PhysicsTest
           p.AspectRatio = w / (float)h;
         }
 
-        var c1 = scene.GetLayer<Layer_IMGUI>();
+        var c1 = scene.GetLayer<Layer_EasyUI>();
         if (c1 != null)
         {
           c1.Camera.Left = 0;

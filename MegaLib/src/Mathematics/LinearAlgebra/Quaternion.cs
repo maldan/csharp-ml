@@ -435,4 +435,9 @@ public struct Quaternion
   }
 
   #endregion
+
+  public override string ToString()
+  {
+    return $"Quaternion({X}, {Y}, {Z}, {W})";
+  }
 }

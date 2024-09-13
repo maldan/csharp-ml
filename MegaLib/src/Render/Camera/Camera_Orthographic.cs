@@ -68,7 +68,7 @@ public class Camera_Orthographic : Camera_Base
 
   private void CalculateProjection()
   {
-    _projectionMatrix = new Matrix4x4
+    /*_projectionMatrix = new Matrix4x4
     {
       M00 = 2.0f / (_right - _left),
       M01 = 0.0f,
@@ -88,6 +88,29 @@ public class Camera_Orthographic : Camera_Base
       M30 = -(_right + _left) / (_right - _left),
       M31 = -(_top + _bottom) / (_top - _bottom),
       M32 = 0.0f,
+      M33 = 1.0f
+    };*/
+
+    _projectionMatrix = new Matrix4x4
+    {
+      M00 = 2.0f / (_right - _left),
+      M01 = 0.0f,
+      M02 = 0.0f,
+      M03 = 0.0f,
+
+      M10 = 0.0f,
+      M11 = 2.0f / (_top - _bottom),
+      M12 = 0.0f,
+      M13 = 0.0f,
+
+      M20 = 0.0f,
+      M21 = 0.0f,
+      M22 = 1.0f, // Используем обратное Z (положительное значение)
+      M23 = 0.0f,
+
+      M30 = -(_right + _left) / (_right - _left),
+      M31 = -(_top + _bottom) / (_top - _bottom),
+      M32 = -1.0f, // В этой системе Z=1 будет у ближней плоскости, Z=0 — у дальней
       M33 = 1.0f
     };
   }

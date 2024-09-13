@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using MegaLib.IO;
 using MegaLib.Mathematics.LinearAlgebra;
@@ -44,40 +45,66 @@ internal class TestScene3 : Render_Scene
     var rnd = new Random();
     var sex = 0f;
 
+    // Основной контейнер
     easyUi.Add<EasyUI_Element>(t =>
     {
       t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
       t.Style.SetArea(10, 10, 60, 90);
-      t.Style.TextAlign = "center";
 
-      t.Events.OnMouseOver = () => { t.Style.BackgroundColor = new Vector4(0.25f, 0.25f, 0.25f, 1); };
-      t.Events.OnMouseOut = () => { t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1); };
-
-      t.Text = "GAS";
-
-      easyUi.Add<EasyUI_Element>(t =>
+      /*// Кнопка
+      easyUi.Add<EasyUI_Button>(t =>
       {
-        t.Style.BackgroundColor = new Vector4(0.2f, 0.2f, 0.2f, 1);
-        t.Style.SetArea(10, 10, 32, 32);
-        t.Text = "XX";
-        t.Style.TextAlign = "center";
+        t.Style.X = 10;
+        t.Style.Y = 60;
+        t.Text = "Click";
       });
-    });
 
-    easyUi.Add<EasyUI_Element>(t =>
-    {
-      t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
-      t.Style.SetArea(100, 10, 60, 90);
+      // Кнопка
+      easyUi.Add<EasyUI_Spin>(t =>
+      {
+        var f = 1f;
+        t.Style.X = 10;
+        t.Style.Y = 40;
+        t.UpdateLabel($"{f:F}");
+        t.Events.OnChange = o =>
+        {
+          if (o is int i)
+          {
+            if (i == -1) f -= 1;
+            if (i == 1) f += 1;
+          }
 
-      t.Events.OnMouseOver = () => { t.Style.BackgroundColor = new Vector4(0.25f, 0.25f, 0.25f, 1); };
-      t.Events.OnMouseOut = () => { t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1); };
+          t.UpdateLabel($"{f:F}");
+        };
+      });
 
-      t.Text = "BLA BLA BL\nDFDFDF\nXX";
+      // Кнопка
+      easyUi.Add<EasyUI_Check>(t =>
+      {
+        t.Style.X = 10;
+        t.Style.Y = 10;
+        t.Value = true;
+      });*/
+
+      // Кнопка
+      easyUi.Add<EasyUI_Slider>(t =>
+      {
+        t.Style.X = 0;
+        t.Style.Y = 0;
+        t.Value = 0;
+        t.Events.OnChange = f =>
+        {
+          if (f is float ff)
+          {
+            t.Style.BackgroundColor = new Vector4(ff, ff, ff, 1f);
+          }
+        };
+      });
     });
   }
 }
 
-public class EaseUITest
+public class EasyUITest
 {
   [Test]
   public void TestBasic()

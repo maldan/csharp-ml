@@ -105,6 +105,37 @@ public struct Vector3
     return result;
   }
 
+  public static Vector3 Transform(Vector3 vector, Quaternion rotation)
+  {
+    // Нормализуем кватернион (на всякий случай)
+    var q = rotation.Normalized;
+
+    // Извлекаем компоненты кватерниона
+    var x = q.X;
+    var y = q.Y;
+    var z = q.Z;
+    var w = q.W;
+
+    // Вычисляем квадрат компонентов
+    var xx = x * x;
+    var yy = y * y;
+    var zz = z * z;
+    var xy = x * y;
+    var xz = x * z;
+    var yz = y * z;
+    var wx = w * x;
+    var wy = w * y;
+    var wz = w * z;
+
+    // Вычисляем результат преобразования
+    return new Vector3
+    {
+      X = (1 - 2 * (yy + zz)) * vector.X + 2 * (xy - wz) * vector.Y + 2 * (xz + wy) * vector.Z,
+      Y = 2 * (xy + wz) * vector.X + (1 - 2 * (xx + zz)) * vector.Y + 2 * (yz - wx) * vector.Z,
+      Z = 2 * (xz - wy) * vector.X + 2 * (yz + wx) * vector.Y + (1 - 2 * (xx + yy)) * vector.Z
+    };
+  }
+
   #endregion
 
   #region Operators

@@ -13,7 +13,6 @@ public class Layer_Line : Layer_Base
   public Camera_Orthographic Camera;
   public float LineWidth = 1.0f;
   public bool IsSmooth = true;
-  public bool IsYInverted = false;
 
   public void Draw(VerletLine line)
   {
@@ -147,6 +146,97 @@ public class Layer_Line : Layer_Base
 
         // Рисуем линию между этими двумя точками
         Add(new RO_Line(p1, p2, color));
+      }
+    }
+  }
+
+  public void DrawSphere(Transform transform, float radius, RGBA<float> color)
+  {
+    var longitudeSegments = 16 / 2;
+    var latitudeSegments = 16 / 2;
+
+    // Пройтись по долготе (угол вокруг Y оси)
+    for (var i = 0; i <= longitudeSegments; i++)
+    {
+      var lon = (float)(i * Math.PI * 2 / longitudeSegments);
+      var cosLon = (float)Math.Cos(lon);
+      var sinLon = (float)Math.Sin(lon);
+
+      // Пройтись по широте (угол от полюса к полюсу)
+      for (var j = 0; j <= latitudeSegments; j++)
+      {
+        var lat = (float)(j * Math.PI / latitudeSegments - Math.PI / 2); // от -PI/2 до PI/2
+        var cosLat = (float)Math.Cos(lat);
+        var sinLat = (float)Math.Sin(lat);
+
+        // Координаты точки на поверхности сферы в локальных координатах
+        var p1 = new Vector3(
+          radius * cosLat * cosLon, // x
+          radius * sinLat, // y
+          radius * cosLat * sinLon // z
+        );
+
+        // Следующая точка по широте (для соединения линией)
+        var nextLat = (float)((j + 1) * Math.PI / latitudeSegments - Math.PI / 2);
+        var p2 = new Vector3(
+          radius * (float)Math.Cos(nextLat) * cosLon,
+          radius * (float)Math.Sin(nextLat),
+          radius * (float)Math.Cos(nextLat) * sinLon
+        );
+
+        p1 *= transform.Matrix;
+        p2 *= transform.Matrix;
+
+        // Рисуем линию между этими двумя точками
+        Add(new RO_Line(p1, p2, color));
+      }
+    }
+
+    // Повторить то же самое для другой стороны (соединение вдоль долготы)
+    for (var i = 0; i <= longitudeSegments; i++)
+    {
+      var lon = (float)(i * Math.PI * 2 / longitudeSegments);
+      var nextLon = (float)((i + 1) * Math.PI * 2 / longitudeSegments);
+
+      for (var j = 0; j <= latitudeSegments; j++)
+      {
+        var lat = (float)(j * Math.PI / latitudeSegments - Math.PI / 2);
+
+        // Текущая и следующая долгота
+        var p1 = new Vector3(
+          radius * (float)Math.Cos(lat) * (float)Math.Cos(lon),
+          radius * (float)Math.Sin(lat),
+          radius * (float)Math.Cos(lat) * (float)Math.Sin(lon)
+        );
+
+        var p2 = new Vector3(
+          radius * (float)Math.Cos(lat) * (float)Math.Cos(nextLon),
+          radius * (float)Math.Sin(lat),
+          radius * (float)Math.Cos(lat) * (float)Math.Sin(nextLon)
+        );
+
+        p1 *= transform.Matrix;
+        p2 *= transform.Matrix;
+
+        // Рисуем линию между этими двумя точками
+        Add(new RO_Line(p1, p2, color));
+      }
+    }
+  }
+
+  public void DrawRigidBody(RigidBody body, RGBA<float> color)
+  {
+    var tr = new Transform();
+    tr.Position = body.Position;
+    tr.Rotation = body.Rotation;
+    DrawSphere(tr, 0.1f, color);
+
+    foreach (var collider in body.Colliders)
+    {
+      if (collider is SphereCollider sphereCollider)
+      {
+        var tr2 = new Transform(tr.Matrix * collider.Transform.Matrix);
+        DrawSphere(tr2, sphereCollider.Radius, new RGBA<float>(0, 1, 0, 1));
       }
     }
   }
