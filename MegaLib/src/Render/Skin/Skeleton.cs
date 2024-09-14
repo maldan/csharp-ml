@@ -71,7 +71,7 @@ public class Skeleton : IAnimatable
   public void Update()
   {
     var mx = Matrix4x4.Identity;
-    mx = mx.Translate(Position);
+    mx = mx.Translate(new Vector3(Position.X, Position.Y, -Position.Z));
     mx = mx.Rotate(Rotation);
     mx = mx.Scale(Scale);
 

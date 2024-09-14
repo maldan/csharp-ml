@@ -13,6 +13,13 @@ public enum MouseKey
   Center = 4
 }
 
+public enum MouseCursor
+{
+  Arrow,
+  Pointer,
+  Move
+}
+
 public static class Mouse
 {
   public static Vector2 Screen { get; private set; }
@@ -23,6 +30,8 @@ public static class Mouse
   public static Vector2 Normalized { get; private set; }
 
   public static float WheelDirection;
+
+  public static MouseCursor Cursor = MouseCursor.Arrow;
 
   private static byte[] _state =
   [

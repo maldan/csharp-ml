@@ -30,19 +30,14 @@ public class Layer_EasyUI : Layer_Base
     _currentElement.Push(new EasyUI_Element()
     {
       Style = new EasyUI_ElementStyle()
-      {
-      }
     });
   }
 
   public void Add<T>(Action<T> onInit = null) where T : EasyUI_Element, new()
   {
     var cnt = _currentElement.Peek();
-    var element = new T
-    {
-      // FontData = _fontData
-    };
-    cnt.Children.Add(element);
+    var element = new T();
+    cnt.Add(element);
 
     // Проверка типа T
     _currentElement.Push(element);

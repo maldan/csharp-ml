@@ -5,7 +5,6 @@ using MegaLib.IO;
 using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
-using MegaLib.Render.IMGUI;
 
 namespace MegaLib.Render.UI.EasyUI;
 
@@ -79,6 +78,11 @@ public class EasyUI_Element
     return false;
   }
 
+  public virtual void Add(EasyUI_Element element)
+  {
+    Children.Add(element);
+  }
+
   public void Clear()
   {
     foreach (var rd in RenderData) rd.Clear();
@@ -97,7 +101,8 @@ public class EasyUI_Element
     elementBoundingBox += buildArgs.ParentPosition;
 
     // Инициализация коллизии
-    var hasCollision = Events.OnMouseOver != null || Events.OnMouseOut != null || Events.OnClick != null;
+    var hasCollision = Events.OnMouseDown != null || Events.OnMouseUp != null || Events.OnMouseOver != null ||
+                       Events.OnMouseOut != null || Events.OnClick != null;
     if (hasCollision)
     {
       InitCollision(elementBoundingBox);
@@ -288,10 +293,24 @@ public class EasyUI_Button : EasyUI_Element
     Style.SetArea(0, 0, 64, 24);
     Style.TextAlign = "center";
 
-    Events.OnMouseOver += () => { Style.BackgroundColor = new Vector4(0.25f, 0.25f, 0.25f, 1); };
-    Events.OnMouseOut += () => { Style.BackgroundColor = baseColor; };
+    var isOver = false;
+
+    Events.OnMouseOver += () =>
+    {
+      isOver = true;
+      Style.BackgroundColor = new Vector4(0.25f, 0.25f, 0.25f, 1);
+    };
+    Events.OnMouseOut += () =>
+    {
+      isOver = false;
+      Style.BackgroundColor = baseColor;
+    };
     Events.OnMouseDown += () => { Style.BackgroundColor = new Vector4(0.5f, 0.2f, 0.2f, 1); };
     Events.OnMouseUp += () => { Style.BackgroundColor = baseColor; };
+    Events.OnRender += (delta) =>
+    {
+      if (isOver) Mouse.Cursor = MouseCursor.Pointer;
+    };
   }
 }
 
@@ -417,5 +436,66 @@ public class EasyUI_Slider : EasyUI_Element
       Value = percentage.Remap(0, 1, Min, Max);
       Events.OnChange(Value);
     };
+  }
+}
+
+public class EasyUI_Window : EasyUI_Element
+{
+  private EasyUI_Element _header;
+  private EasyUI_Element _body;
+  private EasyUI_Element _minimize;
+
+  public EasyUI_Window()
+  {
+    _header = new EasyUI_Element();
+    _header.Style.Y = -20;
+    _header.Style.Width = 80;
+    _header.Style.Height = 20;
+    _header.Style.BackgroundColor = new Vector4(0.25f, 0.25f, 0.25f, 1f);
+    _header.Text = "Window";
+
+    var isDrag = false;
+    _header.Events.OnMouseDown += () => { isDrag = true; };
+    _header.Events.OnMouseUp += () => { isDrag = false; };
+    Children.Add(_header);
+
+    _body = new EasyUI_Element();
+    _body.Style.Y = 0;
+    _body.Style.Width = 80;
+    _body.Style.Height = 40;
+    _body.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1f);
+    Children.Add(_body);
+
+    _minimize = new EasyUI_Element();
+    _minimize.Style.X = 80 - 16;
+    _minimize.Style.Y = -20;
+    _minimize.Style.Width = 16;
+    _minimize.Style.Height = 20;
+    _minimize.Style.BackgroundColor = new Vector4(0.25f, 0.0f, 0.0f, 1f);
+    _minimize.Text = "_";
+    _minimize.Events.OnClick += () => { _body.IsVisible = !_body.IsVisible; };
+    Children.Add(_minimize);
+
+    Events.OnRender += delta =>
+    {
+      if (!isDrag) return;
+      Mouse.Cursor = MouseCursor.Move;
+      Style.X = Position().X + Mouse.ClientDelta.X;
+      Style.Y = Position().Y + Mouse.ClientDelta.Y;
+      if (Position().X < 0) Style.X = 0;
+    };
+  }
+
+  public void SetSize(float width, float height)
+  {
+    _header.Style.Width = width;
+    _minimize.Style.X = width - 16;
+    _body.Style.Width = width;
+    _body.Style.Height = height;
+  }
+
+  public override void Add(EasyUI_Element element)
+  {
+    _body.Add(element);
   }
 }

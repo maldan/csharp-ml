@@ -145,7 +145,7 @@ public class Window
         return IntPtr.Zero;
       case WinApi.WM_PAINT:
         // User32.SetCursor(User32.LoadCursor(IntPtr.Zero, User32.IDC_ARROW));
-
+        Mouse.Cursor = MouseCursor.Arrow;
         _timer.Start();
         OnPaint?.Invoke(_delta);
         var deltaTime = _timer.Elapsed;
@@ -166,6 +166,14 @@ public class Window
         var width = (int)(lParam.ToInt64() & 0xFFFF);
         var height = (int)((lParam.ToInt64() >> 16) & 0xFFFF);
         OnResize?.Invoke(width, height);
+        return IntPtr.Zero;
+      case WinApi.WM_SETCURSOR:
+        var pointer = 32512;
+        if (Mouse.Cursor == MouseCursor.Pointer) pointer = 32649;
+        if (Mouse.Cursor == MouseCursor.Move) pointer = 32646;
+        var hCursor = User32.LoadCursor(IntPtr.Zero, pointer);
+        User32.SetCursor(hCursor);
+
         return IntPtr.Zero;
       /*case WinApi.WM_SETCURSOR:
         const int IDC_ARROW = 32512;

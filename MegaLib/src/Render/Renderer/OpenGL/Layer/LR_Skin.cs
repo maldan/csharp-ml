@@ -477,8 +477,8 @@ public class LR_Skin : LR_Base
     Shader.Enable(OpenGL32.GL_BLEND);
     Shader.Enable(OpenGL32.GL_DEPTH_TEST);
 
-    var cp = Scene.Camera.Position;
-    cp.Z *= -1;
+    //var cp = Scene.Camera.Position;
+    //cp.Z *= -1;
     // cp.Y *= -1;
     // Shader.SetUniform("uCameraPosition", cp);
     Shader.SetUniform("uProjectionMatrix", Scene.Camera.ProjectionMatrix);

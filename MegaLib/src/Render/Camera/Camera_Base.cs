@@ -20,9 +20,9 @@ public class Camera_Base
   private Vector3 _position;
   private Quaternion _rotation = Quaternion.Identity;
 
-  public bool IsXInverted = true;
-  public bool IsYInverted = true;
-  public bool IsZInverted = false;
+  //public bool IsXInverted = true;
+  //public bool IsYInverted = true;
+  //public bool IsZInverted = false;
 
   public Vector3 Position
   {

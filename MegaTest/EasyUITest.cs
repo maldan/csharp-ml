@@ -51,11 +51,11 @@ internal class TestScene3 : Render_Scene
       t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
       t.Style.SetArea(10, 10, 60, 90);
 
-      /*// Кнопка
+      // Кнопка
       easyUi.Add<EasyUI_Button>(t =>
       {
         t.Style.X = 10;
-        t.Style.Y = 60;
+        t.Style.Y = 10;
         t.Text = "Click";
       });
 
@@ -82,15 +82,15 @@ internal class TestScene3 : Render_Scene
       easyUi.Add<EasyUI_Check>(t =>
       {
         t.Style.X = 10;
-        t.Style.Y = 10;
+        t.Style.Y = 65;
         t.Value = true;
-      });*/
+      });
 
       // Кнопка
       easyUi.Add<EasyUI_Slider>(t =>
       {
         t.Style.X = 0;
-        t.Style.Y = 0;
+        t.Style.Y = 90;
         t.Value = 0;
         t.Events.OnChange = f =>
         {
@@ -99,6 +99,38 @@ internal class TestScene3 : Render_Scene
             t.Style.BackgroundColor = new Vector4(ff, ff, ff, 1f);
           }
         };
+      });
+    });
+
+    // Кнопка
+    easyUi.Add<EasyUI_Window>(t =>
+    {
+      t.Style.X = 120;
+      t.Style.Y = 90;
+
+      // Кнопка
+      easyUi.Add<EasyUI_Button>(t =>
+      {
+        t.Style.X = 0;
+        t.Style.Y = 0;
+        t.Text = "Click";
+      });
+    });
+
+    // Кнопка
+    easyUi.Add<EasyUI_Window>(t =>
+    {
+      t.Style.X = 220;
+      t.Style.Y = 90;
+
+      t.SetSize(128, 240);
+
+      // Кнопка
+      easyUi.Add<EasyUI_Button>(t =>
+      {
+        t.Style.X = 0;
+        t.Style.Y = 0;
+        t.Text = "Click";
       });
     });
   }
@@ -141,30 +173,11 @@ public class EasyUITest
           c1.Camera.Bottom = h;
         }
 
-        var c2 = scene.GetLayer<Layer_Line>();
-        if (c2 != null)
-        {
-          c2.Camera.Left = 0;
-          c2.Camera.Top = 0;
-          c2.Camera.Right = w;
-          c2.Camera.Bottom = h;
-        }
-
         OpenGL32.glViewport(0, 0, w, h);
       }
     };
 
     win.InitOpenGL();
-
-    // scene.OnInit();
-
-    if (scene.Camera is Camera_Orthographic c)
-    {
-      c.Left = 0;
-      c.Top = 0;
-      c.Right = 1280 / 4;
-      c.Bottom = 720 / 4;
-    }
 
     renderer.Scene = scene;
     Task.Run(() => { scene.OnLoad(); });
