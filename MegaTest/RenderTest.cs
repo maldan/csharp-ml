@@ -49,7 +49,7 @@ internal class RenderTestScene : Render_Scene
       Camera = new Camera_Orthographic()
     });
     AddLayer("dynamicPoint", new Layer_Point() { });
-    AddLayer("dynamicLine", new Layer_Line() { LineWidth = 2f });
+    AddLayer("dynamicLine", new Layer_Line() { });
     AddLayer("staticMesh", new Layer_StaticMesh() { });
     AddLayer("skybox", new Layer_Skybox() { });
 
@@ -200,7 +200,7 @@ public class RenderTest
       Title = "Mazel Game",
       Width = 1280,
       Height = 720,
-      OnPaint = (delta) =>
+      OnPaint = (win, delta) =>
       {
         Keyboard.Update();
         Mouse.Update();

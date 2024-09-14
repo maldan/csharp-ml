@@ -201,6 +201,15 @@ public static class Keyboard
     return str;
   }
 
+  public static void ResetAll()
+  {
+    for (var i = 0; i < _state.Length; i++)
+    {
+      _state[i] = 0;
+      _previousState[i] = 0;
+    }
+  }
+
   public static void Update()
   {
     // Предыдущее состояние клавиш

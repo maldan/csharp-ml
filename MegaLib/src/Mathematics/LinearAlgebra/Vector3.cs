@@ -82,6 +82,11 @@ public struct Vector3
     return dir.Normalized;
   }
 
+  public static Vector3 Normalize(Vector3 v)
+  {
+    return v.Normalized;
+  }
+
   public static Vector3 Random(Random r, float x, float y, float z)
   {
     return new Vector3(r.RangeFloat(-x, x), r.RangeFloat(-y, y), r.RangeFloat(-z, z));
@@ -260,6 +265,10 @@ public struct Vector3
   public static Vector3 Down => new(0, -1, 0);
   public static Vector3 Forward => new(0, 0, 1);
   public static Vector3 Backward => new(0, 0, -1);
+
+  public static Vector3 UnitX => new(1, 0, 0);
+  public static Vector3 UnitY => new(0, 1, 0);
+  public static Vector3 UnitZ => new(0, 0, 1);
 
   #endregion
 

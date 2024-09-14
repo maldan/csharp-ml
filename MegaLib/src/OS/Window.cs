@@ -25,7 +25,7 @@ public class Window
   public Action OnShow;
   public Action OnClose;
   public Action OnCreated;
-  public Action<float> OnPaint;
+  public Action<Window, float> OnPaint;
   public Action<int, int> OnResize;
 
   // Пропсы
@@ -147,7 +147,7 @@ public class Window
         // User32.SetCursor(User32.LoadCursor(IntPtr.Zero, User32.IDC_ARROW));
         Mouse.Cursor = MouseCursor.Arrow;
         _timer.Start();
-        OnPaint?.Invoke(_delta);
+        OnPaint?.Invoke(this, _delta);
         var deltaTime = _timer.Elapsed;
         _timer.Restart();
         _delta = (float)deltaTime.TotalMilliseconds / 1000f;

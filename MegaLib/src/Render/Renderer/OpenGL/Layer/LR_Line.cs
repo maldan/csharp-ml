@@ -11,6 +11,12 @@ using MegaLib.Render.Scene;
 
 namespace MegaLib.Render.Renderer.OpenGL.Layer;
 
+internal class GG
+{
+  public List<Vector3> Lines = [];
+  public List<Vector4> Colors = [];
+}
+
 public class LR_Line : LR_Base
 {
   private ListGPU<Vector3> _lines;
@@ -92,50 +98,63 @@ public class LR_Line : LR_Base
 
     if (layer.IsSmooth) OpenGL32.glEnable(OpenGL32.GL_LINE_SMOOTH);
     else OpenGL32.glDisable(OpenGL32.GL_LINE_SMOOTH);
-    OpenGL32.glLineWidth(layer.LineWidth);
 
-    // Build actual line arrays data
-    _lines.Clear();
-    _colors.Clear();
+    // OpenGL32.glLineWidth(layer.LineWidth);
+
+
+    var dict = new Dictionary<float, GG>();
+
     layer.ForEach<RO_Line>((line) =>
     {
+      if (!dict.ContainsKey(line.Width)) dict[line.Width] = new GG();
+
       var from = line.From;
       var to = line.To;
 
-      /*if (layer.IsYInverted)
-      {
-        from.Y *= -1;
-        to.Y *= -1;
-      }
-
-      from.Z *= -1;
-      to.Z *= -1;*/
-
-      if (line.Transform != null)
+      /*if (line.Transform != null)
       {
         from = line.From * line.Transform.Matrix;
         to = line.To * line.Transform.Matrix;
-      }
+      }*/
 
-      _lines.Add(from);
+      /*_lines.Add(from);
       _lines.Add(to);
       _colors.Add(new Vector4(line.FromColor.R, line.FromColor.G, line.FromColor.B, line.FromColor.A));
-      _colors.Add(new Vector4(line.ToColor.R, line.ToColor.G, line.ToColor.B, line.ToColor.A));
+      _colors.Add(new Vector4(line.ToColor.R, line.ToColor.G, line.ToColor.B, line.ToColor.A));*/
+
+      dict[line.Width].Lines.Add(from);
+      dict[line.Width].Lines.Add(to);
+      dict[line.Width].Colors.Add(line.FromColor.Vector4);
+      dict[line.Width].Colors.Add(line.ToColor.Vector4);
     });
 
-    // Upload on gpu
-    _lines.Sync();
-    _colors.Sync();
+    foreach (var (width, value) in dict)
+    {
+      // Устанавливаем ширину
+      OpenGL32.glLineWidth(width);
 
-    // gl enable attributes
-    OpenGL32.glBindVertexArray(_vaoId);
-    Shader.EnableAttribute(_lines, "aVertex");
-    Shader.EnableAttribute(_colors, "aColor");
+      // Очищаем прошлые линии
+      _lines.Clear();
+      _colors.Clear();
 
-    // gl draw arrays
-    OpenGL32.glDrawArrays(OpenGL32.GL_LINES, 0, layer.Count * 2);
+      // Загружаем в список
+      _lines.AddRange(value.Lines.ToArray());
+      _colors.AddRange(value.Colors.ToArray());
 
-    // Clear list
+      // Загружаем на гпу
+      _lines.Sync();
+      _colors.Sync();
+
+      // gl enable attributes
+      OpenGL32.glBindVertexArray(_vaoId);
+      Shader.EnableAttribute(_lines, "aVertex");
+      Shader.EnableAttribute(_colors, "aColor");
+
+      // Рисуем линии
+      OpenGL32.glDrawArrays(OpenGL32.GL_LINES, 0, _lines.Count);
+    }
+
+    // Очищаем список
     layer.Clear();
 
     OpenGL32.glBindVertexArray(0);

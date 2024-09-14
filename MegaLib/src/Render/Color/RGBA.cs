@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Render.Color;
 
@@ -18,6 +19,8 @@ public readonly struct RGBA<T>
     B = b;
     A = a;
   }
+
+  public Vector4 Vector4 => new(Convert.ToSingle(R), Convert.ToSingle(G), Convert.ToSingle(B), Convert.ToSingle(A));
 
   public static RGBA<T> White => new(
     (T)Convert.ChangeType(Convert.ToSingle(1), typeof(T)),
@@ -67,6 +70,7 @@ public readonly struct RGBA<T>
       (T)Convert.ChangeType((1 - t) * Convert.ToSingle(a.A) + t * Convert.ToSingle(b.A), typeof(T))
     );
   }
+
 
   public override string ToString()
   {

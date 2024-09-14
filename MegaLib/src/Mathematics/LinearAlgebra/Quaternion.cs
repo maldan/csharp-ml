@@ -415,6 +415,11 @@ public struct Quaternion
     return new Quaternion(0, 0, 0, 0) - value;
   }
 
+  public static Quaternion Normalize(Quaternion q)
+  {
+    return q.Normalized;
+  }
+
   // Метод создания кватерниона из оси и угла вращения
   public static Quaternion CreateFromAxisAngle(Vector3 axis, float angle)
   {

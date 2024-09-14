@@ -13,7 +13,8 @@ namespace MegaLib.Render.Layer;
 public class Layer_Line : Layer_Base
 {
   public Camera_Orthographic Camera;
-  public float LineWidth = 1.0f;
+
+  // public float LineWidth = 1.0f;
   public bool IsSmooth = true;
 
   public void Draw(VerletLine line)
@@ -411,5 +412,60 @@ public class Layer_Line : Layer_Base
   public void DrawAABB(AABB aabb, RGBA<float> color)
   {
     DrawAABB(aabb.Center, aabb.Size, color);
+  }
+
+  public void DrawGrid(int gridSize, float cellSize, RGBA<float> mainColor, int subdivisions, RGBA<float> subColor)
+  {
+    // Грид рисуется в плоскости XZ (ось Y вертикальная)
+    for (float i = -gridSize; i < gridSize; i += cellSize)
+    {
+      // Линии параллельные оси X (горизонтальные)
+      var p1 = new Vector3(i, 0, -gridSize);
+      var p2 = new Vector3(i, 0, gridSize);
+      Add(new RO_Line(p1, p2, mainColor));
+
+      // Линии параллельные оси Z (вертикальные)
+      var p3 = new Vector3(-gridSize, 0, i);
+      var p4 = new Vector3(gridSize, 0, i);
+      Add(new RO_Line(p3, p4, mainColor));
+
+      // Если есть деления внутри клеток
+      if (subdivisions > 0)
+      {
+        var subCellSize = cellSize / (subdivisions + 1); // Размер каждой подячейки
+
+        for (var j = 1; j <= subdivisions; j++)
+        {
+          // Рассчитываем смещение для делений
+          var subOffset = j * subCellSize;
+
+          // Проверяем, что деления не выходят за границу сетки
+          if (i + subOffset < gridSize)
+          {
+            // Горизонтальные деления внутри клетки (параллельные X)
+            var subP1 = new Vector3(i + subOffset, 0, -gridSize);
+            var subP2 = new Vector3(i + subOffset, 0, gridSize);
+            Add(new RO_Line(subP1, subP2, subColor));
+          }
+
+          if (i + subOffset < gridSize)
+          {
+            // Вертикальные деления внутри клетки (параллельные Z)
+            var subP3 = new Vector3(-gridSize, 0, i + subOffset);
+            var subP4 = new Vector3(gridSize, 0, i + subOffset);
+            Add(new RO_Line(subP3, subP4, subColor));
+          }
+        }
+      }
+    }
+
+    // Добавляем правую и верхнюю границы для основных линий (так как цикл идёт до < gridSize)
+    var rightBorderP1 = new Vector3(gridSize, 0, -gridSize);
+    var rightBorderP2 = new Vector3(gridSize, 0, gridSize);
+    Add(new RO_Line(rightBorderP1, rightBorderP2, mainColor));
+
+    var topBorderP1 = new Vector3(-gridSize, 0, gridSize);
+    var topBorderP2 = new Vector3(gridSize, 0, gridSize);
+    Add(new RO_Line(topBorderP1, topBorderP2, mainColor));
   }
 }

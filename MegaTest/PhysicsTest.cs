@@ -38,6 +38,9 @@ internal class TestScene : Render_Scene
   private PhysicsWorld _physicsWorld = new();
   // private RigidBody _rigidBody;
 
+  private float _cameraOrbitRadius = 10f;
+  private Vector3 _cameraFocalPoint = new();
+
   public override void OnInit()
   {
     // Инициализируем камеру
@@ -52,7 +55,7 @@ internal class TestScene : Render_Scene
     // Добавляем слои
 
     AddLayer("dynamicPoint", new Layer_Point() { });
-    AddLayer("dynamicLine", new Layer_Line() { LineWidth = 2f });
+    AddLayer("dynamicLine", new Layer_Line() { });
     AddLayer("easyui", new Layer_EasyUI()
     {
       Camera = new Camera_Orthographic()
@@ -152,13 +155,13 @@ internal class TestScene : Render_Scene
     rb1.Colliders.Add(sc1);
     _physicsWorld.Add(rb1);
 
-    var rb2 = new RigidBody(1);
+    /*var rb2 = new RigidBody(1);
     rb2.Position = new Vector3(0.2f, 2, 0);
     rb2.UseGravity = true;
     var sc2 = new SphereCollider();
     sc2.Radius = 0.5f;
     rb2.Colliders.Add(sc2);
-    _physicsWorld.Add(rb2);
+    _physicsWorld.Add(rb2);*/
 
     var rb3 = new RigidBody(1);
     rb3.IsKinematic = true;
@@ -175,7 +178,7 @@ internal class TestScene : Render_Scene
     // _x = (float)Math.Sin(_time / 2f) * 1;
     // _scaleX = Math.Abs((float)Math.Sin(_time) * 2).Clamp(0.2f, 1);
 
-    Camera.BasicMovement(delta);
+    Camera.OrbitalCameraMovement(delta, ref _cameraOrbitRadius, ref _cameraFocalPoint);
 
     if (Keyboard.IsKeyDown(KeyboardKey.I)) _x -= delta;
     if (Keyboard.IsKeyDown(KeyboardKey.O)) _x += delta;
@@ -185,7 +188,7 @@ internal class TestScene : Render_Scene
 
   public override void OnBeforeRender()
   {
-    for (var i = 0; i < 8; i++)
+    /*for (var i = 0; i < 8; i++)
     {
       Add("dynamicLine",
         new RO_Line(new Vector3(i - 3.5f, 0f, -4f), new Vector3(i - 3.5f, 0f, 4f)));
@@ -199,9 +202,10 @@ internal class TestScene : Render_Scene
         new RO_Line(new Vector3(-4, 0, i - 3.5f), new Vector3(4, 0, i - 3.5f)));
       Add("dynamicLine",
         new RO_Line(new Vector3(-4, 4, i - 3.5f), new Vector3(4, 4, i - 3.5f)));
-    }
+    }*/
 
-    /**/
+    var line = GetLayer<Layer_Line>("dynamicLine");
+    line.DrawGrid(4, 1f, new RGBA<float>(1, 1, 1, 0.5f), 1, new RGBA<float>(1, 1, 1, 0.25f));
   }
 
   private void VerletPoint(float delta)
@@ -402,9 +406,10 @@ public class PhysicsTest
       Title = "Mazel Game",
       Width = 1280,
       Height = 720,
-      OnPaint = (delta) =>
+      OnPaint = (win, delta) =>
       {
-        Keyboard.Update();
+        if (win.IsFocused) Keyboard.Update();
+        else Keyboard.ResetAll();
         Mouse.Update();
         renderer.Tick(delta, 1);
       },

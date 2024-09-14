@@ -36,8 +36,8 @@ internal class TestScene3 : Render_Scene
     });
     AddLayer("line", new Layer_Line()
     {
-      Camera = new Camera_Orthographic(),
-      LineWidth = 2
+      Camera = new Camera_Orthographic()
+      // LineWidth = 2
     });
 
     var easyUi = GetLayer<Layer_EasyUI>();
@@ -151,7 +151,7 @@ public class EasyUITest
       Title = "Mazel Game",
       Width = 1280,
       Height = 720,
-      OnPaint = (delta) =>
+      OnPaint = (win, delta) =>
       {
         Keyboard.Update();
         Mouse.Update();

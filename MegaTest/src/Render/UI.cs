@@ -39,8 +39,8 @@ internal class TestScene2 : Render_Scene
     });
     AddLayer("line", new Layer_Line()
     {
-      Camera = new Camera_Orthographic(),
-      LineWidth = 2
+      Camera = new Camera_Orthographic()
+      // LineWidth = 2
     });
 
     var imgui = GetLayer<Layer_IMGUI>();
@@ -288,7 +288,7 @@ public class UITest
       Title = "Mazel Game",
       Width = 1280,
       Height = 720,
-      OnPaint = (delta) =>
+      OnPaint = (win, delta) =>
       {
         Keyboard.Update();
         Mouse.Update();

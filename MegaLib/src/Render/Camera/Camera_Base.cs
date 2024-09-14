@@ -77,6 +77,69 @@ public class Camera_Base
     // this._positionOffset = this._positionOffset.add(dirNew.toVector3());
   }
 
+  public void OrbitalCameraMovement(float delta, ref float radius, ref Vector3 focusPoint)
+  {
+    // Получаем изменения мыши
+    var deltaX = Mouse.ClientDelta.X * 48f; // Изменение мыши по X
+    var deltaY = Mouse.ClientDelta.Y * 48f; // Изменение мыши по Y
+
+    if (Keyboard.IsKeyDown(KeyboardKey.Shift) && Mouse.IsKeyDown(MouseKey.Center))
+    {
+      // Реализуем перемещение фокусной точки, если зажат Shift
+      var shiftSpeed = 0.005f * radius; // Скорость перемещения зависит от расстояния (чтобы перемещение было плавным)
+
+      // Вычисляем вектор вправо и вверх в локальной системе координат камеры
+      var right = Vector3.Normalize(Vector3.Transform(Vector3.UnitX, Rotation)); // Локальный вектор вправо
+      var up = Vector3.Normalize(Vector3.Transform(Vector3.UnitY, Rotation)); // Локальный вектор вверх
+
+      // Обновляем фокусную точку на основе движения мыши
+      focusPoint += right * (-deltaX * shiftSpeed * delta) + up * (deltaY * shiftSpeed * delta);
+
+      // Рассчитываем новую позицию камеры
+      Position = focusPoint +
+                 Vector3.Transform(new Vector3(0, 0, -radius), Rotation); // Позиция камеры с учётом вращения
+      return; // Прерываем дальнейшее обновление, так как уже переместили сцену
+    }
+
+    if (!Mouse.IsKeyDown(MouseKey.Center))
+    {
+      deltaX = 0;
+      deltaY = 0;
+    }
+
+    switch (Mouse.WheelDirection)
+    {
+      case > 0:
+        radius *= 1.0f - 0.05f * delta * 128f; // Уменьшаем радиус с учётом delta
+        break;
+      case < 0:
+        radius *= 1.0f + 0.05f * delta * 128f; // Увеличиваем радиус с учётом delta
+        break;
+    }
+
+    // Обновляем углы вращения на основе движения мыши
+    var azimuth = deltaX * delta * 0.01f; // Вращение по горизонтали (вокруг оси Y)
+    var zenith = deltaY * delta * 0.01f; // Вращение по вертикали (вокруг локальной оси X)
+
+    // Ограничиваем зенитный угол (чтобы избежать переворота камеры)
+    zenith = Math.Clamp(zenith, -MathF.PI / 2 + 0.1f, MathF.PI / 2 - 0.1f);
+
+    // Создаем вращение для оси Y (азимут) вокруг глобальной оси Y
+    var rotationY = Quaternion.CreateFromAxisAngle(Vector3.UnitY, azimuth);
+
+    // Создаем вращение для оси X (зенит) вокруг локальной оси X
+    var rightVec = Vector3.Normalize(Vector3.Cross(Vector3.UnitY, focusPoint - Position));
+    var rotationX = Quaternion.CreateFromAxisAngle(rightVec, zenith);
+
+    // Обновляем общее вращение камеры (накладываем вращения на существующее)
+    Rotation = Quaternion.Normalize(rotationY * rotationX * Rotation);
+
+    // Рассчитываем новую позицию камеры
+    var offset = new Vector3(0, 0, -radius); // Камера "смотрит" назад
+    Position = focusPoint + Vector3.Transform(offset, Rotation); // Позиция камеры с учётом вращения
+  }
+
+
   public void BasicMovement(float delta)
   {
     if (Keyboard.IsKeyDown(KeyboardKey.A)) OffsetPosition(-delta);

@@ -9,6 +9,7 @@ public class RO_Line : RO_Base
   public Vector3 To;
   public RGBA<float> FromColor = new(1, 1, 1, 1);
   public RGBA<float> ToColor = new(1, 1, 1, 1);
+  public float Width = 1;
 
   public RO_Line()
   {
@@ -26,6 +27,15 @@ public class RO_Line : RO_Base
     To = to;
     FromColor = color;
     ToColor = color;
+  }
+
+  public RO_Line(Vector3 from, Vector3 to, RGBA<float> color, float width)
+  {
+    From = from;
+    To = to;
+    FromColor = color;
+    ToColor = color;
+    Width = width;
   }
 
   public RO_Line(Vector3 from, Vector3 to, RGBA<float> fromColor, RGBA<float> toColor)
