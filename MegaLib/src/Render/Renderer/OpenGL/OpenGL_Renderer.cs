@@ -82,14 +82,14 @@ public class OpenGL_Renderer : IRenderer
       Clear();
 
       // _scene.Camera.IsZInverted = true;
-      _scene.Camera.Position = new Vector3(pose.Position.X, pose.Position.Y, -pose.Position.Z);
+      _scene.Camera.Position = new Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);
 
       /*_scene.Camera.Position += new Vector3(VrInput.Headset.PositionOffset.X, VrInput.Headset.PositionOffset.Y,
         -VrInput.Headset.PositionOffset.Z);*/
 
       _scene.Camera.Rotation = new Quaternion(
         pose.Orientation.X, pose.Orientation.Y, pose.Orientation.Z, pose.Orientation.W
-      ).Inverted;
+      );
 
       /*var mx = Matrix4x4.Identity;
       mx = mx.Rotate(new Quaternion(

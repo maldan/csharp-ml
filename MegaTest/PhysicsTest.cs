@@ -163,7 +163,7 @@ internal class TestScene : Render_Scene
     var rb3 = new RigidBody(1);
     rb3.IsKinematic = true;
     rb3.SetMass(0);
-    rb3.Rotation = Quaternion.FromEuler(-12, 0, 0, "deg");
+    rb3.Rotation = Quaternion.FromEuler(0, 0, 0, "deg");
     var sc3 = new PlaneCollider();
     rb3.Colliders.Add(sc3);
     _physicsWorld.Add(rb3);
