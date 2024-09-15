@@ -167,6 +167,11 @@ public struct Vector3
   }
 
   // Sub
+  public static Vector3 operator -(float scalar, Vector3 vec)
+  {
+    return new Vector3(scalar - vec.X, scalar - vec.Y, scalar - vec.Z);
+  }
+
   public static Vector3 operator -(Vector3 a, Vector3 b)
   {
     return new Vector3

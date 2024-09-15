@@ -8,6 +8,7 @@ using MegaLib.Render.Core.Layer;
 using MegaLib.Render.Layer;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Scene;
+using MegaLib.Render.Shader;
 
 namespace MegaLib.Render.Renderer.OpenGL.Layer;
 
@@ -63,9 +64,8 @@ public class LR_Line : LR_Base
               color = vo_Color;
           }".Replace("\r", "");
 
-    // Create buffer color
-    Shader.ShaderCode["vertex"] = vertex;
-    Shader.ShaderCode["fragment"] = fragment;
+    // Create shader
+    Shader.ShaderCode = ShaderProgram.Compile("Line");
     Shader.Compile();
 
     _lines = [];
@@ -147,7 +147,7 @@ public class LR_Line : LR_Base
 
       // gl enable attributes
       OpenGL32.glBindVertexArray(_vaoId);
-      Shader.EnableAttribute(_lines, "aVertex");
+      Shader.EnableAttribute(_lines, "aPosition");
       Shader.EnableAttribute(_colors, "aColor");
 
       // Рисуем линии

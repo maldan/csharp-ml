@@ -218,7 +218,23 @@ public struct Matrix4x4
     };
   }
 
+  // Статическая функция для нахождения обратной матрицы
+  public static Matrix4x4 Inverse(Matrix4x4 matrix)
+  {
+    return matrix.Inverted;
+  }
+
   // Scale
+  public static Vector4 operator *(Matrix4x4 matrix, Vector4 vector)
+  {
+    var x = matrix.M00 * vector.X + matrix.M01 * vector.Y + matrix.M02 * vector.Z + matrix.M03 * vector.W;
+    var y = matrix.M10 * vector.X + matrix.M11 * vector.Y + matrix.M12 * vector.Z + matrix.M13 * vector.W;
+    var z = matrix.M20 * vector.X + matrix.M21 * vector.Y + matrix.M22 * vector.Z + matrix.M23 * vector.W;
+    var w = matrix.M30 * vector.X + matrix.M31 * vector.Y + matrix.M32 * vector.Z + matrix.M33 * vector.W;
+
+    return new Vector4(x, y, z, w);
+  }
+
   public static Matrix4x4 operator *(Matrix4x4 a, Matrix4x4 b)
   {
     return new Matrix4x4

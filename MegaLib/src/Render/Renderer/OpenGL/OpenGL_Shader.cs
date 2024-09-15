@@ -10,7 +10,7 @@ namespace MegaLib.Render.Renderer.OpenGL;
 
 public class OpenGL_Shader
 {
-  public readonly Dictionary<string, string> ShaderCode = new();
+  public Dictionary<string, string> ShaderCode = new();
   public uint Id { get; private set; }
   public OpenGL_Context Context;
 

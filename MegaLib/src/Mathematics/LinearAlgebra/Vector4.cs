@@ -35,6 +35,14 @@ public struct Vector4
   public float Z;
   public float W;
 
+  public Vector4(Vector3 v, float w)
+  {
+    X = v.X;
+    Y = v.Y;
+    Z = v.Z;
+    W = w;
+  }
+
   public Vector4(float x, float y, float z, float w)
   {
     X = x;

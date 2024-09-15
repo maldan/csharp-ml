@@ -8,6 +8,7 @@ using MegaLib.Render.Core.Layer;
 using MegaLib.Render.Layer;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Scene;
+using MegaLib.Render.Shader;
 
 namespace MegaLib.Render.Renderer.OpenGL.Layer;
 
@@ -59,8 +60,9 @@ public class LR_Point : LR_Base
           }".Replace("\r", "");
 
     // Create buffer color
-    Shader.ShaderCode["vertex"] = vertex;
-    Shader.ShaderCode["fragment"] = fragment;
+    Shader.ShaderCode = ShaderProgram.Compile("Point");
+    /*Shader.ShaderCode["vertex"] = vertex;
+    Shader.ShaderCode["fragment"] = fragment;*/
     Shader.Compile();
 
     _points = [];
@@ -100,7 +102,7 @@ public class LR_Point : LR_Base
 
     // gl enable attributes
     OpenGL32.glBindVertexArray(_vaoId);
-    Shader.EnableAttribute(_points, "aVertex");
+    Shader.EnableAttribute(_points, "aPosition");
     Shader.EnableAttribute(_colors, "aColor");
 
     // gl draw arrays

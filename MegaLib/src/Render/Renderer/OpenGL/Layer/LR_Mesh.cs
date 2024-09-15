@@ -5,6 +5,7 @@ using MegaLib.Render.Core;
 using MegaLib.Render.Core.Layer;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Scene;
+using MegaLib.Render.Shader;
 
 namespace MegaLib.Render.Renderer.OpenGL.Layer;
 
@@ -388,7 +389,9 @@ public class LR_Mesh : LR_Base
 
     #endregion
 
-    Shader.ShaderCode["vertex"] = vertex;
+    var ss = ShaderProgram.Compile("Mesh");
+
+    Shader.ShaderCode["vertex"] = ss["vertex"];
     Shader.ShaderCode["fragment"] = fragment;
     Shader.Compile();
   }
