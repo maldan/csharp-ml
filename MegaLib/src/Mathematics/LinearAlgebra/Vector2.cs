@@ -5,6 +5,18 @@ using System.Text.Json.Serialization;
 
 namespace MegaLib.Mathematics.LinearAlgebra;
 
+public struct IVector2
+{
+  public int X;
+  public int Y;
+
+  public IVector2(int x, int y)
+  {
+    X = x;
+    Y = y;
+  }
+}
+
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public struct Vector2
 {
@@ -15,6 +27,18 @@ public struct Vector2
   {
     X = x;
     Y = y;
+  }
+
+  public float R
+  {
+    get => X;
+    set => X = value;
+  }
+
+  public float G
+  {
+    get => Y;
+    set => Y = value;
   }
 
   public static float Distance(Vector2 from, Vector2 to)

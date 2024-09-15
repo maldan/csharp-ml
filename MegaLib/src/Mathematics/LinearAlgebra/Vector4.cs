@@ -35,6 +35,30 @@ public struct Vector4
   public float Z;
   public float W;
 
+  public float R
+  {
+    get => X;
+    set => X = value;
+  }
+
+  public float G
+  {
+    get => Y;
+    set => Y = value;
+  }
+
+  public float B
+  {
+    get => Z;
+    set => Z = value;
+  }
+
+  public float A
+  {
+    get => W;
+    set => W = value;
+  }
+
   public Vector4(Vector3 v, float w)
   {
     X = v.X;
@@ -50,6 +74,8 @@ public struct Vector4
     Z = z;
     W = w;
   }
+
+  public Vector3 XYZ => new(X, Y, Z);
 
   public Vector3 DropW()
   {

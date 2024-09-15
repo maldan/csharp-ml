@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.Render.Buffer;
 using MegaLib.Render.Color;
 
@@ -53,5 +54,10 @@ public class Texture_Cube
     }
 
     Id = TextureId.NextId();
+  }
+
+  public static Vector4 ReadPixel(Texture_Cube textureCube, Vector3 position)
+  {
+    return new Vector4();
   }
 }

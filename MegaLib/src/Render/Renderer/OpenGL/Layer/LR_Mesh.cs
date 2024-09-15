@@ -233,12 +233,15 @@ public class LR_Mesh : LR_Base
             
             // Read albedo
             vec4 texelColor = texture(uAlbedoTexture, vo_UV);
-            if (texelColor.a <= 0.01) discard;
+            if (texelColor.a <= 0.01) {
+                discard;
+                return mat;
+            }
             mat.albedo = sRGBToLinear(texelColor.rgb);
             mat.alpha = texelColor.a;
             
             // Read normal
-            vec3 normal = texture(uNormalTexture, vo_UV).xyz * 2.0 - 1.0;
+            vec3 normal = texture(uNormalTexture, vo_UV).xyz * 2.0f - 1.0f;
             mat.normal = normalize(vo_TBN * normal);
             
             // Roughness
@@ -392,7 +395,7 @@ public class LR_Mesh : LR_Base
     var ss = ShaderProgram.Compile("Mesh");
 
     Shader.ShaderCode["vertex"] = ss["vertex"];
-    Shader.ShaderCode["fragment"] = fragment;
+    Shader.ShaderCode["fragment"] = ss["fragment"];
     Shader.Compile();
   }
 

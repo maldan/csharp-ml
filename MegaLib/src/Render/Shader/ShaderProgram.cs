@@ -9,6 +9,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using MegaLib.Render.Color;
+using MegaLib.Render.Texture;
 
 namespace MegaLib.Render.Shader;
 
@@ -32,6 +34,12 @@ public class ShaderProgram
   {
     public string Name;
     public string ShaderType;
+  }
+
+  public struct StructInfo
+  {
+    public string Name;
+    public List<FieldInfo> Fields;
   }
 
   // Класс для хранения информации о методе
@@ -62,8 +70,11 @@ public class ShaderProgram
       .AddReferences(
         MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
         MetadataReference.CreateFromFile(typeof(Console).Assembly.Location),
+        MetadataReference.CreateFromFile(typeof(Vector2).Assembly.Location),
         MetadataReference.CreateFromFile(typeof(Vector3).Assembly.Location),
         MetadataReference.CreateFromFile(typeof(Vector4).Assembly.Location),
+        MetadataReference.CreateFromFile(typeof(Texture_Cube).Assembly.Location),
+        MetadataReference.CreateFromFile(typeof(Texture_2D<RGBA<float>>).Assembly.Location),
         MetadataReference.CreateFromFile(typeof(MathF).Assembly.Location)
       );
 
@@ -76,9 +87,9 @@ public class ShaderProgram
     for (var i = 0; i < classList.Count; i++)
     {
       shaders[classList[i].ShaderType] = CompileClass(root, model, classList[i]);
-      Console.WriteLine(classList[i].ShaderType);
+      /*Console.WriteLine(classList[i].ShaderType);
       Console.WriteLine(shaders[classList[i].ShaderType]);
-      Console.WriteLine("");
+      Console.WriteLine("");*/
     }
 
     return shaders;
@@ -100,7 +111,8 @@ public class ShaderProgram
     var locationCounter = 0;
     for (var i = 0; i < fieldList.Count; i++)
     {
-      if (fieldList[i].Attributes.Count <= 0) throw new Exception("Need attribute");
+      if (fieldList[i].Attributes.Count <= 0)
+        throw new Exception($"Need attribute for field {fieldList[i].Type} {fieldList[i].Name}");
       if (fieldList[i].Attributes[0].Name.ToString() != "ShaderField")
         throw new Exception("Need ShaderField attribute");
 
@@ -120,11 +132,32 @@ public class ShaderProgram
 
     outShader.Add("");
 
+    // Структуры если есть
+    var structList = GetStructs(root, classInfo.Name);
+    for (var i = 0; i < structList.Count; i++)
+    {
+      outShader.Add($"struct {structList[i].Name} {{");
+      for (var j = 0; j < structList[i].Fields.Count; j++)
+      {
+        outShader.Add($"{ReplaceTypes(structList[i].Fields[j].Type)} {structList[i].Fields[j].Name};");
+      }
+
+      outShader.Add("};");
+      outShader.Add("");
+    }
+
     // Потом получаем все методы
+    var ignoreList = new string[]
+    {
+      "length", "pow", "toInt", "toUInt", "normalize", "max", "texelFetch", "discard", "texture", "dot", "reflect",
+      "inverse", "transpose"
+    };
     var methodList = GetMethods(root, classInfo.Name);
     for (var i = 0; i < methodList.Count; i++)
     {
       var methodName = methodList[i].Name;
+      if (ignoreList.ToList().Contains(methodName)) continue;
+
       var methodReturnType = ReplaceTypes(methodList[i].ReturnType);
 
       if (methodName == "Main") methodName = "main";
@@ -149,87 +182,215 @@ public class ShaderProgram
       var statementList = GetMethodStatements(root, classInfo.Name, methodList[i].Name);
       for (var j = 0; j < statementList.Count; j++)
       {
-        // Console.WriteLine(statementList[j].ToFullString());
+        CompileStatement(statementList[j], model, classInfo, methodName, outShader);
+      }
 
-        /*if (IsAssignment(statementList[j]))
-        {
-          var assignment =
-            (AssignmentExpressionSyntax)((ExpressionStatementSyntax)statementList[j]).Expression;
-          outShader.Add($"{assignment.Left} = {assignment.Right};");
-        }
-        else */
-        // statementList[j] = TransformStatement(statementList[j]);
+      outShader.Add("}");
 
-
-        /*if (IsVariableDeclaration(statementList[j]))
-        {
-          var declaration = (LocalDeclarationStatementSyntax)statementList[j];
-          var variable = declaration.Declaration.Variables.First();
-
-          // Используем семантическую модель для определения типа переменной
-          var variableSymbol = model.GetDeclaredSymbol(variable) as ILocalSymbol;
-          var variableType = variableSymbol?.Type;
-
-          // Если тип найден
-          if (variableType == null || variableType is IErrorTypeSymbol)
-          {
-            throw new Exception(
-              $"unknown variable type. {variableType} {variable.Identifier.Text} = {variable.Initializer.Value}");
-          }
-
-          outShader.Add(
-            $"{ReplaceTypes(variableType.Name)} {variable.Identifier.Text} = {variable.Initializer.Value};");
-        }
-        else if (IsReturnStatement(statementList[j]))
-        {
-          // Если мы в main методе у вертексного шейдера
-          if (methodList[i].Name.ToLower() == "main" && classInfo.ShaderType == "vertex")
-          {
-            outShader.Add(statementList[j].ToString().Replace("return ", "gl_Position = "));
-          }
-          else
-          {
-            outShader.Add(statementList[j].ToString());
-          }
-        }
-        else
-        {
-
-        }*/
-
-        // 
-        var newStatement = TransformStatement(statementList[j], model, classInfo, methodName).ToString();
+      for (var ii = 0; ii < outShader.Count; ii++)
+      {
+        var newStatement = outShader[ii];
 
         if (classInfo.ShaderType == "vertex" && methodName.ToLower() == "main" && newStatement.StartsWith("return"))
         {
           newStatement = newStatement.Replace("return ", "gl_Position = ");
         }
 
-        // Если это векторные поля, то большие буквы XYZW меняем на маленькие xyzw
-        for (var k = 0; k < fieldList.Count; k++)
+        // Прочие замены глобальных методов
+        //newStatement = newStatement.Replace("Matrix3x3.Transpose", "transpose");
+        //newStatement = newStatement.Replace("Matrix3x3.Inverse", "inverse");
+        //newStatement = newStatement.Replace("Vector3.Normalize", "normalize");
+        //newStatement = newStatement.Replace("Matrix4x4.Inverse", "inverse");
+        //newStatement = newStatement.Replace(".DropW()", ".xyz");
+
+        // newStatement = Regex.Replace(newStatement, $@"\= new vec(\d)\(\);", ";");
+
+        foreach (var structInfo in structList)
         {
-          if (fieldList[k].Type.Contains("Vector"))
-          {
-            var pattern = $@"\b({fieldList[k].Name})\.([XYZWRGBA])";
-            newStatement = Regex.Replace(newStatement, pattern,
-              m => $"{m.Groups[1].Value}.{m.Groups[2].Value.ToLower()}");
-          }
+          newStatement = newStatement.Replace($"= new {structInfo.Name}();", ";");
         }
 
-        // Прочие замены глобальных методов
-        newStatement = newStatement.Replace("Matrix3x3.Transpose", "transpose");
-        newStatement = newStatement.Replace("Matrix3x3.Inverse", "inverse");
-        newStatement = newStatement.Replace("Vector3.Normalize", "normalize");
-        newStatement = newStatement.Replace("Matrix4x4.Inverse", "inverse");
-        newStatement = newStatement.Replace(".DropW()", ".xyz");
+        newStatement = newStatement.Replace("Matrix3x3", "mat3");
+        newStatement = newStatement.Replace("Matrix4x4", "mat4");
 
-        outShader.Add(newStatement);
+        newStatement = newStatement.Replace("toInt(", "int(");
+        newStatement = newStatement.Replace("toUInt(", "uint(");
+
+        newStatement = newStatement.Replace("for (var", "for (int");
+        newStatement = newStatement.Replace("discard()", "discard");
+        newStatement = newStatement.Replace("MathF.PI", $"{MathF.PI}".Replace(",", "."));
+
+        newStatement = Regex.Replace(newStatement, $@"\bnew\b", "");
+        newStatement = Regex.Replace(newStatement, $@"\bIVector(\d)\b", "ivec$1");
+        newStatement = Regex.Replace(newStatement, $@"\bVector(\d)\b", "vec$1");
+
+        // Заменяем в тексте
+        newStatement = Regex.Replace(newStatement, @"\.([XYZWRGBA]+)(?=\b)", match =>
+        {
+          // Получаем совпадение
+          var letter = match.Groups[1].Value;
+
+          // Возвращаем замененный результат
+          return $".{letter.ToLower()}";
+        });
+
+        outShader[ii] = newStatement;
       }
-
-      outShader.Add("}");
     }
 
     return string.Join("\n", outShader);
+  }
+
+  private static void CompileStatement(StatementSyntax statement, SemanticModel model, ClassInfo classInfo,
+    string methodName, List<string> outShader)
+  {
+    var newStatement = statement.ToString();
+
+    if (statement is IfStatementSyntax ifStatement)
+    {
+      // Получение условия
+      var condition = ifStatement.Condition.ToString();
+
+      // Получение блока if
+      var ifBlock = ifStatement.Statement as BlockSyntax;
+      var ifStatements = ifBlock?.Statements.Select(s => s) ?? Enumerable.Empty<StatementSyntax>();
+
+      // Получение блока else, если есть
+      var elseBlock = ifStatement.Else?.Statement as BlockSyntax;
+      var elseStatements = elseBlock?.Statements.Select(s => s) ?? Enumerable.Empty<StatementSyntax>();
+
+      // Вывод
+      outShader.Add($"if ({condition}) {{");
+      if (ifStatement.Statement is BlockSyntax)
+      {
+        foreach (var stmt in ifStatements)
+        {
+          CompileStatement(stmt, model, classInfo, methodName, outShader);
+        }
+      }
+      else
+      {
+        CompileStatement(ifStatement.Statement, model, classInfo, methodName, outShader);
+      }
+
+      outShader.Add("}");
+
+      // Вывод блока else, если есть
+      if (ifStatement.Else != null)
+      {
+        outShader.Add("else {");
+        if (ifStatement.Else.Statement is BlockSyntax)
+        {
+          foreach (var stmt in elseStatements)
+          {
+            CompileStatement(stmt, model, classInfo, methodName, outShader);
+          }
+        }
+        else
+        {
+          CompileStatement(ifStatement.Else.Statement, model, classInfo, methodName, outShader);
+        }
+
+        outShader.Add("}");
+      }
+
+      return;
+    }
+
+    if (statement is ForStatementSyntax forStatement)
+    {
+      var condition = forStatement.Condition?.ToString() ?? "";
+      var incrementors = forStatement.Incrementors.Select(i => i.ToString()).ToList();
+      var initializers = forStatement.Initializers.Select(i => i.ToString()).ToList();
+
+      var iin = string.Join(", ", initializers);
+      if (iin == "")
+      {
+        iin = $"int {incrementors[0].Replace("++", "")} = 0";
+      }
+
+      outShader.Add($"for ({iin}; {condition}; {string.Join(", ", incrementors)}) {{");
+
+      // Проверяем, является ли Statement блоком или одиночным выражением
+      if (forStatement.Statement is BlockSyntax block)
+      {
+        foreach (var stmt in block.Statements)
+        {
+          CompileStatement(stmt, model, classInfo, methodName, outShader);
+        }
+      }
+      else
+      {
+        // Если это не блок, то обрабатываем как одиночный Statement
+        CompileStatement(forStatement.Statement, model, classInfo, methodName, outShader);
+      }
+
+      outShader.Add("}");
+      return;
+    }
+
+    if (IsVariableDeclaration(statement))
+    {
+      var varType = GetVariableType(statement, model);
+      if (varType == string.Empty) throw new Exception("FUCK!");
+      newStatement = newStatement.Replace("var ", ReplaceTypes(varType) + " ");
+    }
+
+
+    outShader.Add(newStatement);
+  }
+
+  private static List<StructInfo> GetStructs(SyntaxNode root, string className)
+  {
+    var structsInfo = new List<StructInfo>();
+
+    // Находим объявление класса по имени
+    var classDeclaration = root.DescendantNodes()
+      .OfType<ClassDeclarationSyntax>()
+      .FirstOrDefault(c => c.Identifier.Text == className);
+
+    if (classDeclaration != null)
+    {
+      // Получаем все вложенные структуры
+      var structs = classDeclaration.DescendantNodes()
+        .OfType<StructDeclarationSyntax>();
+
+      foreach (var structDeclaration in structs)
+      {
+        var structInfo = new StructInfo
+        {
+          Name = structDeclaration.Identifier.Text,
+          Fields = []
+        };
+
+        // Извлекаем все поля в структуре
+        var fieldDeclarations = structDeclaration.DescendantNodes()
+          .OfType<FieldDeclarationSyntax>();
+
+        foreach (var field in fieldDeclarations)
+        {
+          // Тип поля
+          var fieldType = field.Declaration.Type.ToString();
+
+          // Имена полей (если объявлено несколько через запятую)
+          var fieldNames = field.Declaration.Variables.Select(v => v.Identifier.Text);
+
+          foreach (var name in fieldNames)
+          {
+            // Добавляем информацию о поле
+            structInfo.Fields.Add(new FieldInfo
+            {
+              Name = name,
+              Type = fieldType
+            });
+          }
+        }
+
+        structsInfo.Add(structInfo);
+      }
+    }
+
+    return structsInfo;
   }
 
   private static List<ClassInfo> GetClasses(SyntaxNode root)
@@ -254,7 +415,6 @@ public class ShaderProgram
     return classInfoList;
   }
 
-  // Функция для поиска всех полей класса и возвращения их в виде списка
   private static List<FieldInfo> GetFields(SyntaxNode root, string className)
   {
     var fieldsList = new List<FieldInfo>();
@@ -266,10 +426,11 @@ public class ShaderProgram
 
     if (classDeclaration != null)
     {
-      // Извлекаем все поля в классе
-      var fieldDeclarations = classDeclaration.DescendantNodes().OfType<FieldDeclarationSyntax>();
+      // Извлекаем только те поля, которые находятся непосредственно внутри целевого класса
+      var fieldsInClass = classDeclaration.Members
+        .OfType<FieldDeclarationSyntax>();
 
-      foreach (var field in fieldDeclarations)
+      foreach (var field in fieldsInClass)
       {
         // Тип поля
         var fieldType = field.Declaration.Type.ToString();
@@ -467,9 +628,14 @@ public class ShaderProgram
     {
       { "Matrix3x3", "mat3" },
       { "Matrix4x4", "mat4" },
+
       { "Vector4", "vec4" },
       { "Vector3", "vec3" },
-      { "Vector2", "vec2" }
+      { "Vector2", "vec2" },
+
+      { "IVector4", "ivec4" },
+      { "IVector3", "ivec3" },
+      { "IVector2", "ivec2" }
     };
 
     // Продолжаем обработку других выражений
@@ -551,15 +717,32 @@ public class ShaderProgram
     return statement is ReturnStatementSyntax;
   }
 
+  public static bool IsExpression(StatementSyntax statement)
+  {
+    // Проверяем, является ли стейтмент выражением
+    // Это может быть выражение присваивания или выражение, которое используется как часть выражения
+    return statement is ExpressionStatementSyntax;
+  }
+
   private static string ReplaceTypes(string sharpType)
   {
+    sharpType = sharpType.Split(".").Last();
+
     return sharpType switch
     {
       "Matrix3x3" => "mat3",
       "Matrix4x4" => "mat4",
+
+      "IVector2" => "ivec2",
+      "IVector3" => "ivec3",
+      "IVector4" => "ivec4",
+
       "Vector2" => "vec2",
       "Vector3" => "vec3",
       "Vector4" => "vec4",
+      "Texture_2D<RGBA<float>>" => "sampler2D",
+      "Texture_2D<RGBA<byte>>" => "sampler2D",
+      "Texture_Cube" => "samplerCube",
       _ => sharpType
     };
   }
@@ -582,5 +765,21 @@ public class ShaderProgram
         throw new Exception($"Ресурс {resourceName} не найден.");
       }
     }
+  }
+
+  public static string GetVariableType(StatementSyntax statement, SemanticModel semanticModel)
+  {
+    // Проверка, является ли стейтмент объявлением переменной
+    if (statement is LocalDeclarationStatementSyntax localDeclaration)
+    {
+      // Получаем тип переменной
+      var variableDeclaration = localDeclaration.Declaration;
+      var typeInfo = semanticModel.GetTypeInfo(variableDeclaration.Type);
+
+      // Возвращаем строковое представление типа или пустую строку, если тип неизвестен
+      return typeInfo.Type?.ToString() ?? string.Empty;
+    }
+
+    return string.Empty; // Если стейтмент не является объявлением переменной
   }
 }

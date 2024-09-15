@@ -11,6 +11,32 @@ public struct Vector3
   public float Y;
   public float Z;
 
+  public float R
+  {
+    get => X;
+    set => X = value;
+  }
+
+  public float G
+  {
+    get => Y;
+    set => Y = value;
+  }
+
+  public float B
+  {
+    get => Z;
+    set => Z = value;
+  }
+
+
+  public Vector3(float v)
+  {
+    X = v;
+    Y = v;
+    Z = v;
+  }
+
   public Vector3(float x, float y, float z)
   {
     X = x;
@@ -44,6 +70,17 @@ public struct Vector3
   public static float Dot(Vector3 v1, Vector3 v2)
   {
     return v1.X * v2.X + v1.Y * v2.Y + v1.Z * v2.Z;
+  }
+
+  public static Vector3 Reflect(Vector3 incident, Vector3 normal)
+  {
+    var dot = incident.X * normal.X + incident.Y * normal.Y + incident.Z * normal.Z;
+    return new Vector3
+    {
+      X = incident.X - 2 * dot * normal.X,
+      Y = incident.Y - 2 * dot * normal.Y,
+      Z = incident.Z - 2 * dot * normal.Z
+    };
   }
 
   public static Vector3 Cross(Vector3 v1, Vector3 v2)
@@ -141,6 +178,16 @@ public struct Vector3
     };
   }
 
+  // Функция возведения вектора в степень
+  public static Vector3 Pow(Vector3 baseVec, Vector3 exponentVec)
+  {
+    return new Vector3(
+      (float)Math.Pow(baseVec.X, exponentVec.X),
+      (float)Math.Pow(baseVec.Y, exponentVec.Y),
+      (float)Math.Pow(baseVec.Z, exponentVec.Z)
+    );
+  }
+
   #endregion
 
   #region Operators
@@ -170,6 +217,11 @@ public struct Vector3
   public static Vector3 operator -(float scalar, Vector3 vec)
   {
     return new Vector3(scalar - vec.X, scalar - vec.Y, scalar - vec.Z);
+  }
+
+  public static Vector3 operator -(Vector3 vec, float scalar)
+  {
+    return new Vector3(vec.X - scalar, vec.Y - scalar, vec.Z - scalar);
   }
 
   public static Vector3 operator -(Vector3 a, Vector3 b)
@@ -221,6 +273,16 @@ public struct Vector3
       Y = a.Y / s,
       Z = a.Z / s
     };
+  }
+
+  // Оператор деления вектора на вектор
+  public static Vector3 operator /(Vector3 vec1, Vector3 vec2)
+  {
+    return new Vector3(
+      vec1.X / vec2.X,
+      vec1.Y / vec2.Y,
+      vec1.Z / vec2.Z
+    );
   }
 
   public static Vector3 operator *(Vector3 a, Vector3 b)
@@ -280,6 +342,35 @@ public struct Vector3
   public Vector3 Clone()
   {
     return new Vector3 { X = X, Y = Y, Z = Z };
+  }
+
+  public float this[int index]
+  {
+    get
+    {
+      return index switch
+      {
+        0 => X,
+        1 => Y,
+        2 => Z,
+        _ => 0
+      };
+    }
+    set
+    {
+      switch (index)
+      {
+        case 0:
+          X = index;
+          break;
+        case 1:
+          Y = index;
+          break;
+        case 2:
+          Z = index;
+          break;
+      }
+    }
   }
 
   /*public Vector4 ToVector4(float w)

@@ -31,6 +31,8 @@ internal class RenderTestScene : Render_Scene
   private float _x;
   private RO_Mesh _cube;
   private RO_Mesh _sphere;
+  private float _cameraOrbitRadius = 10f;
+  private Vector3 _cameraFocalPoint = new();
 
   public override void OnInit()
   {
@@ -145,13 +147,14 @@ internal class RenderTestScene : Render_Scene
 
   public override void OnBeforeUpdate(float delta)
   {
-    Camera.BasicMovement(delta);
+    Camera.OrbitalCameraMovement(delta, ref _cameraOrbitRadius, ref _cameraFocalPoint);
+    // Camera.BasicMovement(delta);
     _x += delta;
 
     _cube.Transform.Rotation = Quaternion.FromEuler(0, _x * 5.0f, 0, "deg");
     _sphere.Transform.Rotation = Quaternion.FromEuler(_x * 45.0f, 0, 0, "deg");
 
-    Console.WriteLine($"{Camera.Rotation.Euler.ToDegrees}");
+    // Console.WriteLine($"{Camera.Rotation.Euler.ToDegrees}");
   }
 
   public override void OnBeforeRender()
