@@ -20,6 +20,12 @@ public class ShaderFieldAttribute(string description) : Attribute
   public string Description { get; } = description;
 }
 
+[AttributeUsage(AttributeTargets.Method)] // Указываем, что атрибут можно применять только к полям
+public class ShaderMethodAttribute(string description) : Attribute
+{
+  public string Description { get; } = description;
+}
+
 public class ShaderProgram
 {
   // Класс для хранения информации о поле
@@ -48,6 +54,7 @@ public class ShaderProgram
     public string Name;
     public string ReturnType;
     public List<ParameterInfo> Parameters;
+    public List<AttributeSyntax> Attributes;
   }
 
   // Класс для хранения информации о параметрах метода
@@ -60,10 +67,13 @@ public class ShaderProgram
   public static Dictionary<string, string> Compile(string shaderName)
   {
     // language=C#
-    var methodSource = GetShaderText($"MegaLib.src.Render.Shader.{shaderName}Shader.cs");
+    var fullSource = "";
+    fullSource += GetShaderText($"MegaLib.src.Render.Shader.Shader_Base.cs") + "\n";
+    fullSource += GetShaderText($"MegaLib.src.Render.Shader.Shader_PBR.cs") + "\n";
+    fullSource += GetShaderText($"MegaLib.src.Render.Shader.Shader_{shaderName}.cs");
 
     // Парсим код метода с помощью Roslyn
-    var tree = CSharpSyntaxTree.ParseText(methodSource);
+    var tree = CSharpSyntaxTree.ParseText(fullSource);
     var root = tree.GetRoot() as CompilationUnitSyntax;
     var compilation = CSharpCompilation.Create("ShaderAnalysis")
       .AddSyntaxTrees(tree)
@@ -75,7 +85,8 @@ public class ShaderProgram
         MetadataReference.CreateFromFile(typeof(Vector4).Assembly.Location),
         MetadataReference.CreateFromFile(typeof(Texture_Cube).Assembly.Location),
         MetadataReference.CreateFromFile(typeof(Texture_2D<RGBA<float>>).Assembly.Location),
-        MetadataReference.CreateFromFile(typeof(MathF).Assembly.Location)
+        MetadataReference.CreateFromFile(typeof(MathF).Assembly.Location),
+        MetadataReference.CreateFromFile(typeof(Shader_Base).Assembly.Location)
       );
 
     // Создаем семантическую модель для анализа типов
@@ -133,7 +144,7 @@ public class ShaderProgram
     outShader.Add("");
 
     // Структуры если есть
-    var structList = GetStructs(root, classInfo.Name);
+    var structList = GetStructs(root, classInfo.Name, true, model);
     for (var i = 0; i < structList.Count; i++)
     {
       outShader.Add($"struct {structList[i].Name} {{");
@@ -152,10 +163,13 @@ public class ShaderProgram
       "length", "pow", "toInt", "toUInt", "normalize", "max", "texelFetch", "discard", "texture", "dot", "reflect",
       "inverse", "transpose"
     };
-    var methodList = GetMethods(root, classInfo.Name);
+    var methodList = GetMethods(root, classInfo.Name, model, true);
     for (var i = 0; i < methodList.Count; i++)
     {
+      // Console.WriteLine(methodList[i].Attributes);
+
       var methodName = methodList[i].Name;
+      Console.WriteLine(methodName);
       if (ignoreList.ToList().Contains(methodName)) continue;
 
       var methodReturnType = ReplaceTypes(methodList[i].ReturnType);
@@ -179,7 +193,7 @@ public class ShaderProgram
       outShader.Add(str);
 
       // Внутри методов обрабатываем стейтменты
-      var statementList = GetMethodStatements(root, classInfo.Name, methodList[i].Name);
+      var statementList = GetMethodStatements(root, classInfo.Name, methodList[i].Name, model, true);
       for (var j = 0; j < statementList.Count; j++)
       {
         CompileStatement(statementList[j], model, classInfo, methodName, outShader);
@@ -340,18 +354,20 @@ public class ShaderProgram
     outShader.Add(newStatement);
   }
 
-  private static List<StructInfo> GetStructs(SyntaxNode root, string className)
+  public static List<StructInfo> GetStructs(SyntaxNode root, string className, bool includeInherited = false,
+    SemanticModel semanticModel = null)
   {
     var structsInfo = new List<StructInfo>();
 
-    // Находим объявление класса по имени
     var classDeclaration = root.DescendantNodes()
       .OfType<ClassDeclarationSyntax>()
       .FirstOrDefault(c => c.Identifier.Text == className);
 
     if (classDeclaration != null)
     {
-      // Получаем все вложенные структуры
+      var classSymbol = semanticModel?.GetDeclaredSymbol(classDeclaration) as INamedTypeSymbol;
+
+      // Получаем все вложенные структуры в текущем классе
       var structs = classDeclaration.DescendantNodes()
         .OfType<StructDeclarationSyntax>();
 
@@ -360,24 +376,19 @@ public class ShaderProgram
         var structInfo = new StructInfo
         {
           Name = structDeclaration.Identifier.Text,
-          Fields = []
+          Fields = new List<FieldInfo>()
         };
 
-        // Извлекаем все поля в структуре
         var fieldDeclarations = structDeclaration.DescendantNodes()
           .OfType<FieldDeclarationSyntax>();
 
         foreach (var field in fieldDeclarations)
         {
-          // Тип поля
           var fieldType = field.Declaration.Type.ToString();
-
-          // Имена полей (если объявлено несколько через запятую)
           var fieldNames = field.Declaration.Variables.Select(v => v.Identifier.Text);
 
           foreach (var name in fieldNames)
           {
-            // Добавляем информацию о поле
             structInfo.Fields.Add(new FieldInfo
             {
               Name = name,
@@ -388,9 +399,49 @@ public class ShaderProgram
 
         structsInfo.Add(structInfo);
       }
+
+      if (includeInherited && classSymbol != null)
+      {
+        AddInheritedStructs(classSymbol, root, structsInfo, semanticModel);
+      }
     }
 
     return structsInfo;
+  }
+
+  private static void AddInheritedStructs(INamedTypeSymbol classSymbol, SyntaxNode root, List<StructInfo> structsInfo,
+    SemanticModel semanticModel)
+  {
+    var baseType = classSymbol.BaseType;
+
+    if (baseType != null)
+    {
+      var baseClassSyntax = root.DescendantNodes()
+        .OfType<ClassDeclarationSyntax>()
+        .FirstOrDefault(c => c.Identifier.Text == baseType.Name);
+
+      if (baseClassSyntax != null)
+      {
+        var baseStructs = baseClassSyntax.DescendantNodes()
+          .OfType<StructDeclarationSyntax>()
+          .Where(s => !structsInfo.Any(si => si.Name == s.Identifier.Text))
+          .Select(s => new StructInfo
+          {
+            Name = s.Identifier.Text,
+            Fields = s.DescendantNodes()
+              .OfType<FieldDeclarationSyntax>()
+              .SelectMany(f => f.Declaration.Variables.Select(v => new FieldInfo
+              {
+                Name = v.Identifier.Text,
+                Type = f.Declaration.Type.ToString()
+              })).ToList()
+          });
+
+        structsInfo.AddRange(baseStructs);
+
+        AddInheritedStructs(baseType, root, structsInfo, semanticModel);
+      }
+    }
   }
 
   private static List<ClassInfo> GetClasses(SyntaxNode root)
@@ -467,80 +518,142 @@ public class ShaderProgram
     return fieldsList;
   }
 
-  // Функция для поиска всех методов класса и возвращения их в виде списка
-  private static List<MethodInfo> GetMethods(SyntaxNode root, string className)
+  private static List<MethodInfo> GetMethods(SyntaxNode root, string className, SemanticModel semanticModel,
+    bool includeInherited = false)
   {
     var methodsList = new List<MethodInfo>();
+    var classSymbol = GetClassSymbol(root, className, semanticModel);
 
-    // Находим объявление класса по имени
-    var classDeclaration = root.DescendantNodes()
-      .OfType<ClassDeclarationSyntax>()
-      .FirstOrDefault(c => c.Identifier.Text == className);
-
-    if (classDeclaration != null)
+    if (classSymbol != null)
     {
-      // Извлекаем все методы в классе
-      var methodDeclarations =
-        classDeclaration.DescendantNodes().OfType<MethodDeclarationSyntax>();
+      var classDeclaration = root.DescendantNodes()
+        .OfType<ClassDeclarationSyntax>()
+        .FirstOrDefault(c => c.Identifier.Text == className);
 
-      foreach (var method in methodDeclarations)
+      if (includeInherited)
       {
-        // Имя метода
-        var methodName = method.Identifier.Text;
-
-        // Возвращаемый тип метода 
-        var returnType = method.ReturnType.ToString();
-
-        // Создаем объект для хранения информации о методе
-        var methodInfo = new MethodInfo
-        {
-          Name = methodName,
-          ReturnType = returnType,
-          Parameters = []
-        };
-
-        // Извлекаем параметры метода
-        foreach (var parameter in method.ParameterList.Parameters)
-        {
-          methodInfo.Parameters.Add(new ParameterInfo
-          {
-            Name = parameter.Identifier.Text,
-            Type = parameter.Type.ToString()
-          });
-        }
-
-        // Добавляем информацию о методе в список
-        methodsList.Add(methodInfo);
+        AddInheritedMethods(classSymbol, root, methodsList, semanticModel);
       }
+
+      // Добавляем методы текущего класса
+      AddClassMethods(classDeclaration, methodsList, semanticModel);
     }
 
     return methodsList;
   }
 
-  // Метод для получения списка стейтментов заданной функции
-  private static List<StatementSyntax> GetMethodStatements(SyntaxNode root, string className, string methodName)
+  private static void AddInheritedMethods(INamedTypeSymbol classSymbol, SyntaxNode root, List<MethodInfo> methodsList,
+    SemanticModel semanticModel)
   {
-    // Находим объявление класса по его имени
+    var baseType = classSymbol.BaseType;
+
+    if (baseType != null)
+    {
+      var baseClassSyntax = root.DescendantNodes()
+        .OfType<ClassDeclarationSyntax>()
+        .FirstOrDefault(c => c.Identifier.Text == baseType.Name);
+
+      if (baseClassSyntax != null)
+      {
+        // Рекурсивно добавляем методы базового класса
+        AddInheritedMethods(baseType, root, methodsList, semanticModel);
+
+        // Добавляем методы базового класса
+        AddClassMethods(baseClassSyntax, methodsList, semanticModel);
+      }
+    }
+  }
+
+  private static void AddClassMethods(ClassDeclarationSyntax classDeclaration, List<MethodInfo> methodsList,
+    SemanticModel semanticModel)
+  {
+    var methodDeclarations = classDeclaration.DescendantNodes()
+      .OfType<MethodDeclarationSyntax>();
+
+    foreach (var method in methodDeclarations)
+    {
+      var methodInfo = new MethodInfo
+      {
+        Name = method.Identifier.Text,
+        ReturnType = method.ReturnType.ToString(),
+        Parameters = method.ParameterList.Parameters.Select(p => new ParameterInfo
+        {
+          Name = p.Identifier.Text,
+          Type = p.Type.ToString()
+        }).ToList(),
+        Attributes = method.AttributeLists.SelectMany(a => a.Attributes).ToList()
+      };
+      Console.WriteLine(method.AttributeLists.SelectMany(a => a.Attributes).ToList().Count);
+      methodsList.Add(methodInfo);
+    }
+  }
+
+  private static INamedTypeSymbol GetClassSymbol(SyntaxNode root, string className, SemanticModel semanticModel)
+  {
     var classDeclaration = root.DescendantNodes()
       .OfType<ClassDeclarationSyntax>()
       .FirstOrDefault(c => c.Identifier.Text == className);
 
-    if (classDeclaration != null)
-    {
-      // Находим метод внутри класса по его имени
-      var methodDeclaration = classDeclaration.DescendantNodes()
-        .OfType<MethodDeclarationSyntax>()
-        .FirstOrDefault(m => m.Identifier.Text == methodName);
+    return classDeclaration != null ? semanticModel.GetDeclaredSymbol(classDeclaration) as INamedTypeSymbol : null;
+  }
 
-      if (methodDeclaration != null && methodDeclaration.Body != null)
+  private static List<StatementSyntax> GetMethodStatements(SyntaxNode root, string className, string methodName,
+    SemanticModel semanticModel, bool includeInherited = false)
+  {
+    var statementsList = new List<StatementSyntax>();
+
+    var classSymbol = GetClassSymbol(root, className, semanticModel);
+    if (classSymbol != null)
+    {
+      var classDeclaration = root.DescendantNodes()
+        .OfType<ClassDeclarationSyntax>()
+        .FirstOrDefault(c => c.Identifier.Text == className);
+
+      if (includeInherited)
       {
-        // Возвращаем список стейтментов из тела метода
-        return methodDeclaration.Body.Statements.ToList();
+        AddInheritedMethodStatements(classSymbol, methodName, root, statementsList, semanticModel);
       }
+
+      // Добавляем стейтменты текущего класса
+      AddMethodStatements(classDeclaration, methodName, statementsList);
     }
 
-    // Если метод не найден или тело метода пустое, возвращаем пустой список
-    return [];
+    return statementsList;
+  }
+
+  private static void AddInheritedMethodStatements(INamedTypeSymbol classSymbol, string methodName, SyntaxNode root,
+    List<StatementSyntax> statementsList, SemanticModel semanticModel)
+  {
+    var baseType = classSymbol.BaseType;
+
+    if (baseType != null)
+    {
+      var baseClassSyntax = root.DescendantNodes()
+        .OfType<ClassDeclarationSyntax>()
+        .FirstOrDefault(c => c.Identifier.Text == baseType.Name);
+
+      if (baseClassSyntax != null)
+      {
+        // Рекурсивно добавляем стейтменты методов базового класса
+        AddInheritedMethodStatements(baseType, methodName, root, statementsList, semanticModel);
+
+        // Добавляем стейтменты базового класса, если метод найден
+        AddMethodStatements(baseClassSyntax, methodName, statementsList);
+      }
+    }
+  }
+
+  private static void AddMethodStatements(ClassDeclarationSyntax classDeclaration, string methodName,
+    List<StatementSyntax> statementsList)
+  {
+    var methodDeclaration = classDeclaration.DescendantNodes()
+      .OfType<MethodDeclarationSyntax>()
+      .FirstOrDefault(m => m.Identifier.Text == methodName);
+
+    if (methodDeclaration != null && methodDeclaration.Body != null)
+    {
+      statementsList.AddRange(methodDeclaration.Body.Statements);
+    }
   }
 
   private static StatementSyntax TransformStatement(StatementSyntax statement, SemanticModel model, ClassInfo classInfo,
