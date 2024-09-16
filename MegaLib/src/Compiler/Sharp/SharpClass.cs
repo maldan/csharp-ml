@@ -5,18 +5,6 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MegaLib.Compiler.Sharp;
 
-public class SharpAttribute
-{
-  public string Name => _attributeSyntax.Name.ToString();
-
-  private AttributeSyntax _attributeSyntax;
-
-  public SharpAttribute(AttributeSyntax attributeSyntax)
-  {
-    _attributeSyntax = attributeSyntax;
-  }
-}
-
 public class SharpClass
 {
   public bool IsPublic;
@@ -85,6 +73,25 @@ public class SharpClass
     (from attributeList in _classDeclaration.AttributeLists
       from attribute in attributeList.Attributes
       select new SharpAttribute(attribute)).ToList();
+
+  public List<SharpStruct> StructList
+  {
+    get
+    {
+      var structsList = new List<SharpStruct>();
+
+      // Извлекаем только те структуры, которые находятся непосредственно внутри целевого класса
+      var structsInClass = _classDeclaration.Members
+        .OfType<StructDeclarationSyntax>();
+
+      foreach (var structDeclaration in structsInClass)
+      {
+        structsList.Add(new SharpStruct(_syntaxTree, _semanticModel, structDeclaration));
+      }
+
+      return structsList;
+    }
+  }
 
   public SharpClass Parent
   {

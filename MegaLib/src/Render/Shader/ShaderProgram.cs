@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using MegaLib.Compiler.Sharp;
 using MegaLib.Render.Color;
 using MegaLib.Render.Texture;
 
@@ -25,6 +26,9 @@ public class ShaderMethodAttribute(string description) : Attribute
 {
   public string Description { get; } = description;
 }
+
+[AttributeUsage(AttributeTargets.Method)] // Указываем, что атрибут можно применять только к полям
+public class ShaderBuiltinMethodAttribute : Attribute;
 
 public class ShaderProgram
 {
@@ -62,6 +66,70 @@ public class ShaderProgram
   {
     public string Name;
     public string Type;
+  }
+
+  public static Dictionary<string, string> Compile2(string shaderName)
+  {
+    var sharpCompiler = new SharpCompiler();
+    sharpCompiler.AddCode(GetShaderText($"MegaLib.src.Render.Shader.Shader_Base.cs"));
+    sharpCompiler.AddCode(GetShaderText($"MegaLib.src.Render.Shader.Shader_PBR.cs"));
+    sharpCompiler.AddCode(GetShaderText($"MegaLib.src.Render.Shader.Shader_{shaderName}.cs"));
+    sharpCompiler.Parse();
+
+    var dict = new Dictionary<string, string>();
+
+    foreach (var sharpClass in sharpCompiler.ClassList)
+    {
+      if (sharpClass.Name.Contains("Vertex")) dict["vertex"] = CompileClass2(sharpClass);
+      if (sharpClass.Name.Contains("Fragment")) dict["fragment"] = CompileClass2(sharpClass);
+    }
+
+    return dict;
+  }
+
+  private static string CompileClass2(SharpClass sharpClass)
+  {
+    var outShader = new List<string>();
+
+    if (sharpClass.Parent != null)
+    {
+      outShader.Add(CompileClass2(sharpClass.Parent));
+    }
+    else
+    {
+      outShader.Add("#version 330 core");
+      outShader.Add("");
+      outShader.Add("precision highp float;");
+      outShader.Add("precision highp int;");
+      outShader.Add("precision highp usampler2D;");
+      outShader.Add("precision highp sampler2D;");
+      outShader.Add("");
+    }
+
+    foreach (var sharpStruct in sharpClass.StructList)
+    {
+      outShader.Add($"struct {sharpStruct.Name} {{");
+      outShader.AddRange(sharpStruct.FieldList.Select(sharpField =>
+        $"    {ReplaceTypes(sharpField.Type)} {sharpField.Name};"));
+      outShader.Add("};");
+      outShader.Add("");
+    }
+
+    foreach (var sharpMethod in sharpClass.MethodList)
+    {
+      if (sharpMethod.HasAttribute("ShaderBuiltinMethod")) continue;
+
+      var methodHeader = "";
+      methodHeader += $"{ReplaceTypes(sharpMethod.ReturnType)} {sharpMethod.Name}";
+      methodHeader += "(";
+      methodHeader += string.Join(", ", sharpMethod.ParameterList.Select(x => $"{ReplaceTypes(x.Type)} {x.Name}"));
+      methodHeader += ") {";
+      outShader.Add(methodHeader);
+      outShader.Add("}");
+      outShader.Add("");
+    }
+
+    return string.Join("\n", outShader);
   }
 
   public static Dictionary<string, string> Compile(string shaderName)

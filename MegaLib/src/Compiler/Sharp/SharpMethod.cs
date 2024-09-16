@@ -25,8 +25,18 @@ public class SharpMethod
     }
   }
 
-  public int AA => _methodDeclaration.AttributeLists.SelectMany(a => a.Attributes).ToList().Count;
-
   public List<SharpAttribute> AttributeList =>
-    _methodDeclaration.AttributeLists.SelectMany(a => a.Attributes).Select(x => new SharpAttribute(x)).ToList();
+    (from attributeList in _methodDeclaration.AttributeLists
+      from attribute in attributeList.Attributes
+      select new SharpAttribute(attribute)).ToList();
+
+  public bool HasAttribute(string name)
+  {
+    return AttributeList.Any(x => x.Name == name);
+  }
+
+  public List<SharpParameter> ParameterList
+  {
+    get { return _methodDeclaration.ParameterList.Parameters.Select(param => new SharpParameter(param)).ToList(); }
+  }
 }
