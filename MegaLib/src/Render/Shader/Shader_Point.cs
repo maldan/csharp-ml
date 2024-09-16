@@ -4,13 +4,13 @@ namespace MegaLib.Render.Shader;
 
 public class PointVertexShader
 {
-  [ShaderField("attribute")] public Vector4 aPosition;
-  [ShaderField("attribute")] public Vector4 aColor;
+  [ShaderFieldAttribute] public Vector4 aPosition;
+  [ShaderFieldAttribute] public Vector4 aColor;
 
-  [ShaderField("uniform")] public Matrix4x4 uProjectionMatrix;
-  [ShaderField("uniform")] public Matrix4x4 uViewMatrix;
+  [ShaderFieldUniform] public Matrix4x4 uProjectionMatrix;
+  [ShaderFieldUniform] public Matrix4x4 uViewMatrix;
 
-  [ShaderField("out")] public Vector4 vo_Color;
+  [ShaderFieldOut] public Vector4 vo_Color;
 
   public Vector4 Main()
   {
@@ -23,8 +23,8 @@ public class PointVertexShader
 
 public class PointFragmentShader
 {
-  [ShaderField("in")] public Vector4 vo_Color;
-  [ShaderField("out")] public Vector4 color;
+  [ShaderFieldIn] public Vector4 vo_Color;
+  [ShaderFieldOut] public Vector4 color;
 
   public void Main()
   {

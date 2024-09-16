@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.Render.Color;
 using MegaLib.Render.Shader;
 using MegaLib.Render.Texture;
@@ -42,7 +43,14 @@ public class SharpCompiler
       .AddSyntaxTrees(_syntaxTree)
       .AddReferences(
         MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-        MetadataReference.CreateFromFile(typeof(Console).Assembly.Location)
+        MetadataReference.CreateFromFile(typeof(Console).Assembly.Location),
+        MetadataReference.CreateFromFile(typeof(Vector2).Assembly.Location),
+        MetadataReference.CreateFromFile(typeof(Vector3).Assembly.Location),
+        MetadataReference.CreateFromFile(typeof(Vector4).Assembly.Location),
+        MetadataReference.CreateFromFile(typeof(Texture_Cube).Assembly.Location),
+        MetadataReference.CreateFromFile(typeof(Texture_2D<RGBA<float>>).Assembly.Location),
+        MetadataReference.CreateFromFile(typeof(MathF).Assembly.Location),
+        MetadataReference.CreateFromFile(typeof(Shader_Base).Assembly.Location)
       );
 
     // Создаем семантическую модель для анализа типов

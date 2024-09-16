@@ -25,6 +25,7 @@
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Shader.ShaderProgramTest.Basic&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Compiler.Sharp.SharpCompilerTest.Basic&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Shader.ShaderProgramTest.Basic2&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Compiler.Sharp.SharpCompilerTest.Basic2&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
 	

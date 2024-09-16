@@ -15,7 +15,7 @@ using MegaLib.Render.Texture;
 
 namespace MegaLib.Render.Shader;
 
-[AttributeUsage(AttributeTargets.Field)] // Указываем, что атрибут можно применять только к полям
+/*[AttributeUsage(AttributeTargets.Field)] // Указываем, что атрибут можно применять только к полям
 public class ShaderFieldAttribute(string description) : Attribute
 {
   public string Description { get; } = description;
@@ -25,9 +25,21 @@ public class ShaderFieldAttribute(string description) : Attribute
 public class ShaderMethodAttribute(string description) : Attribute
 {
   public string Description { get; } = description;
-}
+}*/
 
-[AttributeUsage(AttributeTargets.Method)] // Указываем, что атрибут можно применять только к полям
+[AttributeUsage(AttributeTargets.Field)]
+public class ShaderFieldUniformAttribute : Attribute;
+
+[AttributeUsage(AttributeTargets.Field)]
+public class ShaderFieldInAttribute : Attribute;
+
+[AttributeUsage(AttributeTargets.Field)]
+public class ShaderFieldOutAttribute : Attribute;
+
+[AttributeUsage(AttributeTargets.Field)]
+public class ShaderFieldAttributeAttribute : Attribute;
+
+[AttributeUsage(AttributeTargets.Method)]
 public class ShaderBuiltinMethodAttribute : Attribute;
 
 public class ShaderProgram
@@ -68,7 +80,7 @@ public class ShaderProgram
     public string Type;
   }
 
-  public static Dictionary<string, string> Compile2(string shaderName)
+  public static Dictionary<string, string> Compile(string shaderName)
   {
     var sharpCompiler = new SharpCompiler();
     sharpCompiler.AddCode(GetShaderText($"MegaLib.src.Render.Shader.Shader_Base.cs"));
@@ -87,15 +99,13 @@ public class ShaderProgram
     return dict;
   }
 
-  private static string CompileClass2(SharpClass sharpClass)
+  private static string CompileClass2(SharpClass sharpClass, int classIndex = 0)
   {
     var outShader = new List<string>();
 
-    if (sharpClass.Parent != null)
-    {
-      outShader.Add(CompileClass2(sharpClass.Parent));
-    }
-    else
+
+    // Самый первый класс
+    if (classIndex == 0)
     {
       outShader.Add("#version 330 core");
       outShader.Add("");
@@ -104,7 +114,26 @@ public class ShaderProgram
       outShader.Add("precision highp usampler2D;");
       outShader.Add("precision highp sampler2D;");
       outShader.Add("");
+
+      var locationCounter = 0;
+      foreach (var sharpField in sharpClass.FieldList)
+      {
+        if (sharpField.HasAttribute("ShaderFieldUniform"))
+          outShader.Add($"uniform {ReplaceTypes(sharpField.Type)} {sharpField.Name};");
+        if (sharpField.HasAttribute("ShaderFieldAttribute"))
+          outShader.Add(
+            $"layout (location = {locationCounter++}) in {ReplaceTypes(sharpField.Type)} {sharpField.Name};");
+        if (sharpField.HasAttribute("ShaderFieldIn"))
+          outShader.Add($"in {ReplaceTypes(sharpField.Type)} {sharpField.Name};");
+        if (sharpField.HasAttribute("ShaderFieldOut"))
+          outShader.Add($"out {ReplaceTypes(sharpField.Type)} {sharpField.Name};");
+      }
+
+      outShader.Add("");
     }
+
+    // Если есть базовый класс
+    if (sharpClass.Parent != null) outShader.Add(CompileClass2(sharpClass.Parent, classIndex + 1));
 
     foreach (var sharpStruct in sharpClass.StructList)
     {
@@ -119,12 +148,67 @@ public class ShaderProgram
     {
       if (sharpMethod.HasAttribute("ShaderBuiltinMethod")) continue;
 
+      var methodName = sharpMethod.Name;
+      var returnType = ReplaceTypes(sharpMethod.ReturnType);
+      if (methodName.ToLower() == "main")
+      {
+        methodName = "main";
+        returnType = "void";
+      }
+
       var methodHeader = "";
-      methodHeader += $"{ReplaceTypes(sharpMethod.ReturnType)} {sharpMethod.Name}";
+      methodHeader += $"{returnType} {methodName}";
       methodHeader += "(";
       methodHeader += string.Join(", ", sharpMethod.ParameterList.Select(x => $"{ReplaceTypes(x.Type)} {x.Name}"));
       methodHeader += ") {";
       outShader.Add(methodHeader);
+
+      var methodText = "";
+
+      foreach (var sharpStatement in sharpMethod.StatementList)
+      {
+        methodText += sharpStatement.GetTextWithExplicitVariableDeclaration() + "\n";
+      }
+
+      // Заменяем декларацию переменные типа Vector3 normal = на vec3 normal = 
+      methodText = Regex.Replace(methodText, $@"([a-zA-Z0-9\.]+) ([a-zA-Z0-9]+) =",
+        (match) => $"{ReplaceTypes(match.Groups[1].Value)} {match.Groups[2].Value} =");
+
+      // Заменяем new Vector3( на vec3(
+      methodText = Regex.Replace(methodText, $@"\bnew ([a-zA-Z0-9]+)\(",
+        (match) => $"{ReplaceTypes(match.Groups[1].Value)}(");
+
+      // Заменяем new Vector3 X; на vec3 X;
+      methodText = Regex.Replace(methodText, $@"([a-zA-Z0-9_]+) ([a-zA-Z0-9_]+);",
+        (match) => $"{ReplaceTypes(match.Groups[1].Value)} {match.Groups[2].Value};");
+
+      // Заменяем Light light = Light();
+      methodText = Regex.Replace(methodText, @"([a-zA-Z0-9_]+) ([a-zA-Z0-9_]+) = \1\(\);", "$1 $2;");
+
+      // Заменяем .XYZW на .xyzw
+      methodText = Regex.Replace(methodText, @"\.([XYZWRGBA]+)(?=\b)", match => $".{match.Groups[1].Value.ToLower()}");
+
+      // Удаляем ненужное
+      methodText = methodText.Replace("MegaLib.Render.Shader.MegaLib.Render.Shader.Shader_", "");
+
+      // Константы
+      methodText = methodText.Replace("MathF.PI", MathF.PI.ToString().Replace(",", "."));
+
+      // Привидение типов
+      methodText = methodText.Replace("toInt(", "int(");
+      methodText = methodText.Replace("toUInt(", "uint(");
+
+      // Прочие фичи
+      methodText = methodText.Replace("for (var", "for (int");
+      methodText = Regex.Replace(methodText, $@"for \(\; ([a-zA-Z0_9]+)\b",
+        (match) => $"for (int {match.Groups[1].Value} = 0; {match.Groups[1].Value}");
+      methodText = methodText.Replace("discard()", "discard");
+
+      // В главном методе делаем так
+      if (methodName == "main") methodText = methodText.Replace("return ", "gl_Position = ");
+
+      outShader.Add(methodText);
+
       outShader.Add("}");
       outShader.Add("");
     }
@@ -132,7 +216,7 @@ public class ShaderProgram
     return string.Join("\n", outShader);
   }
 
-  public static Dictionary<string, string> Compile(string shaderName)
+  public static Dictionary<string, string> Compile2(string shaderName)
   {
     // language=C#
     var fullSource = "";
@@ -166,9 +250,6 @@ public class ShaderProgram
     for (var i = 0; i < classList.Count; i++)
     {
       shaders[classList[i].ShaderType] = CompileClass(root, model, classList[i]);
-      /*Console.WriteLine(classList[i].ShaderType);
-      Console.WriteLine(shaders[classList[i].ShaderType]);
-      Console.WriteLine("");*/
     }
 
     return shaders;

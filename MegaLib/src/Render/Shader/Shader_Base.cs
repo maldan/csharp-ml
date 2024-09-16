@@ -78,16 +78,19 @@ public class Shader_Base
     return new Vector4();
   }
 
+  [ShaderBuiltinMethod]
   protected uint toUInt(int x)
   {
     return (uint)x;
   }
 
+  [ShaderBuiltinMethod]
   protected int toInt(uint x)
   {
     return (int)x;
   }
 
+  [ShaderBuiltinMethod]
   protected int toInt(float x)
   {
     return (int)x;

@@ -7,20 +7,20 @@ namespace MegaLib.Render.Shader;
 
 public class MeshVertex : Shader_Base
 {
-  [ShaderField("attribute")] public Vector3 aPosition;
-  [ShaderField("attribute")] public Vector3 aTangent;
-  [ShaderField("attribute")] public Vector3 aBiTangent;
-  [ShaderField("attribute")] public Vector2 aUV;
-  [ShaderField("attribute")] public Vector3 aNormal;
+  [ShaderFieldAttribute] public Vector3 aPosition;
+  [ShaderFieldAttribute] public Vector3 aTangent;
+  [ShaderFieldAttribute] public Vector3 aBiTangent;
+  [ShaderFieldAttribute] public Vector2 aUV;
+  [ShaderFieldAttribute] public Vector3 aNormal;
 
-  [ShaderField("uniform")] public Matrix4x4 uProjectionMatrix;
-  [ShaderField("uniform")] public Matrix4x4 uViewMatrix;
-  [ShaderField("uniform")] public Matrix4x4 uModelMatrix;
+  [ShaderFieldUniform] public Matrix4x4 uProjectionMatrix;
+  [ShaderFieldUniform] public Matrix4x4 uViewMatrix;
+  [ShaderFieldUniform] public Matrix4x4 uModelMatrix;
 
-  [ShaderField("out")] public Vector3 vo_Position;
-  [ShaderField("out")] public Vector2 vo_UV;
-  [ShaderField("out")] public Matrix3x3 vo_TBN;
-  [ShaderField("out")] public Vector3 vo_CameraPosition;
+  [ShaderFieldOut] public Vector3 vo_Position;
+  [ShaderFieldOut] public Vector2 vo_UV;
+  [ShaderFieldOut] public Matrix3x3 vo_TBN;
+  [ShaderFieldOut] public Vector3 vo_CameraPosition;
 
   public Vector4 Main()
   {
@@ -55,20 +55,20 @@ public class MeshVertex : Shader_Base
 
 public class MeshFragmentShader : Shader_PBR
 {
-  [ShaderField("in")] public Vector3 vo_Position;
-  [ShaderField("in")] public Vector2 vo_UV;
-  [ShaderField("in")] public Matrix3x3 vo_TBN;
-  [ShaderField("in")] public Vector3 vo_CameraPosition;
+  [ShaderFieldIn] public Vector3 vo_Position;
+  [ShaderFieldIn] public Vector2 vo_UV;
+  [ShaderFieldIn] public Matrix3x3 vo_TBN;
+  [ShaderFieldIn] public Vector3 vo_CameraPosition;
 
-  [ShaderField("out")] public Vector4 color;
+  [ShaderFieldOut] public Vector4 color;
 
-  [ShaderField("uniform")] public Texture_2D<RGBA<float>> uAlbedoTexture;
-  [ShaderField("uniform")] public Texture_2D<RGBA<float>> uNormalTexture;
-  [ShaderField("uniform")] public Texture_2D<RGBA<float>> uRoughnessTexture;
-  [ShaderField("uniform")] public Texture_2D<RGBA<float>> uMetallicTexture;
-  [ShaderField("uniform")] public Texture_2D<RGBA<float>> uLightTexture;
-  [ShaderField("uniform")] public Texture_Cube uSkybox;
-  [ShaderField("uniform")] public Vector4 uTint;
+  [ShaderFieldUniform] public Texture_2D<RGBA<float>> uAlbedoTexture;
+  [ShaderFieldUniform] public Texture_2D<RGBA<float>> uNormalTexture;
+  [ShaderFieldUniform] public Texture_2D<RGBA<float>> uRoughnessTexture;
+  [ShaderFieldUniform] public Texture_2D<RGBA<float>> uMetallicTexture;
+  [ShaderFieldUniform] public Texture_2D<RGBA<float>> uLightTexture;
+  [ShaderFieldUniform] public Texture_Cube uSkybox;
+  [ShaderFieldUniform] public Vector4 uTint;
 
   public void Main()
   {

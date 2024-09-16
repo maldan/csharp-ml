@@ -65,7 +65,7 @@ public class SharpClass
       // Извлекаем только те методы, которые находятся непосредственно внутри целевого класса
       var methodsInClass = _classDeclaration.Members
         .OfType<MethodDeclarationSyntax>();
-      return methodsInClass.Select(method => new SharpMethod(method)).ToList();
+      return methodsInClass.Select(method => new SharpMethod(method, _semanticModel)).ToList();
     }
   }
 

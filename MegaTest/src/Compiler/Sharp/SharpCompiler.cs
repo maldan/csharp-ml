@@ -61,4 +61,32 @@ public class SharpCompilerTest
       }
     }
   }
+
+  [Test]
+  public void Basic2()
+  {
+    var xx = new SharpCompiler();
+    // language=C#
+    xx.AddCode(@"
+      public class Y {
+        public int Rock = 4;
+        
+        public void Test() {
+            var x = 5.0f;
+            if (x > 4.0f) {
+                Hello();
+            }
+        }
+      }
+    ");
+    xx.Parse();
+
+    foreach (var classInfo in xx.ClassList)
+    {
+      foreach (var method in classInfo.MethodList)
+      {
+        Console.WriteLine(method.Text);
+      }
+    }
+  }
 }
