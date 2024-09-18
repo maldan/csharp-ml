@@ -39,7 +39,7 @@ public class Transform
     _matrix = _matrix.Rotate(Quaternion.Identity);
     _matrix = _matrix.Scale(Vector3.One);
   }
-
+  
   public Matrix4x4 Matrix
   {
     get
@@ -86,5 +86,19 @@ public class Transform
     _matrix = _matrix.Rotate(_rotation);
     _matrix = _matrix.Scale(_scale);
     _isChanged = false;
+  }
+  
+  public static Transform operator *(Transform a, Transform b)
+  {
+    // Умножаем матрицы трансформации двух объектов
+    Matrix4x4 resultMatrix = a.Matrix * b.Matrix;
+    
+    // Извлекаем позицию, вращение и масштаб из результирующей матрицы
+    Vector3 resultPosition = resultMatrix.Position;
+    Quaternion resultRotation = resultMatrix.Rotation;
+    Vector3 resultScale = resultMatrix.Scaling;
+    
+    // Возвращаем новый Transform с полученными параметрами
+    return new Transform(resultPosition, resultRotation, resultScale);
   }
 }

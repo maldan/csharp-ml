@@ -5,18 +5,6 @@ using System.Text.Json.Serialization;
 
 namespace MegaLib.Mathematics.LinearAlgebra;
 
-public struct IVector2
-{
-  public int X;
-  public int Y;
-
-  public IVector2(int x, int y)
-  {
-    X = x;
-    Y = y;
-  }
-}
-
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public struct Vector2
 {
@@ -100,6 +88,43 @@ public struct Vector2
     {
       X = a.X - b.X,
       Y = a.Y - b.Y
+    };
+  }
+
+  public static Vector2 operator ++(Vector2 a)
+  {
+    return new Vector2
+    {
+      X = a.X + 1,
+      Y = a.Y + 1
+    };
+  }
+
+  public static Vector2 operator --(Vector2 a)
+  {
+    return new Vector2
+    {
+      X = a.X - 1,
+      Y = a.Y - 1
+    };
+  }
+
+  public static bool operator ==(Vector2 a, Vector2 b)
+  {
+    return a.X == b.X && a.Y == b.Y;
+  }
+
+  public static bool operator !=(Vector2 a, Vector2 b)
+  {
+    return !(a == b);
+  }
+
+  public static Vector2 operator -(Vector2 a)
+  {
+    return new Vector2
+    {
+      X = -a.X,
+      Y = -a.Y
     };
   }
 
