@@ -26,4 +26,8 @@
         <ProjectReference Include="..\MegaLib\MegaLib.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <Folder Include="src\AssetLoader\PNG\"/>
+    </ItemGroup>
+
 </Project>

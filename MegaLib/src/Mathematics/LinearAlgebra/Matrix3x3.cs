@@ -8,12 +8,68 @@ public struct Matrix3x3
   public float M10, M11, M12;
   public float M20, M21, M22;
 
-  public float[] Raw => new[]
-  {
+  public float[] Raw =>
+  [
     M00, M01, M02,
     M10, M11, M12,
     M20, M21, M22
-  };
+  ];
+
+  public int Count => 9;
+
+  // Перегрузка оператора [] для доступа к элементам матрицы по индексу
+  public float this[int index]
+  {
+    get
+    {
+      return index switch
+      {
+        0 => M00,
+        1 => M01,
+        2 => M02,
+        3 => M10,
+        4 => M11,
+        5 => M12,
+        6 => M20,
+        7 => M21,
+        8 => M22,
+        _ => 0
+      };
+    }
+    set
+    {
+      switch (index)
+      {
+        case 0:
+          M00 = value;
+          break;
+        case 1:
+          M01 = value;
+          break;
+        case 2:
+          M02 = value;
+          break;
+        case 3:
+          M10 = value;
+          break;
+        case 4:
+          M11 = value;
+          break;
+        case 5:
+          M12 = value;
+          break;
+        case 6:
+          M20 = value;
+          break;
+        case 7:
+          M21 = value;
+          break;
+        case 8:
+          M22 = value;
+          break;
+      }
+    }
+  }
 
   // Конструктор по элементам
   public Matrix3x3(float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22)

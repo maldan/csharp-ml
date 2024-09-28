@@ -11,4 +11,8 @@
     <ItemGroup>
         <EmbeddedResource Include="src/Render/Shader/**/*.cs"/>
     </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="src\Media\"/>
+    </ItemGroup>
 </Project>
