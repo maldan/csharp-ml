@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using MegaLib.AssetLoader.GLTF;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.Render.Buffer;
@@ -25,9 +26,9 @@ public class RO_Mesh : RO_Base
   public ListGPU<uint> BoneIndexList;
 
   public Texture_2D<RGBA<byte>> AlbedoTexture;
-  public Texture_2D<RGBA<byte>> NormalTexture;
-  public Texture_2D<RGBA<byte>> RoughnessTexture;
-  public Texture_2D<RGBA<byte>> MetallicTexture;
+  public Texture_2D<RGB<byte>> NormalTexture;
+  public Texture_2D<byte> RoughnessTexture;
+  public Texture_2D<byte> MetallicTexture;
 
   public RGBA<float> Tint = new(1, 1, 1, 1);
 
@@ -98,41 +99,41 @@ public class RO_Mesh : RO_Base
         [3] = new RGBA<byte>(255, 255, 255, 255)
       }
     };
-    albedo.Options.FiltrationMode = TextureFiltrationMode.Nearest;
+    albedo.Options.FiltrationMode = TextureFiltrationMode.Linear;
     AlbedoTexture = albedo;
 
-    var normal = new Texture_2D<RGBA<byte>>(1, 1)
+    var normal = new Texture_2D<RGB<byte>>(1, 1)
     {
       RAW =
       {
-        [0] = new RGBA<byte>(128, 128, 255, 255)
+        [0] = new RGB<byte>(128, 128, 255)
       }
     };
     normal.Options.FiltrationMode = TextureFiltrationMode.Linear;
     NormalTexture = normal;
 
-    var roughness = new Texture_2D<RGBA<byte>>(1, 1)
+    var roughness = new Texture_2D<byte>(1, 1)
     {
       RAW =
       {
-        [0] = new RGBA<byte>(255, 255, 255, 255)
+        [0] = 128
       }
     };
     roughness.Options.FiltrationMode = TextureFiltrationMode.Linear;
     RoughnessTexture = roughness;
 
-    var metalic = new Texture_2D<RGBA<byte>>(1, 1)
+    var metalic = new Texture_2D<byte>(1, 1)
     {
       RAW =
       {
-        [0] = new RGBA<byte>(0, 0, 0, 255)
+        [0] = 0
       }
     };
     metalic.Options.FiltrationMode = TextureFiltrationMode.Linear;
     MetallicTexture = metalic;
   }
 
-  public static RO_Mesh GenerateUVSphere(float radius, int longitudeSegments, int latitudeSegments)
+  /*public static RO_Mesh GenerateUVSphere(float radius, int longitudeSegments, int latitudeSegments)
   {
     var vertices = new ListGPU<Vector3>();
     var uvs = new ListGPU<Vector2>();
@@ -264,46 +265,107 @@ public class RO_Mesh : RO_Base
     m.CalculateTangent();
 
     return m;
-  }
-}
+  }*/
 
-public static class MeshEx
-{
-  public static void FromMesh(this RO_Mesh mesh, Mesh.Mesh mesh2)
+  public void FromMesh(Mesh.Mesh mesh2)
   {
-    mesh.VertexList = new ListGPU<Vector3>(mesh2.VertexList);
-    mesh.UV0List = new ListGPU<Vector2>(mesh2.UV0List);
-    mesh.NormalList = new ListGPU<Vector3>(mesh2.NormalList);
-    mesh.IndexList = new ListGPU<uint>(mesh2.IndexList);
-    mesh.CalculateTangent();
+    VertexList = new ListGPU<Vector3>(mesh2.VertexList);
+    UV0List = new ListGPU<Vector2>(mesh2.UV0List);
+    NormalList = new ListGPU<Vector3>(mesh2.NormalList);
+    IndexList = new ListGPU<uint>(mesh2.IndexList);
+    CalculateTangent();
   }
 
-  public static void FromGLTF(this RO_Mesh mesh, GLTF_MeshPrimitive gltfMeshPrimitive)
+  public void FromGLTF(GLTF_MeshPrimitive gltfMeshPrimitive)
   {
-    mesh.VertexList = new ListGPU<Vector3>(gltfMeshPrimitive.Vertices);
-    mesh.UV0List = new ListGPU<Vector2>(gltfMeshPrimitive.UV0);
-    mesh.IndexList = new ListGPU<uint>(gltfMeshPrimitive.Indices);
-    mesh.NormalList = new ListGPU<Vector3>(gltfMeshPrimitive.Normals);
+    VertexList = new ListGPU<Vector3>(gltfMeshPrimitive.Vertices);
+    UV0List = new ListGPU<Vector2>(gltfMeshPrimitive.UV0);
+    IndexList = new ListGPU<uint>(gltfMeshPrimitive.Indices);
+    NormalList = new ListGPU<Vector3>(gltfMeshPrimitive.Normals);
 
     if (gltfMeshPrimitive.BoneWeight.Count > 0)
-      mesh.BoneWeightList = new ListGPU<Vector4>(gltfMeshPrimitive.BoneWeight);
+      BoneWeightList = new ListGPU<Vector4>(gltfMeshPrimitive.BoneWeight);
 
     if (gltfMeshPrimitive.BoneIndex.Count > 0)
     {
       var l = new ListGPU<uint>(gltfMeshPrimitive.BoneIndex.Count);
       gltfMeshPrimitive.BoneIndex.ForEach(x => { l.Add(x.UInt32BE); });
-      mesh.BoneIndexList = l;
+      BoneIndexList = l;
     }
 
-    mesh.CalculateTangent();
+    CalculateTangent();
+    InitDefaultTextures();
 
-    mesh.AlbedoTexture = new Texture_2D<RGBA<byte>>(1, 1);
-    mesh.AlbedoTexture.RAW.SetPixels(new RGBA<byte>[] { new(128, 128, 128, 255) });
-    mesh.NormalTexture = new Texture_2D<RGBA<byte>>(1, 1);
-    mesh.NormalTexture.RAW.SetPixels(new RGBA<byte>[] { new(128, 128, 255, 255) });
-    mesh.RoughnessTexture = new Texture_2D<RGBA<byte>>(1, 1);
-    mesh.RoughnessTexture.RAW.SetPixels(new RGBA<byte>[] { new(128, 128, 128, 255) });
-    mesh.MetallicTexture = new Texture_2D<RGBA<byte>>(1, 1);
-    mesh.MetallicTexture.RAW.SetPixels(new RGBA<byte>[] { new(0, 0, 0, 255) });
+    // Назначаем материалы
+    var mat = gltfMeshPrimitive.Material;
+
+    // Базовую текстуру
+    if (mat is { HasBaseColorTexture: true })
+    {
+      var texturePath = gltfMeshPrimitive.Gltf.BaseURI + "/" + mat.BaseColorTexture.Image.URI;
+      // Console.WriteLine(texturePath);
+      if (TextureManager.Has(texturePath))
+      {
+        AlbedoTexture = TextureManager.Get<RGBA<byte>>(texturePath);
+      }
+      else
+      {
+        var texture = mat.BaseColorTexture.Image.ToTexture2D<RGBA<byte>>();
+        if (texture != null)
+        {
+          AlbedoTexture = texture;
+          TextureManager.Add(texturePath, texture);
+        }
+      }
+    }
+
+    if (mat is { HasBaseColorTexture: false })
+    {
+      AlbedoTexture.RAW.Resize(1, 1);
+      AlbedoTexture.RAW.SetPixels([
+        new RGBA<byte>((byte)(mat.BaseColor.R * 255),
+          (byte)(mat.BaseColor.G * 255), (byte)(mat.BaseColor.B * 255),
+          (byte)(mat.BaseColor.A * 255))
+      ]);
+    }
+
+    // Базовую текстуру
+    if (mat is { HasNormalTexture: true })
+    {
+      var texturePath = gltfMeshPrimitive.Gltf.BaseURI + "/" + mat.NormalTexture.Image.URI;
+      Console.WriteLine(texturePath);
+      if (TextureManager.Has(texturePath))
+      {
+        NormalTexture = TextureManager.Get<RGB<byte>>(texturePath);
+      }
+      else
+      {
+        var texture = mat.NormalTexture.Image.ToTexture2D<RGB<byte>>();
+        if (texture != null)
+        {
+          NormalTexture = texture;
+          TextureManager.Add(texturePath, texture);
+        }
+      }
+    }
+
+    // Базовую текстуру
+    if (mat is { HasRoughnessTexture: true })
+    {
+      var texturePath = gltfMeshPrimitive.Gltf.BaseURI + "/" + mat.RoughnessTexture.Image.URI;
+      if (TextureManager.Has(texturePath))
+      {
+        RoughnessTexture = TextureManager.Get<byte>(texturePath);
+      }
+      else
+      {
+        var texture = mat.RoughnessTexture.Image.ToTexture2D<byte>();
+        if (texture != null)
+        {
+          RoughnessTexture = texture;
+          TextureManager.Add(texturePath, texture);
+        }
+      }
+    }
   }
 }

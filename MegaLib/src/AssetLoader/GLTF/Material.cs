@@ -1,8 +1,11 @@
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using MegaLib.Media.Image;
 using MegaLib.Render.Color;
+using MegaLib.Render.Texture;
 
 namespace MegaLib.AssetLoader.GLTF;
 
@@ -43,6 +46,28 @@ public class GLTF_Image
 
     if (element.TryGetProperty("uri", out var uri)) URI = uri.GetString();
     if (element.TryGetProperty("bufferView", out var bufferView)) BufferView = bufferView.GetInt32();
+  }
+
+  public BitmapData<T> ToBitmapData<T>() where T : struct
+  {
+    var content = RawContent;
+    return BitmapData.FromFile<T>(content);
+  }
+
+  public Texture_2D<T> ToTexture2D<T>() where T : struct
+  {
+    var bmp = ToBitmapData<T>();
+
+    var ptr = Marshal.UnsafeAddrOfPinnedArrayElement(bmp.Pixels, 0);
+    var texture = new Texture_2D<T>(bmp.Width, bmp.Height);
+    texture.RAW.SetRaw(ptr, bmp.ByteSize);
+
+    // texture.SaveToBMP($"C:/Users/black/Desktop/Chapter3/${ptr}.bmp");
+    //if (typeof(T) == typeof(RGBA<byte>)) texture.Options.Format = TextureFormat.RGBA8;
+    //if (typeof(T) == typeof(RGB<byte>)) texture.Options.Format = TextureFormat.RGB8;
+    //if (typeof(T) == typeof(byte)) texture.Options.Format = TextureFormat.R8;
+
+    return texture;
   }
 }
 
@@ -98,7 +123,7 @@ public class GLTF_Material
 
       // BaseColor = bc.GetProperty("index").GetInt32();
       if (pbr.TryGetProperty("metallicRoughnessTexture", out var rt))
-        RoughnessTextureId = bc.GetProperty("index").GetInt32();
+        RoughnessTextureId = rt.GetProperty("index").GetInt32();
 
       if (pbr.TryGetProperty("roughnessFactor", out var rf))
         Roughness = rf.GetSingle();

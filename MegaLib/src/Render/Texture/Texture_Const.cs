@@ -22,7 +22,8 @@ public enum TextureFormat
   RGB8,
   RGBA8,
   BGRA8,
-  R32F
+  R32F,
+  R8
 }
 
 public struct TextureOptions

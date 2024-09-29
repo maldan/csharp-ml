@@ -37,6 +37,7 @@ public class Texture_2D<T>
   {
     Options.Format = RAW switch
     {
+      ImageGPU<byte> => TextureFormat.R8,
       ImageGPU<RGB<byte>> => TextureFormat.RGB8,
       ImageGPU<RGBA<byte>> => TextureFormat.RGBA8,
       ImageGPU<float> => TextureFormat.R32F,

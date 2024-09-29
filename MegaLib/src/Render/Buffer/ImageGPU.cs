@@ -50,6 +50,7 @@ public class ImageGPU<T>
     Width = (ushort)width;
     Height = (ushort)height;
     _pixelData = new T[width * height];
+    IsChanged = true;
   }
 
   ~ImageGPU()

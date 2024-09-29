@@ -372,6 +372,11 @@ public class OpenGL_Context
         srcFormat = OpenGL32.GL_RED;
         srcType = OpenGL32.GL_FLOAT;
         break;
+      case TextureFormat.R8:
+        internalFormat = (int)OpenGL32.GL_R8;
+        srcFormat = OpenGL32.GL_RED;
+        srcType = OpenGL32.GL_UNSIGNED_BYTE;
+        break;
       default:
         throw new Exception("Unsupported texture format");
     }
