@@ -6,6 +6,16 @@ namespace MegaLib.OS.Api;
 
 public class User32
 {
+  // Определение структуры RECT для хранения координат окна
+  [StructLayout(LayoutKind.Sequential)]
+  public struct RECT
+  {
+    public int Left;
+    public int Top;
+    public int Right;
+    public int Bottom;
+  }
+
   // Константы для стандартных типов курсоров
   public const int IDC_ARROW = 32512;
   public const int IDC_HAND = 32649;
@@ -15,6 +25,10 @@ public class User32
   // Определение необходимых констант
   public const int WH_MOUSE_LL = 14;
   public const int WM_MOUSEWHEEL = 0x020A;
+
+  // Константы для индексов стиля окна
+  public const int GWL_STYLE = -16;
+  public const int GWL_EXSTYLE = -20;
 
   // Делегат для обработки событий
   public delegate IntPtr LowLevelMouseProc(int nCode, IntPtr wParam, IntPtr lParam);
@@ -144,6 +158,14 @@ public class User32
 
   [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
   public static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
+
+  // Импорт функции GetWindowLong из user32.dll для получения стиля окна
+  [DllImport("user32.dll", SetLastError = true)]
+  public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+
+  // Импорт функции AdjustWindowRectEx из user32.dll для расчета полной области окна
+  [DllImport("user32.dll", SetLastError = true)]
+  public static extern bool AdjustWindowRectEx(ref RECT lpRect, int dwStyle, bool bMenu, int dwExStyle);
 
   public static int GetScreenWidth()
   {

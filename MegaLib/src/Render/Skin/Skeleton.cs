@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MegaLib.AssetLoader.GLTF;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.Render.Animation;
+using MegaLib.Render.RenderObject;
 
 namespace MegaLib.Render.Skin;
 
@@ -86,5 +88,30 @@ public class Skeleton : IAnimatable
       if (frame.Type == AnimationKeyType.Scale) SetBoneScale(frame.Key, frame.Value.DropW());
       if (frame.Type == AnimationKeyType.Rotate) SetBoneRotation(frame.Key, frame.Value.ToQuaternion());
     });
+  }
+
+  public void FromGLTF(GLTF_Skin gltfSkin)
+  {
+    var boneMap = new Dictionary<int, Bone>();
+
+    // Fill plain bones
+    for (var i = 0; i < gltfSkin.BoneList.Count; i++)
+    {
+      var bone = new Bone();
+      bone.FromGLTFBone(gltfSkin.BoneList[i]);
+      boneMap[gltfSkin.BoneList[i].JointId] = bone;
+      BoneList.Add(bone);
+    }
+
+    // Fill hierarchy
+    for (var i = 0; i < gltfSkin.BoneList.Count; i++)
+    {
+      var gBone = gltfSkin.BoneList[i];
+      for (var j = 0; j < gBone.ChildrenBone.Count; j++)
+      {
+        var child = gBone.ChildrenBone[j];
+        boneMap[gBone.JointId].Children.Add(BoneList.Find(x => x.Name == child.Name));
+      }
+    }
   }
 }

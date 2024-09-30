@@ -414,6 +414,20 @@ public class Layer_Line : Layer_Base
     DrawAABB(aabb.Center, aabb.Size, color);
   }
 
+  public void DrawLine(Vector3 from, Vector3 to, RGBA<float> color)
+  {
+    Add(new RO_Line(from, to, color));
+  }
+
+  public void DrawLine(Vector3 from, Vector3 to, RGBA<float> color, float width)
+  {
+    var l = new RO_Line(from, to, color)
+    {
+      Width = width
+    };
+    Add(l);
+  }
+
   public void DrawGrid(int gridSize, float cellSize, RGBA<float> mainColor, int subdivisions, RGBA<float> subColor)
   {
     // Грид рисуется в плоскости XZ (ось Y вертикальная)

@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Render.RenderObject;
@@ -47,8 +48,7 @@ public class RO_Base
   {
   }
 
-  /*public virtual dynamic GetDataByName(RO_DataType type, string name)
+  public virtual void CalculateBoundingBox()
   {
-    return null;
-  }*/
+  }
 }

@@ -483,6 +483,7 @@ public class EasyUI_Window : EasyUI_Element
       Style.X = Position().X + Mouse.ClientDelta.X;
       Style.Y = Position().Y + Mouse.ClientDelta.Y;
       if (Position().X < 0) Style.X = 0;
+      if (Position().Y < 20) Style.Y = 20;
     };
   }
 
@@ -492,6 +493,8 @@ public class EasyUI_Window : EasyUI_Element
     _minimize.Style.X = width - 16;
     _body.Style.Width = width;
     _body.Style.Height = height;
+    Style.Width = width;
+    Style.Height = height;
   }
 
   public override void Add(EasyUI_Element element)

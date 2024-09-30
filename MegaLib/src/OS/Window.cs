@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using MegaLib.Crypto;
@@ -20,16 +21,17 @@ public class Window
   private float _delta = 0.016f;
   private string _title = "Untitled";
 
-  // События
+  private static List<Window> _activeWindows = [];
+  public static Window Current => _activeWindows?[0];
 
+  // События
   public Action OnShow;
   public Action OnClose;
   public Action OnCreated;
   public Action<Window, float> OnPaint;
-  public Action<int, int> OnResize;
+  public Action<Window> OnResize;
 
   // Пропсы
-
   public IntPtr CurrentDeviceContext => _handleDeviceContext;
   public IntPtr CurrentGLRC => _hglrc;
 
@@ -77,6 +79,62 @@ public class Window
     {
       User32.GetWindowRect(_handleWindow, out var rect);
       User32.MoveWindow(_handleWindow, rect.Left, rect.Top, rect.Right - rect.Left, value, true);
+    }
+  }
+
+  public int ClientWidth
+  {
+    get
+    {
+      User32.GetClientRect(_handleWindow, out var rect);
+      return rect.Right - rect.Left;
+    }
+    set
+    {
+      User32.GetWindowRect(_handleWindow, out var windowRect);
+
+      // Получаем текущие стили окна
+      var style = User32.GetWindowLong(_handleWindow, User32.GWL_STYLE);
+      var exStyle = User32.GetWindowLong(_handleWindow, User32.GWL_EXSTYLE);
+
+      // Вычисляем полный размер окна с учетом нового размера клиентской области
+      var rect = new User32.RECT { Left = 0, Top = 0, Right = value, Bottom = ClientHeight };
+      User32.AdjustWindowRectEx(ref rect, style, false, exStyle);
+
+      // Вычисляем новый полный размер окна
+      var newWidth = rect.Right - rect.Left;
+      var newHeight = windowRect.Bottom - windowRect.Top;
+
+      // Изменяем размер окна
+      User32.MoveWindow(_handleWindow, windowRect.Left, windowRect.Top, newWidth, newHeight, true);
+    }
+  }
+
+  public int ClientHeight
+  {
+    get
+    {
+      User32.GetClientRect(_handleWindow, out var rect);
+      return rect.Bottom - rect.Top;
+    }
+    set
+    {
+      User32.GetWindowRect(_handleWindow, out var windowRect);
+
+      // Получаем текущие стили окна
+      var style = User32.GetWindowLong(_handleWindow, User32.GWL_STYLE);
+      var exStyle = User32.GetWindowLong(_handleWindow, User32.GWL_EXSTYLE);
+
+      // Вычисляем полный размер окна с учетом нового размера клиентской области
+      var rect = new User32.RECT { Left = 0, Top = 0, Right = ClientWidth, Bottom = value };
+      User32.AdjustWindowRectEx(ref rect, style, false, exStyle);
+
+      // Вычисляем новый полный размер окна
+      var newWidth = windowRect.Right - windowRect.Left;
+      var newHeight = rect.Bottom - rect.Top;
+
+      // Изменяем размер окна
+      User32.MoveWindow(_handleWindow, windowRect.Left, windowRect.Top, newWidth, newHeight, true);
     }
   }
 
@@ -163,9 +221,9 @@ public class Window
         User32.PostQuitMessage(0);
         return IntPtr.Zero;
       case WinApi.WM_SIZE:
-        var width = (int)(lParam.ToInt64() & 0xFFFF);
-        var height = (int)((lParam.ToInt64() >> 16) & 0xFFFF);
-        OnResize?.Invoke(width, height);
+        //var width = (int)(lParam.ToInt64() & 0xFFFF);
+        //var height = (int)((lParam.ToInt64() >> 16) & 0xFFFF);
+        OnResize?.Invoke(this);
         return IntPtr.Zero;
       case WinApi.WM_SETCURSOR:
         var pointer = 32512;
@@ -300,6 +358,8 @@ public class Window
     // Устанавливаем параметры
     _handleWindow = hWnd;
     _handleInstance = hInstance;
+
+    _activeWindows.Add(this);
   }
 
   /*public static Window Create(string className, string title)

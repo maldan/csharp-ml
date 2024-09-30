@@ -90,15 +90,12 @@ public class RO_Skin : RO_Base, IAnimatable
   {
     Skeleton.Animate(animation);
   }
-}
 
-public static class SkinEx
-{
-  public static void FromGLTF(this RO_Skin skin, GLTF_Skin gltfSkin)
+  public void FromGLTF(GLTF_Skin gltfSkin)
   {
     var skeleton = new Skeleton();
-    skeleton.FromGLTFSkin(gltfSkin);
-    skin.Skeleton = skeleton;
+    skeleton.FromGLTF(gltfSkin);
+    Skeleton = skeleton;
 
     foreach (var gMesh in gltfSkin.MeshList)
     foreach (var gPrimitive in gMesh.Primitives)
@@ -108,43 +105,9 @@ public static class SkinEx
         Name = gMesh.Name
       };
       mesh.FromGLTF(gPrimitive);
-      skin.MeshList.Add(mesh);
+      MeshList.Add(mesh);
     }
 
-    skin.Update();
-  }
-
-  public static void FromGLTFSkin(this Skeleton skeleton, GLTF_Skin gltfSkin)
-  {
-    var boneMap = new Dictionary<int, Bone>();
-
-    // Fill plain bones
-    for (var i = 0; i < gltfSkin.BoneList.Count; i++)
-    {
-      var bone = new Bone();
-      bone.FromGLTFBone(gltfSkin.BoneList[i]);
-      boneMap[gltfSkin.BoneList[i].JointId] = bone;
-      skeleton.BoneList.Add(bone);
-    }
-
-    // Fill hierarchy
-    for (var i = 0; i < gltfSkin.BoneList.Count; i++)
-    {
-      var gBone = gltfSkin.BoneList[i];
-      for (var j = 0; j < gBone.ChildrenBone.Count; j++)
-      {
-        var child = gBone.ChildrenBone[j];
-        boneMap[gBone.JointId].Children.Add(skeleton.BoneList.Find(x => x.Name == child.Name));
-      }
-    }
-  }
-
-  public static void FromGLTFBone(this Bone bone, GLTF_Bone gltfBone)
-  {
-    bone.Position = gltfBone.Position;
-    bone.Rotation = gltfBone.Rotation;
-    bone.Scale = gltfBone.Scale;
-    bone.Name = gltfBone.Name;
-    bone.InverseBindMatrix = gltfBone.InverseBindMatrix;
+    Update();
   }
 }

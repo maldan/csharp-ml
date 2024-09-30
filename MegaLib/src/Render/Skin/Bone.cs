@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using MegaLib.AssetLoader.GLTF;
 using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Render.Skin;
@@ -63,5 +64,14 @@ public class Bone
       bone.ParentBone = this;
       bone.Update(Matrix);
     }
+  }
+
+  public void FromGLTFBone(GLTF_Bone gltfBone)
+  {
+    Position = gltfBone.Position;
+    Rotation = gltfBone.Rotation;
+    Scale = gltfBone.Scale;
+    Name = gltfBone.Name;
+    InverseBindMatrix = gltfBone.InverseBindMatrix;
   }
 }

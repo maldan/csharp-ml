@@ -82,6 +82,16 @@ public struct Vector4
     return new Vector3(X, Y, Z);
   }
 
+  public static Vector4 Transform(Vector4 vector, Matrix4x4 matrix)
+  {
+    return new Vector4(
+      vector.X * matrix.M00 + vector.Y * matrix.M10 + vector.Z * matrix.M20 + vector.W * matrix.M30,
+      vector.X * matrix.M01 + vector.Y * matrix.M11 + vector.Z * matrix.M21 + vector.W * matrix.M31,
+      vector.X * matrix.M02 + vector.Y * matrix.M12 + vector.Z * matrix.M22 + vector.W * matrix.M32,
+      vector.X * matrix.M03 + vector.Y * matrix.M13 + vector.Z * matrix.M23 + vector.W * matrix.M33
+    );
+  }
+
   public Quaternion ToQuaternion()
   {
     return new Quaternion(X, Y, Z, W);
@@ -110,6 +120,17 @@ public struct Vector4
       Y = a.Y * s,
       Z = a.Z * s,
       W = a.W * s
+    };
+  }
+
+  public static Vector4 operator /(Vector4 a, float s)
+  {
+    return new Vector4
+    {
+      X = a.X / s,
+      Y = a.Y / s,
+      Z = a.Z / s,
+      W = a.W / s
     };
   }
 

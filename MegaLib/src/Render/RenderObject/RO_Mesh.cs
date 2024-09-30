@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using MegaLib.AssetLoader.GLTF;
+using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.Render.Buffer;
 using MegaLib.Render.Color;
@@ -32,9 +33,30 @@ public class RO_Mesh : RO_Base
 
   public RGBA<float> Tint = new(1, 1, 1, 1);
 
+  protected AABB _boundingBox;
+  public AABB BoundingBox => _boundingBox * Transform.Matrix;
+  public AABB LocalBoundingBox => _boundingBox;
+
   public RO_Mesh()
   {
     Transform = new Transform();
+  }
+
+  public override void CalculateBoundingBox()
+  {
+    // var matrix = Transform.Matrix;
+
+    var min = new Vector3(float.MaxValue);
+    var max = new Vector3(float.MinValue);
+
+    foreach (var v in VertexList)
+    {
+      // var transformedVertex = v * matrix;
+      min = Vector3.Min(min, v);
+      max = Vector3.Max(max, v);
+    }
+
+    _boundingBox = new AABB(min, max);
   }
 
   public void CalculateTangent()
@@ -99,7 +121,7 @@ public class RO_Mesh : RO_Base
         [3] = new RGBA<byte>(255, 255, 255, 255)
       }
     };
-    albedo.Options.FiltrationMode = TextureFiltrationMode.Linear;
+    albedo.Options.FiltrationMode = TextureFiltrationMode.Nearest;
     AlbedoTexture = albedo;
 
     var normal = new Texture_2D<RGB<byte>>(1, 1)
@@ -109,7 +131,7 @@ public class RO_Mesh : RO_Base
         [0] = new RGB<byte>(128, 128, 255)
       }
     };
-    normal.Options.FiltrationMode = TextureFiltrationMode.Linear;
+    normal.Options.FiltrationMode = TextureFiltrationMode.Nearest;
     NormalTexture = normal;
 
     var roughness = new Texture_2D<byte>(1, 1)
@@ -119,7 +141,7 @@ public class RO_Mesh : RO_Base
         [0] = 128
       }
     };
-    roughness.Options.FiltrationMode = TextureFiltrationMode.Linear;
+    roughness.Options.FiltrationMode = TextureFiltrationMode.Nearest;
     RoughnessTexture = roughness;
 
     var metalic = new Texture_2D<byte>(1, 1)
@@ -129,7 +151,7 @@ public class RO_Mesh : RO_Base
         [0] = 0
       }
     };
-    metalic.Options.FiltrationMode = TextureFiltrationMode.Linear;
+    metalic.Options.FiltrationMode = TextureFiltrationMode.Nearest;
     MetallicTexture = metalic;
   }
 
@@ -267,16 +289,18 @@ public class RO_Mesh : RO_Base
     return m;
   }*/
 
-  public void FromMesh(Mesh.Mesh mesh2)
+  public RO_Mesh FromMesh(Mesh.Mesh mesh2)
   {
     VertexList = new ListGPU<Vector3>(mesh2.VertexList);
     UV0List = new ListGPU<Vector2>(mesh2.UV0List);
     NormalList = new ListGPU<Vector3>(mesh2.NormalList);
     IndexList = new ListGPU<uint>(mesh2.IndexList);
     CalculateTangent();
+    CalculateBoundingBox();
+    return this;
   }
 
-  public void FromGLTF(GLTF_MeshPrimitive gltfMeshPrimitive)
+  public RO_Mesh FromGLTF(GLTF_MeshPrimitive gltfMeshPrimitive)
   {
     VertexList = new ListGPU<Vector3>(gltfMeshPrimitive.Vertices);
     UV0List = new ListGPU<Vector2>(gltfMeshPrimitive.UV0);
@@ -294,6 +318,7 @@ public class RO_Mesh : RO_Base
     }
 
     CalculateTangent();
+    CalculateBoundingBox();
     InitDefaultTextures();
 
     // Назначаем материалы
@@ -367,5 +392,7 @@ public class RO_Mesh : RO_Base
         }
       }
     }
+
+    return this;
   }
 }

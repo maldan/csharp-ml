@@ -188,6 +188,26 @@ public struct Vector3
     );
   }
 
+  public static Vector3 Min(Vector3 v1, Vector3 v2)
+  {
+    return new Vector3
+    {
+      X = MathF.Min(v1.X, v2.X),
+      Y = MathF.Min(v1.Y, v2.Y),
+      Z = MathF.Min(v1.Z, v2.Z)
+    };
+  }
+
+  public static Vector3 Max(Vector3 v1, Vector3 v2)
+  {
+    return new Vector3
+    {
+      X = MathF.Max(v1.X, v2.X),
+      Y = MathF.Max(v1.Y, v2.Y),
+      Z = MathF.Max(v1.Z, v2.Z)
+    };
+  }
+
   #endregion
 
   #region Operators
@@ -361,13 +381,13 @@ public struct Vector3
       switch (index)
       {
         case 0:
-          X = index;
+          X = value;
           break;
         case 1:
-          Y = index;
+          Y = value;
           break;
         case 2:
-          Z = index;
+          Z = value;
           break;
       }
     }
