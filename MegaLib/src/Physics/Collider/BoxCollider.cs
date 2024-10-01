@@ -1,10 +1,8 @@
 using System;
-using System.Diagnostics;
-using MegaLib.IO;
 using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 
-namespace MegaLib.Physics;
+namespace MegaLib.Physics.Collider;
 
 public class BoxCollider : BaseCollider
 {

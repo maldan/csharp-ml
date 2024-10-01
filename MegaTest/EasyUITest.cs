@@ -157,8 +157,11 @@ public class EasyUITest
         Mouse.Update();
         renderer.Tick(delta, 1);
       },
-      OnResize = (w, h) =>
+      OnResize = (win) =>
       {
+        var w = win.ClientWidth;
+        var h = win.ClientHeight;
+
         if (scene.Camera is Camera_Perspective p)
         {
           p.AspectRatio = w / (float)h;

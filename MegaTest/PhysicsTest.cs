@@ -310,7 +310,7 @@ internal class TestScene : Render_Scene
     box.Transform.Position = new Vector3(-_x, 0, 0);
     box.Transform.Scale = new Vector3(_scaleX, 1, 1);
     box.Transform.Rotation = Quaternion.FromEuler(_time * 45f, _time * 45f, 0, "deg");
-    line.Draw(box, new RGBA<float>(0, 1, 0, 1));
+    line.DrawBoxCollider(box, new RGBA<float>(0, 1, 0, 1));
 
     var ray = new Ray(new Vector3(_x, 0, -1), new Vector3(_x, 0, 1));
     box.RayIntersection(ray, out var point, out var isHit);
@@ -413,8 +413,11 @@ public class PhysicsTest
         Mouse.Update();
         renderer.Tick(delta, 1);
       },
-      OnResize = (w, h) =>
+      OnResize = (win) =>
       {
+        var w = win.ClientWidth;
+        var h = win.ClientHeight;
+
         if (scene.Camera is Camera_Perspective p)
         {
           p.AspectRatio = w / (float)h;

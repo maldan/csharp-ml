@@ -31,7 +31,7 @@ public class Layer_Line : Layer_Base
     Add(new RO_Line(ray.Start, ray.End, color));
   }
 
-  public void Draw(BoxCollider box, RGBA<float> color)
+  public void DrawBoxCollider(BoxCollider box, RGBA<float> color)
   {
     // Получаем размеры бокса
     var halfSize = box.Size / 2.0f;
@@ -481,5 +481,19 @@ public class Layer_Line : Layer_Base
     var topBorderP1 = new Vector3(-gridSize, 0, gridSize);
     var topBorderP2 = new Vector3(gridSize, 0, gridSize);
     Add(new RO_Line(topBorderP1, topBorderP2, mainColor));
+  }
+
+  public void DrawAxis(Vector3 center)
+  {
+    DrawLine(center + Vector3.Down * 4, center + Vector3.Up * 4, new RGBA<float>(0, 1, 0, 1));
+    DrawLine(center + Vector3.Left * 4, center + Vector3.Right * 4, new RGBA<float>(1, 0, 0, 1));
+    DrawLine(center + Vector3.Backward * 4, center + Vector3.Forward * 4, new RGBA<float>(0.2f, 0.5f, 1, 1));
+  }
+
+  public void DrawTranslateManipulator(Vector3 center)
+  {
+    Add(new RO_Line(center, center + Vector3.Up * 0.5f, new RGBA<float>(0, 1, 0, 1), 3.0f));
+    Add(new RO_Line(center, center + Vector3.Right * 0.5f, new RGBA<float>(1, 0, 0, 1), 3.0f));
+    Add(new RO_Line(center, center + Vector3.Forward * 0.5f, new RGBA<float>(0.2f, 0.5f, 1, 1), 3.0f));
   }
 }
