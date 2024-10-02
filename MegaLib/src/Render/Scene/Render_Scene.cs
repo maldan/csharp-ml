@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using MegaLib.Render.Camera;
+using MegaLib.Render.Color;
 using MegaLib.Render.Core.Layer;
 using MegaLib.Render.Light;
 using MegaLib.Render.RenderObject;
@@ -21,6 +22,7 @@ public class Render_Scene
   public bool UsePostprocess;
   public bool IsVrMode { get; set; }
   public float DeltaTime;
+  public RGBA<float> BackgroundColor = new();
 
   public Layer_PostProcess PostProcessLayer = new();
 

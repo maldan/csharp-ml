@@ -107,6 +107,7 @@ internal class TestScene3 : Render_Scene
     {
       t.Style.X = 120;
       t.Style.Y = 90;
+      t.SetSize(120, 120);
 
       // Кнопка
       easyUi.Add<EasyUI_Button>(t =>
@@ -131,6 +132,9 @@ internal class TestScene3 : Render_Scene
         t.Style.X = 0;
         t.Style.Y = 0;
         t.Text = "Click";
+
+        t.Events.OnMouseOver += () => { Console.WriteLine("A"); };
+        t.Events.OnMouseOut += () => { Console.WriteLine("B"); };
       });
     });
   }

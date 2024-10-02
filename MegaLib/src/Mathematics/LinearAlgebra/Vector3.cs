@@ -393,6 +393,22 @@ public struct Vector3
     }
   }
 
+  public static float AngleBetween(Vector3 from, Vector3 to)
+  {
+    // Нормализуем векторы
+    var normalizedFrom = from.Normalized;
+    var normalizedTo = to.Normalized;
+
+    // Скалярное произведение
+    var dotProduct = Dot(normalizedFrom, normalizedTo);
+
+    // Ограничиваем значение dotProduct в пределах [-1, 1] для корректного вычисления арккосинуса
+    dotProduct = Math.Clamp(dotProduct, -1.0f, 1.0f);
+
+    // Возвращаем угол в радианах через арккосинус
+    return MathF.Acos(dotProduct);
+  }
+
   /*public Vector4 ToVector4(float w)
   {
     return new Vector4(X, Y, Z, w);

@@ -30,7 +30,7 @@ public struct Ray
   public static Ray FromCamera(Camera_Base cameraBase)
   {
     // Получение координат мыши и параметров экрана
-    var mousePosition = Mouse.Client;
+    var mousePosition = Mouse.ClientClamped;
     var projectionMatrix = cameraBase.ProjectionMatrix;
     var viewMatrix = cameraBase.ViewMatrix;
     var screenWidth = Window.Current?.ClientWidth ?? 0f;

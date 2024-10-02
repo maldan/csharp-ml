@@ -83,7 +83,15 @@ public class LR_Line : LR_Base
 
     Shader.Use();
     Shader.Enable(OpenGL32.GL_BLEND);
-    Shader.Enable(OpenGL32.GL_DEPTH_TEST);
+
+    if (layer.DisableDepthTest)
+    {
+      Shader.Disable(OpenGL32.GL_DEPTH_TEST);
+    }
+    else
+    {
+      Shader.Enable(OpenGL32.GL_DEPTH_TEST);
+    }
 
     if (layer.Camera != null)
     {

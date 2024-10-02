@@ -60,6 +60,16 @@ public readonly struct RGBA<T>
     );
   }
 
+  public static RGBA<T> operator *(RGBA<T> a, float b)
+  {
+    return new RGBA<T>(
+      (T)Convert.ChangeType(Convert.ToSingle(a.R) * b, typeof(T)),
+      (T)Convert.ChangeType(Convert.ToSingle(a.G) * b, typeof(T)),
+      (T)Convert.ChangeType(Convert.ToSingle(a.B) * b, typeof(T)),
+      (T)Convert.ChangeType(Convert.ToSingle(a.A) * b, typeof(T))
+    );
+  }
+
   // Lerp function
   public static RGBA<T> Lerp(RGBA<T> a, RGBA<T> b, float t)
   {

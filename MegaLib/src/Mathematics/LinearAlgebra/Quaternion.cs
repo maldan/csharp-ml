@@ -415,13 +415,28 @@ public struct Quaternion
     return new Quaternion(0, 0, 0, 0) - value;
   }
 
+  public static Vector3 operator *(Quaternion q, Vector3 v)
+  {
+    // Преобразуем вектор в кватернион (с нулевой скалярной частью)
+    var vQuat = new Quaternion(v.X, v.Y, v.Z, 0);
+
+    // Вычисляем обратный кватернион
+    var qInverse = q.Inverted; // Предполагаем, что у тебя есть метод для нахождения обратного кватерниона
+
+    // Выполняем умножение q * v * q^-1
+    var resultQuat = q * vQuat * qInverse;
+
+    // Возвращаем результирующий вектор
+    return new Vector3(resultQuat.X, resultQuat.Y, resultQuat.Z);
+  }
+
   public static Quaternion Normalize(Quaternion q)
   {
     return q.Normalized;
   }
 
   // Метод создания кватерниона из оси и угла вращения
-  public static Quaternion CreateFromAxisAngle(Vector3 axis, float angle)
+  public static Quaternion FromAxisAngle(Vector3 axis, float angle)
   {
     // Нормализация оси вращения
     axis = axis.Normalized;

@@ -125,11 +125,11 @@ public class Camera_Base
     zenith = Math.Clamp(zenith, -MathF.PI / 2 + 0.1f, MathF.PI / 2 - 0.1f);
 
     // Создаем вращение для оси Y (азимут) вокруг глобальной оси Y
-    var rotationY = Quaternion.CreateFromAxisAngle(Vector3.UnitY, azimuth);
+    var rotationY = Quaternion.FromAxisAngle(Vector3.UnitY, azimuth);
 
     // Создаем вращение для оси X (зенит) вокруг локальной оси X
     var rightVec = Vector3.Normalize(Vector3.Cross(Vector3.UnitY, focusPoint - Position));
-    var rotationX = Quaternion.CreateFromAxisAngle(rightVec, zenith);
+    var rotationX = Quaternion.FromAxisAngle(rightVec, zenith);
 
     // Обновляем общее вращение камеры (накладываем вращения на существующее)
     Rotation = Quaternion.Normalize(rotationY * rotationX * Rotation);

@@ -4,6 +4,7 @@ using MegaLib.Ext;
 using MegaLib.IO;
 using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
+using MegaLib.OS;
 using MegaLib.OS.Api;
 
 namespace MegaLib.Render.UI.EasyUI;
@@ -42,6 +43,7 @@ public class EasyUI_Element
   public string Text;
   private bool _isClick;
   private bool _isMouseDown;
+  private bool _isMouseDownIgnore;
   private bool _isMouseOver;
   public object Value; // Пользовательское значение
 
@@ -89,6 +91,102 @@ public class EasyUI_Element
     RenderData.Clear();
   }
 
+  protected void HandleMouseEvents()
+  {
+    var isHovering = CheckCollision();
+
+    // Если курсор над элементом. Вызываем OnMouseOver
+    if (isHovering && !_isMouseOver)
+    {
+      _isMouseOver = true;
+      Events?.OnMouseOver?.Invoke();
+    }
+
+    // Если курсор покинул элемент
+    if (!isHovering && _isMouseOver)
+    {
+      _isMouseOver = false;
+      Events?.OnMouseOut?.Invoke();
+    }
+
+    // Сбрасываем статус игнора если мышь отпущена
+    if (Mouse.IsKeyUp(MouseKey.Left))
+    {
+      _isMouseDownIgnore = false;
+    }
+
+    // Нажал мышь за пределами элемента
+    if (!_isMouseOver && Mouse.IsKeyDown(MouseKey.Left)) _isMouseDownIgnore = true;
+
+    // Нажал мышь над элементом
+    if (_isMouseOver && Mouse.IsKeyDown(MouseKey.Left) && !_isMouseDownIgnore && !_isMouseDown)
+    {
+      _isMouseDown = true;
+      Events?.OnMouseDown?.Invoke();
+    }
+
+    // Клик только если мышь опущена на элементе
+    if (_isMouseDown && _isMouseOver && Mouse.IsKeyUp(MouseKey.Left))
+    {
+      Events?.OnClick?.Invoke();
+    }
+
+    // Отпустил мышь с нажатого элемента, причем неважно, где курсор
+    if (_isMouseDown && Mouse.IsKeyUp(MouseKey.Left))
+    {
+      _isMouseDown = false;
+      Events?.OnMouseUp?.Invoke();
+    }
+
+    /*
+
+    // Обработка наведения мыши
+    if (isHovering)
+    {
+      if (!_isMouseOver)
+      {
+        _isMouseOver = true;
+        Events?.OnMouseOver?.Invoke();
+      }
+
+      // Проверка нажатия кнопки мыши
+      if (Mouse.IsKeyDown(MouseKey.Left))
+      {
+        if (!_isMouseDown)
+        {
+          _isMouseDown = true; // Установите флаг нажатия
+          Events?.OnMouseDown?.Invoke();
+        }
+      }
+      else
+      {
+        // Если кнопка мыши отпущена и элемент в фокусе
+        if (_isMouseDown)
+        {
+          _isMouseDown = false;
+          Events?.OnMouseUp?.Invoke();
+          Events?.OnClick?.Invoke();
+        }
+      }
+    }
+    else
+    {
+      // Если курсор покинул элемент
+      if (_isMouseOver)
+      {
+        _isMouseOver = false;
+        Events?.OnMouseOut?.Invoke();
+      }
+
+      // Обработка состояния кнопки мыши, если курсор не над элементом
+      if (_isMouseDown && Mouse.IsKeyUp(MouseKey.Left))
+      {
+        _isMouseDown = false;
+        Events?.OnMouseUp?.Invoke();
+      }
+    }*/
+  }
+
   public virtual EasyUI_BuildOut Build(EasyUI_BuildIn buildArgs)
   {
     Clear();
@@ -106,41 +204,7 @@ public class EasyUI_Element
     if (hasCollision)
     {
       InitCollision(elementBoundingBox);
-      if (CheckCollision())
-      {
-        if (!_isMouseOver)
-        {
-          _isMouseOver = true;
-          Events?.OnMouseOver?.Invoke();
-        }
-
-        if (Mouse.IsKeyDown(MouseKey.Left) && !_isMouseDown)
-        {
-          _isMouseDown = true;
-          Events?.OnMouseDown?.Invoke();
-        }
-
-        if (Mouse.IsKeyUp(MouseKey.Left) && _isMouseDown)
-        {
-          _isMouseDown = false;
-          Events?.OnMouseUp?.Invoke();
-          Events?.OnClick?.Invoke();
-        }
-      }
-      else
-      {
-        if (_isMouseOver)
-        {
-          _isMouseOver = false;
-          Events?.OnMouseOut?.Invoke();
-        }
-
-        if (Mouse.IsKeyUp(MouseKey.Left) && _isMouseDown)
-        {
-          _isMouseDown = false;
-          Events?.OnMouseUp?.Invoke();
-        }
-      }
+      HandleMouseEvents();
     }
 
     // Проходимся по чилдам
@@ -455,7 +519,17 @@ public class EasyUI_Window : EasyUI_Element
     _header.Text = "Window";
 
     var isDrag = false;
-    _header.Events.OnMouseDown += () => { isDrag = true; };
+    var isHover = false;
+    _header.Events.OnMouseOver += () => { isHover = true; };
+    _header.Events.OnMouseOut += () => { isHover = false; };
+    _header.Events.OnMouseDown += () =>
+    {
+      if (isHover)
+      {
+        // Проверка, что курсор над заголовком
+        isDrag = true;
+      }
+    };
     _header.Events.OnMouseUp += () => { isDrag = false; };
     Children.Add(_header);
 
@@ -478,12 +552,17 @@ public class EasyUI_Window : EasyUI_Element
 
     Events.OnRender += delta =>
     {
-      if (!isDrag) return;
-      Mouse.Cursor = MouseCursor.Move;
-      Style.X = Position().X + Mouse.ClientDelta.X;
-      Style.Y = Position().Y + Mouse.ClientDelta.Y;
+      if (isDrag)
+      {
+        Mouse.Cursor = MouseCursor.Move;
+        Style.X = Position().X + Mouse.ClientDelta.X;
+        Style.Y = Position().Y + Mouse.ClientDelta.Y;
+      }
+
       if (Position().X < 0) Style.X = 0;
       if (Position().Y < 20) Style.Y = 20;
+      if (Position().X + Width() > Window.Current.ClientWidth) Style.X = Window.Current.ClientWidth - Width();
+      if (Position().Y + Height() > Window.Current.ClientHeight) Style.Y = Window.Current.ClientHeight - Height();
     };
   }
 

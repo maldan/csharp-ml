@@ -14,8 +14,8 @@ public class Layer_Line : Layer_Base
 {
   public Camera_Orthographic Camera;
 
-  // public float LineWidth = 1.0f;
   public bool IsSmooth = true;
+  public bool DisableDepthTest;
 
   public void Draw(VerletLine line)
   {
@@ -426,6 +426,49 @@ public class Layer_Line : Layer_Base
       Width = width
     };
     Add(l);
+  }
+
+  public void DrawRing(Vector3 center, Vector3 axis, float radius, RGBA<float> color, int segments = 64,
+    float width = 1.0f)
+  {
+    // Нормализуем ось вращения
+    axis = axis.Normalized;
+
+    // Выбираем вектор, перпендикулярный оси вращения, для начальной точки
+    Vector3 perpendicularVector;
+    if (Math.Abs(Vector3.Dot(axis, Vector3.UnitY)) > 0.99f) // Если ось почти параллельна оси Y, выбираем другой вектор
+    {
+      perpendicularVector = Vector3.Cross(axis, Vector3.UnitX).Normalized;
+    }
+    else
+    {
+      perpendicularVector = Vector3.Cross(axis, Vector3.UnitY).Normalized;
+    }
+
+    // Множитель для вращения каждой точки
+    var angleStep = 2 * (float)Math.PI / segments;
+
+    // Предыдущая точка на окружности
+    var prevPoint = center + perpendicularVector * radius;
+
+    // Проходим по каждой точке окружности
+    for (var i = 1; i <= segments; i++)
+    {
+      // Вычисляем угол для текущей точки
+      var angle = i * angleStep;
+
+      // Вычисляем вращение вокруг оси
+      var rotation = Quaternion.FromAxisAngle(axis, angle);
+
+      // Вращаем начальный вектор на текущий угол
+      var currentPoint = center + rotation * (perpendicularVector * radius);
+
+      // Рисуем линию между предыдущей и текущей точками
+      DrawLine(prevPoint, currentPoint, color, width);
+
+      // Обновляем предыдущую точку
+      prevPoint = currentPoint;
+    }
   }
 
   public void DrawGrid(int gridSize, float cellSize, RGBA<float> mainColor, int subdivisions, RGBA<float> subColor)

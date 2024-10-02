@@ -101,7 +101,7 @@ public class RigidBody_Old
     {
       var axis = AngularVelocity.Normalized;
       var angle = AngularVelocity.Length * deltaTime;
-      var deltaRotation = Quaternion.CreateFromAxisAngle(axis, angle);
+      var deltaRotation = Quaternion.FromAxisAngle(axis, angle);
 
       // Обновляем текущий поворот
       Rotation = (Rotation * deltaRotation).Normalized;
