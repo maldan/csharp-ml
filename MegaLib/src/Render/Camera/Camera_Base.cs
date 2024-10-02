@@ -20,9 +20,14 @@ public class Camera_Base
   private Vector3 _position;
   private Quaternion _rotation = Quaternion.Identity;
 
-  //public bool IsXInverted = true;
-  //public bool IsYInverted = true;
-  //public bool IsZInverted = false;
+  public Vector3 Forward =>
+    Vector3.Transform(Vector3.Forward, Rotation).Normalized;
+
+  public Vector3 Up =>
+    Vector3.Transform(Vector3.Up, Rotation).Normalized;
+
+  public Vector3 Right =>
+    Vector3.Transform(Vector3.Right, Rotation).Normalized;
 
   public Vector3 Position
   {
@@ -138,7 +143,6 @@ public class Camera_Base
     var offset = new Vector3(0, 0, -radius); // Камера "смотрит" назад
     Position = focusPoint + Vector3.Transform(offset, Rotation); // Позиция камеры с учётом вращения
   }
-
 
   public void BasicMovement(float delta)
   {

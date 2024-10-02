@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using MegaLib.Ext;
 using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.Physics;
@@ -255,6 +257,78 @@ public class Layer_Line : Layer_Base
     }
   }
 
+  public void DrawCone(Vector3 apex, Vector3 normal, float height, float radius, int segments, RGBA<float> color)
+  {
+    // Вычисление основания конуса
+    var baseCenter = apex - normal.Normalized * height; // Центр основания
+    var rotation = Quaternion.FromToRotation(Vector3.Up, normal.Normalized); // Создаем кватернион для поворота
+
+    var basePoints = new List<Vector3>();
+    var angleStep = 360.0f / segments;
+
+    for (var i = 0; i < segments; i++)
+    {
+      var angle = (i * angleStep).DegToRad();
+      var point = new Vector3(MathF.Cos(angle) * radius, 0, MathF.Sin(angle) * radius);
+      point = rotation * point; // Применяем поворот к точке
+      point += baseCenter; // Смещаем к центру основания
+      basePoints.Add(point);
+    }
+
+    // Рисуем основание
+    for (var i = 0; i < segments; i++)
+    {
+      var p1 = basePoints[i];
+      var p2 = basePoints[(i + 1) % segments];
+      DrawLine(p1, p2, color, 1.0f); // Соединяем точки основания
+    }
+
+    // Рисуем боковые стороны конуса
+    foreach (var point in basePoints)
+    {
+      DrawLine(apex, point, color, 1.0f); // Соединяем верхнюю точку с основанием
+    }
+  }
+
+  public void DrawPlane(Plane plane, float size, RGBA<float> color)
+  {
+    var normal = plane.Normal.Normalized;
+
+    // Определяем векторы, перпендикулярные нормали
+    Vector3 right;
+    if (Math.Abs(normal.Y) < 0.9999f) // Проверяем, не направлен ли вектор вверх/вниз
+    {
+      right = Vector3.Cross(normal, Vector3.Up).Normalized; // Если нет, используем "вверх"
+    }
+    else
+    {
+      right = Vector3.Cross(normal, Vector3.Right).Normalized; // Иначе используем "вправо"
+    }
+
+    var up = Vector3.Cross(normal, right).Normalized; // Вычисляем второй вектор
+
+    var halfSize = size / 2;
+
+    // Расчет вершин квадрата
+    var p1 = plane.D * normal + right * halfSize + up * halfSize;
+    var p2 = plane.D * normal + right * halfSize - up * halfSize;
+    var p3 = plane.D * normal - right * halfSize - up * halfSize;
+    var p4 = plane.D * normal - right * halfSize + up * halfSize;
+
+    // Рисуем квадрат
+    DrawLine(p1, p2, color, 1.0f);
+    DrawLine(p2, p3, color, 1.0f);
+    DrawLine(p3, p4, color, 1.0f);
+    DrawLine(p4, p1, color, 1.0f);
+
+    // Рисуем нормаль
+    var normalEnd = plane.D * normal + normal;
+    DrawLine(plane.D * normal, normalEnd, color, 1.0f);
+
+    // Рисуем конус на конце нормали
+    DrawCone(normalEnd, normal, 0.1f, 0.05f, 12, color);
+  }
+
   public void DrawPlane(Transform t, float size, RGBA<float> color)
   {
     // Центр плоскости
@@ -419,6 +493,11 @@ public class Layer_Line : Layer_Base
     Add(new RO_Line(from, to, color));
   }
 
+  public void DrawLine(Vector3 from, Vector3 to, RGBA<float> fromColor, RGBA<float> toColor)
+  {
+    Add(new RO_Line(from, to, fromColor, toColor));
+  }
+
   public void DrawLine(Vector3 from, Vector3 to, RGBA<float> color, float width)
   {
     var l = new RO_Line(from, to, color)
@@ -426,6 +505,42 @@ public class Layer_Line : Layer_Base
       Width = width
     };
     Add(l);
+  }
+
+  public void DrawFrustum(Frustum frustum, RGBA<float> color)
+  {
+    DrawPlane(frustum.TopPlane, 3f, new RGBA<float>(0, 1, 0, 1));
+    DrawPlane(frustum.BottomPlane, 3f, new RGBA<float>(0, 1, 0, 1));
+
+    DrawPlane(frustum.NearPlane, 3f, new RGBA<float>(0, 0, 1, 1));
+    DrawPlane(frustum.FarPlane, 3f, new RGBA<float>(0, 0, 1, 1));
+
+    DrawPlane(frustum.RightPlane, 3f, new RGBA<float>(1, 0, 0, 1));
+    DrawPlane(frustum.LeftPlane, 3f, new RGBA<float>(1, 0, 0, 1));
+
+    var ntl = frustum.NearTopLeft;
+    var ftl = frustum.FarTopLeft;
+    var ntr = frustum.NearTopRight;
+    var ftr = frustum.FarTopRight;
+    var nbl = frustum.NearBottomLeft;
+    var fbl = frustum.FarBottomLeft;
+    var nbr = frustum.NearBottomRight;
+    var fbr = frustum.FarBottomRight;
+
+    DrawLine(ntl, ftl, color * 0.5f, color);
+    DrawLine(ntr, ftr, color * 0.5f, color);
+    DrawLine(nbl, fbl, color * 0.5f, color);
+    DrawLine(nbr, fbr, color * 0.5f, color);
+
+    DrawLine(ntl, ntr, color * 0.5f, color * 0.5f);
+    DrawLine(nbl, nbr, color * 0.5f, color * 0.5f);
+    DrawLine(ntl, nbl, color * 0.5f, color * 0.5f);
+    DrawLine(ntr, nbr, color * 0.5f, color * 0.5f);
+
+    DrawLine(ftl, ftr, color, color);
+    DrawLine(fbl, fbr, color, color);
+    DrawLine(ftl, fbl, color, color);
+    DrawLine(ftr, fbr, color, color);
   }
 
   public void DrawRing(Vector3 center, Vector3 axis, float radius, RGBA<float> color, int segments = 64,

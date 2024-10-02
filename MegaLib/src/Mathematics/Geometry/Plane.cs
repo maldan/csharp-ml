@@ -11,8 +11,14 @@ public struct Plane
   // Конструктор, принимающий нормаль плоскости и точку на плоскости
   public Plane(Vector3 normal, Vector3 point)
   {
-    Normal = normal;
+    Normal = normal.Normalized;
     D = Vector3.Dot(normal, point); // Смещение вычисляется через скалярное произведение
+  }
+
+  public Plane(Vector3 normal, float d)
+  {
+    Normal = normal.Normalized;
+    D = d;
   }
 
   // Конструктор, принимающий три точки на плоскости (для создания плоскости через три точки)
@@ -48,5 +54,24 @@ public struct Plane
 
     // Если пересечения нет, возвращаем false
     return false;
+  }
+
+  public static Vector3 GetIntersectionPoint(Plane p1, Plane p2, Plane p3)
+  {
+    // Вычисляем векторное произведение двух нормалей
+    var cross = Vector3.Cross(p2.Normal, p3.Normal);
+    // Вычисляем знаменатель
+    var denominator = Vector3.Dot(p1.Normal, cross);
+
+    if (MathF.Abs(denominator) > 1e-6f) // Проверяем, не параллельны ли плоскости
+    {
+      // Вычисляем точку пересечения
+      var point = (p1.D * cross +
+                   p2.D * Vector3.Cross(p3.Normal, p1.Normal) +
+                   p3.D * Vector3.Cross(p1.Normal, p2.Normal)) / denominator;
+      return point;
+    }
+
+    return Vector3.Zero; // Если плоскости не пересекаются, возвращаем (0, 0, 0)
   }
 }

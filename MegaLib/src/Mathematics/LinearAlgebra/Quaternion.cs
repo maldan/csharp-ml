@@ -454,6 +454,36 @@ public struct Quaternion
     };
   }
 
+  // Функция FromToRotation создает кватернион, который поворачивает один вектор (например, вектор "от")
+  // в другой вектор (вектор "к").
+  public static Quaternion FromToRotation(Vector3 from, Vector3 to)
+  {
+    var v0 = from.Normalized;
+    var v1 = to.Normalized;
+
+    var cosTheta = Vector3.Dot(v0, v1);
+    Vector3 rotationAxis;
+
+    if (cosTheta < -1.0f + 0.001f)
+    {
+      // 180 градусов поворот, находим ось
+      rotationAxis = Vector3.Cross(Vector3.Right, v0);
+      if (rotationAxis.LengthSquared < 0.01f)
+        rotationAxis = Vector3.Cross(Vector3.Up, v0);
+
+      rotationAxis = rotationAxis.Normalized;
+      return new Quaternion(rotationAxis.X, rotationAxis.Y, rotationAxis.Z, 0.0f);
+    }
+    else
+    {
+      rotationAxis = Vector3.Cross(v0, v1);
+      var s = MathF.Sqrt((1 + cosTheta) * 2);
+      var invS = 1 / s;
+
+      return new Quaternion(rotationAxis.X * invS, rotationAxis.Y * invS, rotationAxis.Z * invS, s * 0.5f);
+    }
+  }
+
   #endregion
 
   public override string ToString()

@@ -22,6 +22,12 @@ public struct Ray
   public Vector3 Start => Position;
   public Vector3 End => Position + Direction * Length;
 
+  // Метод для получения точки на луче на определённом расстоянии
+  public Vector3 GetPointAtDistance(float distance)
+  {
+    return Start + Direction * distance;
+  }
+
   public override string ToString()
   {
     return $"Ray(P: {Position}, D: {Direction}, L: {Length})";
