@@ -128,11 +128,13 @@ internal class TestScene3 : Render_Scene
       t.SetSize(128, 240);
 
       // Кнопка
+      EasyUI_Button button = null;
       easyUi.Add<EasyUI_Button>(t =>
       {
         t.Style.X = 0;
         t.Style.Y = 0;
         t.Text = "Click";
+        button = t;
 
         t.Events.OnMouseOver += () => { Console.WriteLine("A"); };
         t.Events.OnMouseOut += () => { Console.WriteLine("B"); };
@@ -143,6 +145,7 @@ internal class TestScene3 : Render_Scene
         input.Style.X = 0;
         input.Style.Y = 32;
         input.Style.Width = 128;
+        input.InputType = TextInputType.Integer;
       });
 
       easyUi.Add<EasyUI_TextInput>(input =>
@@ -150,6 +153,16 @@ internal class TestScene3 : Render_Scene
         input.Style.X = 0;
         input.Style.Y = 32 + 24 + 2;
         input.Style.Width = 128;
+        input.InputType = TextInputType.Float;
+      });
+
+      easyUi.Add<EasyUI_TextInput>(input =>
+      {
+        input.Style.X = 0;
+        input.Style.Y = 32 + 24 + 24 + 2;
+        input.Style.Width = 128;
+        input.InputType = TextInputType.Text;
+        input.Events.OnChange += o => { button.Text = $"{o}"; };
       });
     });
   }

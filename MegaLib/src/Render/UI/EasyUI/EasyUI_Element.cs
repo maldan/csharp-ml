@@ -16,7 +16,12 @@ public class EasyUI_ElementEvents
   public Action OnMouseOut;
   public Action OnMouseDown;
   public Action OnMouseUp;
+
+  public Action OnFocus;
+  public Action OnBlur;
+
   public Action<object> OnChange;
+  public Action<float> OnBeforeRender;
   public Action<float> OnRender;
 }
 
@@ -43,6 +48,11 @@ public enum TextAlignment
   HorizontalCenter = 16,
   VerticalCenter = 32,
   Center = 64
+}
+
+public static class EasyUI_GlobalState
+{
+  public static EasyUI_Element FocusedElement;
 }
 
 public class EasyUI_Element
@@ -159,6 +169,9 @@ public class EasyUI_Element
     if (!IsVisible) return new EasyUI_BuildOut();
 
     CurrentFontData = buildArgs.FontData;
+
+    // Событие до основного рендера
+    Events?.OnBeforeRender?.Invoke(buildArgs.Delta);
 
     // Получаем bounding box текущего объекта в локальных координатах
     var elementBoundingBox = BoundingBox();
@@ -325,11 +338,11 @@ public class EasyUI_Element
 
   public Vector4[] BorderColor()
   {
-    if (Style.BorderColor is Vector4[] { Length: 1 } vv) return [vv[0], vv[0], vv[0], vv[0]];
-
     return Style.BorderColor switch
     {
-      Vector4[] v => v,
+      Vector4 v1 => [v1, v1, v1, v1],
+      Vector4[] { Length: 1 } vv => [vv[0], vv[0], vv[0], vv[0]],
+      Vector4[] { Length: 4 } v => v,
       _ => [Vector4.One, Vector4.One, Vector4.One, Vector4.One]
     };
   }

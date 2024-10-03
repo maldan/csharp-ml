@@ -10,6 +10,12 @@ public class EasyUI_Window : EasyUI_Element
   private EasyUI_Element _body;
   private EasyUI_Element _minimize;
 
+  public string Title
+  {
+    set => _header.Text = value;
+    get => _header.Text;
+  }
+
   public EasyUI_Window()
   {
     _header = new EasyUI_Element();
@@ -18,6 +24,7 @@ public class EasyUI_Window : EasyUI_Element
     _header.Style.Height = 20;
     _header.Style.BackgroundColor = new Vector4(0.25f, 0.25f, 0.25f, 1f);
     _header.Style.BorderWidth = 1;
+    _header.Style.BorderColor = new Vector4(0.5f, 0.5f, 0.5f, 1f);
     _header.Text = "Window";
     _header.Style.TextAlign = TextAlignment.VerticalCenter;
     // Style.BorderWidth = 1;
@@ -43,6 +50,7 @@ public class EasyUI_Window : EasyUI_Element
     _body.Style.Height = 40;
     _body.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1f);
     _body.Style.BorderWidth = 1;
+    _body.Style.BorderColor = new Vector4(0.5f, 0.5f, 0.5f, 1f);
     Children.Add(_body);
 
     _minimize = new EasyUI_Element();

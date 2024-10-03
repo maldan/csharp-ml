@@ -4,7 +4,7 @@ using MegaLib.OS.Api;
 
 namespace MegaLib.IO;
 
-public enum KeyboardKey
+public enum KeyboardKey : byte
 {
   None = 0,
   Backspace = 8,
