@@ -17,6 +17,7 @@ public enum MouseCursor
 {
   Arrow,
   Pointer,
+  TextInput,
   Move
 }
 

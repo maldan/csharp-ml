@@ -84,7 +84,7 @@ public static class Font
 
     // Создаем шрифт
     var hFont = GDI32.CreateFont((int)(fontSize * scaleFactor), 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
-      GDI32.ANTIALIASED_QUALITY,
+      GDI32.CLEARTYPE_QUALITY,
       0, fontName);
     GDI32.SelectObject(hdcMem, hFont);
 
@@ -128,73 +128,6 @@ public static class Font
     };
   }
 
-  /*public static void RenderCharacter(char c, string fontName, int fontSize)
-  {
-    var hdc = User32.GetDC(IntPtr.Zero);
-    var hdcMem = GDI32.CreateCompatibleDC(hdc);
-
-    var bmi = new GDI32.BITMAPINFO2();
-    bmi.bmiHeader.biSize = (uint)Marshal.SizeOf(typeof(GDI32.BITMAPINFOHEADER));
-    bmi.bmiHeader.biWidth = 100;
-    bmi.bmiHeader.biHeight = -100; // Отрицательное значение для правильного порядка строк
-    bmi.bmiHeader.biPlanes = 1;
-    bmi.bmiHeader.biBitCount = 32;
-    bmi.bmiHeader.biCompression = 0; // BI_RGB
-
-    IntPtr bits;
-    var hBitmap = GDI32.CreateDIBSection(hdcMem, ref bmi, GDI32.DIB_RGB_COLORS, out bits, IntPtr.Zero, 0);
-    GDI32.SelectObject(hdcMem, hBitmap);
-
-    // Устанавливаем прозрачный фон для текста
-    GDI32.SetBkMode(hdcMem, GDI32.TRANSPARENT);
-    //GDI32.SetBkColor(hdcMem, 0x00000000); // Белый фон
-    GDI32.SetTextColor(hdcMem, 0x00FFFFFF); // Черный текст
-
-    // Заполняем альфа-канал нулями, чтобы фон был прозрачным
-    var pixelData = new byte[100 * 100 * 4];
-    Marshal.Copy(bits, pixelData, 0, pixelData.Length);
-    for (var i = 0; i < pixelData.Length; i += 4) pixelData[i + 3] = 0; // Устанавливаем альфа-канал в 0
-    Marshal.Copy(pixelData, 0, bits, pixelData.Length);
-
-    // Создаем шрифт
-    var hFont = GDI32.CreateFont(fontSize, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, fontName);
-    GDI32.SelectObject(hdcMem, hFont);
-
-    // Устанавливаем цвет текста на черный
-    //GDI32.SetTextColor(hdcMem, 0xFFFFFFFF); // Черный текст
-
-    // Рендерим текст
-    GDI32.TextOut(hdcMem, 0, 0, c.ToString(), 1);
-
-    // Сохранение в BMP
-    SaveToBMP(bits, 100, 100, "sas.bmp");
-
-    // Освобождаем ресурсы
-    GDI32.DeleteObject(hFont);
-    GDI32.DeleteObject(hBitmap);
-    GDI32.DeleteDC(hdcMem);
-    User32.ReleaseDC(IntPtr.Zero, hdc);
-  }*/
-
-  /*public static GDI32.SIZE GetGlyphSize(char c, string fontName, int fontSize)
-  {
-    var hdc = User32.GetDC(IntPtr.Zero);
-    var hdcMem = GDI32.CreateCompatibleDC(hdc);
-
-    var hFont = GDI32.CreateFont(fontSize, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, fontName);
-    GDI32.SelectObject(hdcMem, hFont);
-
-    GDI32.SIZE size;
-    GDI32.GetTextExtentPoint32(hdcMem, c.ToString(), 1, out size);
-
-    // Освобождение ресурсов
-    GDI32.DeleteObject(hFont);
-    GDI32.DeleteDC(hdcMem);
-    User32.ReleaseDC(IntPtr.Zero, hdc);
-
-    return size;
-  }*/
-
   public static Dictionary<char, GlyphInfo> GetGlyphInfo(string charset, string fontName, int fontSize,
     float scaleFactor)
   {
@@ -203,7 +136,10 @@ public static class Font
     var hdc = User32.GetDC(IntPtr.Zero);
     var hdcMem = GDI32.CreateCompatibleDC(hdc);
 
-    var hFont = GDI32.CreateFont((int)(fontSize * scaleFactor), 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, GDI32.ANTIALIASED_QUALITY,
+    var hFont = GDI32.CreateFont(
+      (int)(fontSize * scaleFactor), 0,
+      0, 0, 0, 0, 0, 0, 1, 0, 0,
+      GDI32.CLEARTYPE_QUALITY,
       0, fontName);
     GDI32.SelectObject(hdcMem, hFont);
 

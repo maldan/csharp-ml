@@ -10,7 +10,10 @@ public class EasyUI_ElementStyle
   public object BackgroundColor;
   public object X;
   public object Y;
-  public string TextAlign;
+  public TextAlignment TextAlign;
+
+  public object BorderWidth;
+  public object BorderColor;
 
   public void SetArea(float x, float y, float width, float height)
   {

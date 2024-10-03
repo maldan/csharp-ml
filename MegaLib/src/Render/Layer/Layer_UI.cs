@@ -1,6 +1,6 @@
 using MegaLib.Render.Camera;
 
-namespace MegaLib.Render.Core.Layer;
+namespace MegaLib.Render.Layer;
 
 public class Layer_UI
 {

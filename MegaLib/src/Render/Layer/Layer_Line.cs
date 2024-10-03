@@ -509,14 +509,13 @@ public class Layer_Line : Layer_Base
 
   public void DrawFrustum(Frustum frustum, RGBA<float> color)
   {
-    DrawPlane(frustum.TopPlane, 3f, new RGBA<float>(0, 1, 0, 1));
+    // Отрисовывал плейны чтобы разобраться правильно ли работает
+    /*DrawPlane(frustum.TopPlane, 3f, new RGBA<float>(0, 1, 0, 1));
     DrawPlane(frustum.BottomPlane, 3f, new RGBA<float>(0, 1, 0, 1));
-
     DrawPlane(frustum.NearPlane, 3f, new RGBA<float>(0, 0, 1, 1));
     DrawPlane(frustum.FarPlane, 3f, new RGBA<float>(0, 0, 1, 1));
-
     DrawPlane(frustum.RightPlane, 3f, new RGBA<float>(1, 0, 0, 1));
-    DrawPlane(frustum.LeftPlane, 3f, new RGBA<float>(1, 0, 0, 1));
+    DrawPlane(frustum.LeftPlane, 3f, new RGBA<float>(1, 0, 0, 1));*/
 
     var ntl = frustum.NearTopLeft;
     var ftl = frustum.FarTopLeft;

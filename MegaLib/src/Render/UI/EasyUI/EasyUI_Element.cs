@@ -32,6 +32,19 @@ public struct EasyUI_BuildOut
 {
 }
 
+[Flags]
+public enum TextAlignment
+{
+  Left = 1,
+  Right = 2,
+  Top = 4,
+  Bottom = 8,
+
+  HorizontalCenter = 16,
+  VerticalCenter = 32,
+  Center = 64
+}
+
 public class EasyUI_Element
 {
   public bool IsVisible = true;
@@ -46,6 +59,7 @@ public class EasyUI_Element
   private bool _isMouseDownIgnore;
   private bool _isMouseOver;
   public object Value; // Пользовательское значение
+  protected FontData CurrentFontData;
 
   public void InitCollision(Rectangle r)
   {
@@ -137,60 +151,14 @@ public class EasyUI_Element
       _isMouseDown = false;
       Events?.OnMouseUp?.Invoke();
     }
-
-    /*
-
-    // Обработка наведения мыши
-    if (isHovering)
-    {
-      if (!_isMouseOver)
-      {
-        _isMouseOver = true;
-        Events?.OnMouseOver?.Invoke();
-      }
-
-      // Проверка нажатия кнопки мыши
-      if (Mouse.IsKeyDown(MouseKey.Left))
-      {
-        if (!_isMouseDown)
-        {
-          _isMouseDown = true; // Установите флаг нажатия
-          Events?.OnMouseDown?.Invoke();
-        }
-      }
-      else
-      {
-        // Если кнопка мыши отпущена и элемент в фокусе
-        if (_isMouseDown)
-        {
-          _isMouseDown = false;
-          Events?.OnMouseUp?.Invoke();
-          Events?.OnClick?.Invoke();
-        }
-      }
-    }
-    else
-    {
-      // Если курсор покинул элемент
-      if (_isMouseOver)
-      {
-        _isMouseOver = false;
-        Events?.OnMouseOut?.Invoke();
-      }
-
-      // Обработка состояния кнопки мыши, если курсор не над элементом
-      if (_isMouseDown && Mouse.IsKeyUp(MouseKey.Left))
-      {
-        _isMouseDown = false;
-        Events?.OnMouseUp?.Invoke();
-      }
-    }*/
   }
 
   public virtual EasyUI_BuildOut Build(EasyUI_BuildIn buildArgs)
   {
     Clear();
     if (!IsVisible) return new EasyUI_BuildOut();
+
+    CurrentFontData = buildArgs.FontData;
 
     // Получаем bounding box текущего объекта в локальных координатах
     var elementBoundingBox = BoundingBox();
@@ -217,7 +185,8 @@ public class EasyUI_Element
         {
           Parent = this,
           FontData = buildArgs.FontData,
-          ParentPosition = buildArgs.ParentPosition + Position()
+          ParentPosition = buildArgs.ParentPosition + Position(),
+          Delta = buildArgs.Delta
         });
 
         // Копируем содержимое чилда
@@ -232,6 +201,13 @@ public class EasyUI_Element
     var background = new EasyUI_RenderData();
     background.DrawRectangle(elementBoundingBox, BackgroundColor());
     RenderData.Insert(0, background);
+
+    if (Style.BorderWidth != null)
+    {
+      var outline = new EasyUI_RenderData();
+      outline.DrawOutline(elementBoundingBox, BorderWidth(), BorderColor());
+      RenderData.Add(outline);
+    }
 
     if (Text != "")
     {
@@ -346,238 +322,28 @@ public class EasyUI_Element
       _ => new Vector4(0, 0, 0, 0)
     };
   }
-}
 
-public class EasyUI_Button : EasyUI_Element
-{
-  public EasyUI_Button()
+  public Vector4[] BorderColor()
   {
-    var baseColor = new Vector4(0.2f, 0.2f, 0.2f, 1);
-    Style.BackgroundColor = baseColor;
-    Style.SetArea(0, 0, 64, 24);
-    Style.TextAlign = "center";
+    if (Style.BorderColor is Vector4[] { Length: 1 } vv) return [vv[0], vv[0], vv[0], vv[0]];
 
-    var isOver = false;
-
-    Events.OnMouseOver += () =>
+    return Style.BorderColor switch
     {
-      isOver = true;
-      Style.BackgroundColor = new Vector4(0.25f, 0.25f, 0.25f, 1);
-    };
-    Events.OnMouseOut += () =>
-    {
-      isOver = false;
-      Style.BackgroundColor = baseColor;
-    };
-    Events.OnMouseDown += () => { Style.BackgroundColor = new Vector4(0.5f, 0.2f, 0.2f, 1); };
-    Events.OnMouseUp += () => { Style.BackgroundColor = baseColor; };
-    Events.OnRender += (delta) =>
-    {
-      if (isOver) Mouse.Cursor = MouseCursor.Pointer;
-    };
-  }
-}
-
-public class EasyUI_Spin : EasyUI_Element
-{
-  // public Action<float> OnChange;
-  private EasyUI_Element _center;
-
-  public EasyUI_Spin()
-  {
-    var buttonWidth = 24;
-
-    var leftButton = new EasyUI_Button();
-    leftButton.Style.Width = buttonWidth;
-    leftButton.Text = "-";
-    leftButton.Events.OnClick += () => { Events.OnChange?.Invoke(-1); };
-
-    _center = new EasyUI_Element();
-    _center.Style.Width = buttonWidth * 2;
-    _center.Style.Height = 24;
-    _center.Style.X = buttonWidth;
-    _center.Style.TextAlign = "center";
-    _center.Text = $"0";
-
-    var rightButton = new EasyUI_Button();
-    rightButton.Style.Width = buttonWidth;
-    rightButton.Style.X = buttonWidth + buttonWidth * 2;
-    rightButton.Text = "+";
-    rightButton.Events.OnClick += () => { Events.OnChange?.Invoke(1); };
-
-    Children.Add(leftButton);
-    Children.Add(_center);
-    Children.Add(rightButton);
-  }
-
-  public void UpdateLabel(string text)
-  {
-    _center.Text = text;
-  }
-}
-
-public class EasyUI_Check : EasyUI_Element
-{
-  private EasyUI_Element _text;
-  // public bool Value;
-
-  public EasyUI_Check()
-  {
-    var buttonWidth = 24;
-
-    var leftCheck = new EasyUI_Button();
-    leftCheck.Style.Width = 24;
-    leftCheck.Style.Height = 24;
-    leftCheck.Style.BackgroundColor = new Vector4(0.2f, 0.2f, 0.2f, 1.0f);
-    Children.Add(leftCheck);
-    leftCheck.Events.OnClick += () =>
-    {
-      if (Value is bool v) Value = !v;
-    };
-
-    var check = new EasyUI_Element();
-    check.Style.Width = 24 - 8;
-    check.Style.Height = 24 - 8;
-    check.Style.X = 4;
-    check.Style.Y = 4;
-    check.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1.0f);
-    Children.Add(check);
-
-    _text = new EasyUI_Element();
-    _text.Style.Width = buttonWidth * 2;
-    _text.Style.Height = 24;
-    _text.Style.X = buttonWidth;
-    _text.Style.TextAlign = "center";
-    _text.Text = $"0";
-    Children.Add(_text);
-
-    // Чекаем обновления
-    Events.OnRender += (d) =>
-    {
-      if (Value is bool v) check.IsVisible = v;
+      Vector4[] v => v,
+      _ => [Vector4.One, Vector4.One, Vector4.One, Vector4.One]
     };
   }
 
-  public void UpdateLabel(string text)
+  public float[] BorderWidth()
   {
-    _text.Text = text;
-  }
-}
-
-public class EasyUI_Slider : EasyUI_Element
-{
-  public float Min = 0;
-  public float Max = 1;
-
-  public EasyUI_Slider()
-  {
-    Style.Width = 128;
-    Style.Height = 24;
-    Style.BackgroundColor = new Vector4(0.2f, 0.2f, 0.2f, 1f);
-
-    var bar = new EasyUI_Element();
-    bar.Style.Width = 8;
-    bar.Style.Height = 24;
-    bar.Style.X = 0f;
-    bar.Style.Y = 0;
-    bar.Style.BackgroundColor = new Vector4(0.75f, 0.5f, 0.5f, 1.0f);
-    bar.Events.OnMouseOver += () => { bar.Style.BackgroundColor = new Vector4(0.9f, 0.5f, 0.5f, 1.0f); };
-    bar.Events.OnMouseOut += () => { bar.Style.BackgroundColor = new Vector4(0.75f, 0.5f, 0.5f, 1.0f); };
-    Children.Add(bar);
-
-    var isDrag = false;
-    bar.Events.OnMouseDown += () => { isDrag = true; };
-    bar.Events.OnMouseUp += () => { isDrag = false; };
-
-    Events.OnRender += d =>
+    return Style.BorderWidth switch
     {
-      if (!isDrag) return;
-      bar.Style.X = bar.Position().X + Mouse.ClientDelta.X;
-      if (bar.Position().X < 0) bar.Style.X = 0;
-      if (bar.Position().X > Size().X - 8) bar.Style.X = Size().X - 8;
-
-      var percentage = bar.Position().X / (Size().X - 8);
-      Value = percentage.Remap(0, 1, Min, Max);
-      Events.OnChange(Value);
+      float[] v => v,
+      Vector4 v => [v.X, v.Y, v.Z, v.W],
+      int v => [v, v, v, v],
+      float v => [v, v, v, v],
+      double v => [(float)v, (float)v, (float)v, (float)v],
+      _ => [0, 0, 0, 0]
     };
-  }
-}
-
-public class EasyUI_Window : EasyUI_Element
-{
-  private EasyUI_Element _header;
-  private EasyUI_Element _body;
-  private EasyUI_Element _minimize;
-
-  public EasyUI_Window()
-  {
-    _header = new EasyUI_Element();
-    _header.Style.Y = -20;
-    _header.Style.Width = 80;
-    _header.Style.Height = 20;
-    _header.Style.BackgroundColor = new Vector4(0.25f, 0.25f, 0.25f, 1f);
-    _header.Text = "Window";
-
-    var isDrag = false;
-    var isHover = false;
-    _header.Events.OnMouseOver += () => { isHover = true; };
-    _header.Events.OnMouseOut += () => { isHover = false; };
-    _header.Events.OnMouseDown += () =>
-    {
-      if (isHover)
-      {
-        // Проверка, что курсор над заголовком
-        isDrag = true;
-      }
-    };
-    _header.Events.OnMouseUp += () => { isDrag = false; };
-    Children.Add(_header);
-
-    _body = new EasyUI_Element();
-    _body.Style.Y = 0;
-    _body.Style.Width = 80;
-    _body.Style.Height = 40;
-    _body.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1f);
-    Children.Add(_body);
-
-    _minimize = new EasyUI_Element();
-    _minimize.Style.X = 80 - 16;
-    _minimize.Style.Y = -20;
-    _minimize.Style.Width = 16;
-    _minimize.Style.Height = 20;
-    _minimize.Style.BackgroundColor = new Vector4(0.25f, 0.0f, 0.0f, 1f);
-    _minimize.Text = "_";
-    _minimize.Events.OnClick += () => { _body.IsVisible = !_body.IsVisible; };
-    Children.Add(_minimize);
-
-    Events.OnRender += delta =>
-    {
-      if (isDrag)
-      {
-        Mouse.Cursor = MouseCursor.Move;
-        Style.X = Position().X + Mouse.ClientDelta.X;
-        Style.Y = Position().Y + Mouse.ClientDelta.Y;
-      }
-
-      if (Position().X < 0) Style.X = 0;
-      if (Position().Y < 20) Style.Y = 20;
-      if (Position().X + Width() > Window.Current.ClientWidth) Style.X = Window.Current.ClientWidth - Width();
-      if (Position().Y + Height() > Window.Current.ClientHeight) Style.Y = Window.Current.ClientHeight - Height();
-    };
-  }
-
-  public void SetSize(float width, float height)
-  {
-    _header.Style.Width = width;
-    _minimize.Style.X = width - 16;
-    _body.Style.Width = width;
-    _body.Style.Height = height;
-    Style.Width = width;
-    Style.Height = height;
-  }
-
-  public override void Add(EasyUI_Element element)
-  {
-    _body.Add(element);
   }
 }

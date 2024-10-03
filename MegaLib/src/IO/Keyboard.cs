@@ -162,12 +162,6 @@ public static class Keyboard
 
   public static bool IsKeyPressed(KeyboardKey key)
   {
-    /*var isKeyDown = IsKeyDown(key);
-    var wasKeyDown = _previousState[(int)key];
-
-    _previousState[(int)key] = isKeyDown;
-
-    return isKeyDown && !wasKeyDown;*/
     return IsKeyDown(key) && _previousState[(int)key] == 0;
   }
 
@@ -184,7 +178,13 @@ public static class Keyboard
     var buffer = new StringBuilder(2);
     var result = User32.ToUnicode((uint)virtualKey, scanCode, keyboardState, buffer, buffer.Capacity, 0);
 
-    if (result > 0 && buffer.Length > 0) return buffer[0];
+    if (result > 0 && buffer.Length > 0)
+    {
+      var ch = buffer[0];
+      if (char.IsControl(ch)) return null;
+      return ch;
+    }
+
     return null;
   }
 
@@ -192,11 +192,13 @@ public static class Keyboard
   {
     var str = "";
     for (var i = 0; i < _state.Length; i++)
+    {
       if (IsKeyPressed((KeyboardKey)i))
       {
         var ch = GetCharFromKey(i);
         if (ch != null) str += ch.ToString();
       }
+    }
 
     return str;
   }

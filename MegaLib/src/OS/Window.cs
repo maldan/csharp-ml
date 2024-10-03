@@ -229,6 +229,7 @@ public class Window
         var pointer = 32512;
         if (Mouse.Cursor == MouseCursor.Pointer) pointer = 32649;
         if (Mouse.Cursor == MouseCursor.Move) pointer = 32646;
+        if (Mouse.Cursor == MouseCursor.TextInput) pointer = 32513;
         var hCursor = User32.LoadCursor(IntPtr.Zero, pointer);
         User32.SetCursor(hCursor);
 

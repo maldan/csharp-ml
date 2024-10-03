@@ -1,5 +1,6 @@
 using System;
 using MegaLib.Mathematics.LinearAlgebra;
+using MegaLib.OS;
 using MegaLib.Render.Camera;
 
 namespace MegaLib.Mathematics.Geometry;
@@ -32,37 +33,6 @@ public struct Frustum
     RightPlane = rightPlane;
     NearPlane = nearPlane;
     FarPlane = farPlane;
-  }
-
-  // Метод для построения Frustum из 4 лучей (по углам выделения)
-  public static Frustum FromRays(
-    Ray topLeftRay,
-    Ray topRightRay,
-    Ray bottomLeftRay,
-    Ray bottomRightRay,
-    float nearDistance,
-    float farDistance)
-  {
-    // Вычисляем точки на near и far плоскостях для каждого луча
-    var nearTopLeft = topLeftRay.GetPointAtDistance(nearDistance);
-    var nearTopRight = topRightRay.GetPointAtDistance(nearDistance);
-    var nearBottomLeft = bottomLeftRay.GetPointAtDistance(nearDistance);
-    var nearBottomRight = bottomRightRay.GetPointAtDistance(nearDistance);
-
-    var farTopLeft = topLeftRay.GetPointAtDistance(farDistance);
-    var farTopRight = topRightRay.GetPointAtDistance(farDistance);
-    var farBottomLeft = bottomLeftRay.GetPointAtDistance(farDistance);
-    var farBottomRight = bottomRightRay.GetPointAtDistance(farDistance);
-
-    // Построение плоскостей Frustum
-    var topPlane = new Plane(nearTopLeft, farTopLeft, farTopRight); // Верхняя плоскость
-    var bottomPlane = new Plane(nearBottomRight, farBottomRight, farBottomLeft); // Нижняя плоскость
-    var leftPlane = new Plane(nearBottomLeft, farBottomLeft, farTopLeft); // Левая плоскость
-    var rightPlane = new Plane(nearTopRight, farTopRight, farBottomRight); // Правая плоскость
-    var nearPlane = new Plane(nearTopLeft, nearTopRight, nearBottomRight); // Near-плоскость
-    var farPlane = new Plane(farTopRight, farTopLeft, farBottomLeft); // Far-плоскость
-
-    return new Frustum(topPlane, bottomPlane, leftPlane, rightPlane, nearPlane, farPlane);
   }
 
   // Метод для построения Frustum из двух лучей (по диагональным углам выделения)
@@ -103,8 +73,8 @@ public struct Frustum
     var right = camera.Right.Normalized;
 
     // Параметры камеры
-    var nearClip = camera.Far; // Меняем местами near и far для Reversed-Z
-    var farClip = camera.Near; // Меняем местами near и far для Reversed-Z
+    var nearClip = camera.Near; // Меняем местами near и far для Reversed-Z
+    var farClip = camera.Far; // Меняем местами near и far для Reversed-Z
     var fov = camera.FOV;
     var aspectRatio = camera.AspectRatio;
 

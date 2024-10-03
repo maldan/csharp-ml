@@ -57,6 +57,7 @@ internal class TestScene3 : Render_Scene
         t.Style.X = 10;
         t.Style.Y = 10;
         t.Text = "Click";
+        t.Style.TextColor = new Vector4(1, 0, 0, 1);
       });
 
       // Кнопка
@@ -96,7 +97,7 @@ internal class TestScene3 : Render_Scene
         {
           if (f is float ff)
           {
-            t.Style.BackgroundColor = new Vector4(ff, ff, ff, 1f);
+            // t.Style.BackgroundColor = new Vector4(ff, ff, ff, 1f);
           }
         };
       });
@@ -135,6 +136,20 @@ internal class TestScene3 : Render_Scene
 
         t.Events.OnMouseOver += () => { Console.WriteLine("A"); };
         t.Events.OnMouseOut += () => { Console.WriteLine("B"); };
+      });
+
+      easyUi.Add<EasyUI_TextInput>(input =>
+      {
+        input.Style.X = 0;
+        input.Style.Y = 32;
+        input.Style.Width = 128;
+      });
+
+      easyUi.Add<EasyUI_TextInput>(input =>
+      {
+        input.Style.X = 0;
+        input.Style.Y = 32 + 24 + 2;
+        input.Style.Width = 128;
       });
     });
   }

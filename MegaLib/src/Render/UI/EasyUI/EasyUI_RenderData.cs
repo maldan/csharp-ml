@@ -47,6 +47,43 @@ public class EasyUI_RenderData
     _indexOffset = 0;
   }
 
+  public void DrawOutline(Rectangle area, float[] width, Vector4[] color)
+  {
+    _isChanged = true;
+
+    if (width[0] > 0)
+    {
+      DrawRectangle(
+        new Rectangle(area.FromX, area.FromY, area.FromX + width[0], area.ToY),
+        color[0]
+      );
+    }
+
+    if (width[1] > 0)
+    {
+      DrawRectangle(
+        new Rectangle(area.FromX, area.FromY, area.ToX, area.FromY + width[1]),
+        color[1]
+      );
+    }
+
+    if (width[2] > 0)
+    {
+      DrawRectangle(
+        new Rectangle(area.FromX + area.Width - width[2], area.FromY, area.FromX + area.Width, area.ToY),
+        color[2]
+      );
+    }
+
+    if (width[3] > 0)
+    {
+      DrawRectangle(
+        new Rectangle(area.FromX, area.FromY + area.Height, area.ToX, area.FromY + area.Height - width[3]),
+        color[3]
+      );
+    }
+  }
+
   public void DrawRectangle(Rectangle area, Vector4 color)
   {
     _isChanged = true;
@@ -79,7 +116,7 @@ public class EasyUI_RenderData
 
   public Rectangle DrawText(
     string text,
-    string textAlign,
+    TextAlignment textAlign,
     FontData fontData,
     Vector4 color,
     Rectangle drawArea
@@ -154,12 +191,23 @@ public class EasyUI_RenderData
       maxLineHeight = Math.Max(maxLineHeight, area.TextureArea.Height);
     }
 
-    if (textAlign == "center")
+    // Строго по центру
+    if ((textAlign & TextAlignment.Center) != 0)
     {
       for (var i = 0; i < vectorList.Count; i++)
       {
         vectorList[i] += new Vector3(drawArea.Width / 2f, drawArea.Height / 2f, 0);
         vectorList[i] -= new Vector3(textSize.Width / 2f, textSize.Height / 2f, 0);
+      }
+    }
+
+    // Вертикальное выравнивание
+    if ((textAlign & TextAlignment.VerticalCenter) != 0)
+    {
+      for (var i = 0; i < vectorList.Count; i++)
+      {
+        vectorList[i] += new Vector3(0, drawArea.Height / 2f, 0);
+        vectorList[i] -= new Vector3(0, textSize.Height / 2f, 0);
       }
     }
 

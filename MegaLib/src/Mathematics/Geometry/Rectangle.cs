@@ -10,6 +10,8 @@ public struct Rectangle
   public float ToX;
   public float ToY;
 
+  public float X => MinX;
+  public float Y => MinY;
   public float Width => MaxX - MinX;
   public float Height => MaxY - MinY;
 
