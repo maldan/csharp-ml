@@ -110,6 +110,11 @@ public class LR_EasyUI : LR_Base
         
         void main()
         {
+            if (uMode == vec3(2, 0, 0)) {
+                vec4 texelColor = texture(uFontTexture, vo_UV) * vo_Color;
+                if (texelColor.a <= 0.01) discard;
+                color = texelColor;
+            } else 
             if (uMode == vec3(1, 0, 0)) {
                 color = vo_Color;
             } else {
@@ -213,7 +218,14 @@ public class LR_EasyUI : LR_Base
     // Texture
     Shader.ActivateTexture(layer.FontTexture, "uFontTexture", 0);
 
-    Shader.SetUniform("uMode", new Vector3(0, 0, 0));
+    if (rd.IsText)
+    {
+      Shader.SetUniform("uMode", new Vector3(2, 0, 0));
+    }
+    else
+    {
+      Shader.SetUniform("uMode", new Vector3(0, 0, 0));
+    }
 
     // Биндим индексы
     OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(_indices));

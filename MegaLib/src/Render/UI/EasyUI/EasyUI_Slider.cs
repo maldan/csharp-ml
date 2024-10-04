@@ -13,17 +13,17 @@ public class EasyUI_Slider : EasyUI_Element
   {
     Style.Width = 128;
     Style.Height = 24;
-    Style.BackgroundColor = new Vector4(0.2f, 0.2f, 0.2f, 1f);
+    Style.BackgroundColor = "#232323";
     Style.TextAlign = TextAlignment.Center;
 
     var bar = new EasyUI_Element();
     bar.Style.Width = 8;
-    bar.Style.Height = 24;
-    bar.Style.X = 0f;
-    bar.Style.Y = 0;
-    bar.Style.BackgroundColor = new Vector4(0.75f, 0.5f, 0.5f, 1.0f);
-    bar.Events.OnMouseOver += () => { bar.Style.BackgroundColor = new Vector4(0.9f, 0.5f, 0.5f, 1.0f); };
-    bar.Events.OnMouseOut += () => { bar.Style.BackgroundColor = new Vector4(0.75f, 0.5f, 0.5f, 1.0f); };
+    bar.Style.Height = 16;
+    bar.Style.X = 4f;
+    bar.Style.Y = 4;
+    bar.Style.BackgroundColor = "#ae5c00";
+    bar.Events.OnMouseOver += () => { bar.Style.BackgroundColor = "#db7400"; };
+    bar.Events.OnMouseOut += () => { bar.Style.BackgroundColor = "#ae5c00"; };
     Children.Add(bar);
 
     var isDrag = false;
@@ -35,13 +35,13 @@ public class EasyUI_Slider : EasyUI_Element
     {
       if (!isDrag) return;
       bar.Style.X = bar.Position().X + Mouse.ClientDelta.X;
-      if (bar.Position().X < 0) bar.Style.X = 0;
-      if (bar.Position().X > Size().X - 8) bar.Style.X = Size().X - 8;
+      if (bar.Position().X < 4) bar.Style.X = 4;
+      if (bar.Position().X > Size().X - 8 - 4) bar.Style.X = Size().X - 8 - 4;
 
-      var percentage = bar.Position().X / (Size().X - 8);
+      var percentage = (bar.Position().X - 4) / (Size().X - 8 - 4 - 4);
       Value = percentage.Remap(0, 1, Min, Max);
-      Events.OnChange(Value);
-      Text = $"{Value:F}";
+      Events.OnChange?.Invoke(Value);
+      Text = $"{Value:F}".Replace(",", ".");
     };
   }
 }

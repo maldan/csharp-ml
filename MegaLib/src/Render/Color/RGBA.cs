@@ -81,6 +81,22 @@ public readonly struct RGBA<T>
     );
   }
 
+  public static RGBA<float> FromHex(string color)
+  {
+    if (color.Length == 9)
+    {
+      // Извлекаем цвет
+      var r = int.Parse(color.Substring(1, 2), System.Globalization.NumberStyles.HexNumber);
+      var g = int.Parse(color.Substring(3, 2), System.Globalization.NumberStyles.HexNumber);
+      var b = int.Parse(color.Substring(5, 2), System.Globalization.NumberStyles.HexNumber);
+      var a = int.Parse(color.Substring(7, 2), System.Globalization.NumberStyles.HexNumber);
+
+      // Преобразовываем в значения от 0 до 1
+      return new RGBA<float>(r / 255f, g / 255f, b / 255f, a / 255f);
+    }
+
+    return new RGBA<float>();
+  }
 
   public override string ToString()
   {

@@ -33,7 +33,12 @@ public class Layer_EasyUI : Layer_Base
     });
   }
 
-  public void Add<T>(Action<T> onInit = null) where T : EasyUI_Element, new()
+  public EasyUI_Label Label(string text)
+  {
+    return Add<EasyUI_Label>(label => { label.Text = text; });
+  }
+
+  public T Add<T>(Action<T> onInit = null) where T : EasyUI_Element, new()
   {
     var cnt = _currentElement.Peek();
     var element = new T();
@@ -43,6 +48,7 @@ public class Layer_EasyUI : Layer_Base
     _currentElement.Push(element);
     onInit?.Invoke(element);
     _currentElement.Pop();
+    return element;
   }
 
   public List<EasyUI_RenderData> Build(float delta)

@@ -7,24 +7,25 @@ public class EasyUI_Button : EasyUI_Element
 {
   public EasyUI_Button()
   {
-    var baseColor = new Vector4(0.2f, 0.2f, 0.2f, 1);
+    var baseColor = "#545454";
     Style.BackgroundColor = baseColor;
     Style.SetArea(0, 0, 64, 24);
     Style.TextAlign = TextAlignment.Center;
+    Style.TextColor = "#c0c0c0";
 
     var isOver = false;
 
     Events.OnMouseOver += () =>
     {
       isOver = true;
-      Style.BackgroundColor = new Vector4(0.25f, 0.25f, 0.25f, 1);
+      Style.BackgroundColor = "#646464";
     };
     Events.OnMouseOut += () =>
     {
       isOver = false;
       Style.BackgroundColor = baseColor;
     };
-    Events.OnMouseDown += () => { Style.BackgroundColor = new Vector4(0.5f, 0.2f, 0.2f, 1); };
+    Events.OnMouseDown += () => { Style.BackgroundColor = "#ae5c00"; };
     Events.OnMouseUp += () => { Style.BackgroundColor = baseColor; };
     Events.OnRender += (delta) =>
     {

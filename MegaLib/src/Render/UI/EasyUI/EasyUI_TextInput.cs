@@ -31,6 +31,7 @@ public class EasyUI_TextInput : EasyUI_Element
 
   private EasyUI_Element _cursor;
   private EasyUI_Element _selection;
+  private EasyUI_Element _textContent;
 
   public int MaxCharacters;
   public TextInputType InputType = TextInputType.Text;
@@ -39,12 +40,14 @@ public class EasyUI_TextInput : EasyUI_Element
 
   public EasyUI_TextInput()
   {
-    var baseColor = new Vector4(0.2f, 0.2f, 0.2f, 1);
+    var baseColor = "#232323";
     Style.BackgroundColor = baseColor;
     Style.SetArea(0, 0, 64, 24);
     Style.TextAlign = TextAlignment.Left | TextAlignment.VerticalCenter;
+    Style.BorderWidth = 1f;
+    Style.BorderColor = "#fe000000";
     Value = "";
-    Text = $"{Value}";
+    Text = "";
 
     _cursor = new EasyUI_Element
     {
@@ -68,6 +71,12 @@ public class EasyUI_TextInput : EasyUI_Element
         BackgroundColor = new Vector4(0.0f, 0.8f, 0.0f, 0.25f)
       }
     };
+
+    _textContent = new EasyUI_Element();
+    _textContent.Style.TextAlign = TextAlignment.Left | TextAlignment.VerticalCenter;
+    _textContent.Style.TextColor = "#c0c0c0";
+
+    Children.Add(_textContent);
     Children.Add(_cursor);
     Children.Add(_selection);
 
@@ -77,14 +86,14 @@ public class EasyUI_TextInput : EasyUI_Element
     Events.OnMouseOver += () =>
     {
       isOver = true;
-      Style.BackgroundColor = new Vector4(0.25f, 0.25f, 0.25f, 1);
+      Style.BackgroundColor = "#292929";
     };
     Events.OnMouseOut += () =>
     {
       isOver = false;
       Style.BackgroundColor = baseColor;
     };
-    Events.OnMouseDown += () => { Style.BackgroundColor = new Vector4(0.5f, 0.2f, 0.2f, 1); };
+    Events.OnMouseDown += () => { };
     Events.OnClick += () =>
     {
       if (EasyUI_GlobalState.FocusedElement == this) return;
@@ -112,16 +121,55 @@ public class EasyUI_TextInput : EasyUI_Element
     {
       if (isOver) Mouse.Cursor = MouseCursor.TextInput;
 
+      _textContent.Style.Width = Width() - 16;
+      _textContent.Style.Height = Height();
+      _textContent.Style.X = 4;
+
       _timer += delta * 4f;
       if (IsFocused)
       {
+        Style.BorderColor = "#ae5c00";
         HandleInput(delta);
+      }
+      else
+      {
+        Style.BorderColor = new Vector4(0, 0, 0, 0);
       }
 
       DrawCursor();
 
-      Text = $"{Value}";
+      _textContent.Text = $"{Value}";
     };
+  }
+
+  public void OnRead<T>(Func<T> read) where T : struct
+  {
+    Events.OnBeforeRender += (_) =>
+    {
+      if (!IsFocused) Value = $"{read()}".Replace(",", ".");
+    };
+  }
+
+  public void OnWrite<T>(Action<T> write) where T : struct
+  {
+    Events.OnChange += o =>
+    {
+      if (typeof(T) == typeof(float))
+      {
+        write((T)(object)GetFloatValue());
+      }
+      else
+      {
+        write((T)Value);
+      }
+    };
+  }
+
+  private float GetFloatValue()
+  {
+    return float.TryParse($"{Value}", NumberStyles.Float, CultureInfo.InvariantCulture, out var f)
+      ? f
+      : 0.0f;
   }
 
   private void EmitChange()
@@ -359,9 +407,9 @@ public class EasyUI_TextInput : EasyUI_Element
         finalOffset += CurrentFontData.GetGlyph(currentString[i]).Width;
       }
 
-      if (finalOffset <= 0) finalOffset = 4;
+      if (finalOffset <= 0) finalOffset = 0;
 
-      _cursor.Style.X = finalOffset;
+      _cursor.Style.X = 4 + finalOffset;
     }
   }
 }

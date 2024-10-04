@@ -6,6 +6,7 @@ using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS;
 using MegaLib.OS.Api;
+using MegaLib.Render.Color;
 
 namespace MegaLib.Render.UI.EasyUI;
 
@@ -53,6 +54,12 @@ public enum TextAlignment
 public static class EasyUI_GlobalState
 {
   public static EasyUI_Element FocusedElement;
+}
+
+public enum LayoutDirection
+{
+  Vertical,
+  Horizontal
 }
 
 public class EasyUI_Element
@@ -224,12 +231,15 @@ public class EasyUI_Element
 
     if (Text != "")
     {
-      var textData = new EasyUI_RenderData();
+      var textData = new EasyUI_RenderData
+      {
+        IsText = true
+      };
       textData.DrawText(
         Text,
         Style.TextAlign,
         buildArgs.FontData,
-        new Vector4(1, 1, 1, 1),
+        TextColor(),
         elementBoundingBox
       );
       RenderData.Add(textData);
@@ -307,6 +317,18 @@ public class EasyUI_Element
   public Vector4 TextColor()
   {
     if (Style.TextColor is Vector4 v) return v;
+
+    if (Style.TextColor is string s && s[0] == '#')
+    {
+      switch (s.Length)
+      {
+        case 7:
+          return RGB<float>.FromHex(s).Vector3.AddW(1.0f);
+        case 9:
+          return RGBA<float>.FromHex(s).Vector4;
+      }
+    }
+
     return Style.TextColor switch
     {
       "white" => new Vector4(1, 1, 1, 1),
@@ -320,9 +342,17 @@ public class EasyUI_Element
 
   public Vector4 BackgroundColor()
   {
-    if (Style.BackgroundColor is Vector4 v)
+    if (Style.BackgroundColor is Vector4 v) return v;
+
+    if (Style.BackgroundColor is string s && s[0] == '#')
     {
-      return v;
+      switch (s.Length)
+      {
+        case 7:
+          return RGB<float>.FromHex(s).Vector3.AddW(1.0f);
+        case 9:
+          return RGBA<float>.FromHex(s).Vector4;
+      }
     }
 
     return Style.BackgroundColor switch
@@ -338,6 +368,19 @@ public class EasyUI_Element
 
   public Vector4[] BorderColor()
   {
+    if (Style.BorderColor is string s && s[0] == '#')
+    {
+      switch (s.Length)
+      {
+        case 7:
+          var v = RGB<float>.FromHex(s).Vector3.AddW(1.0f);
+          return [v, v, v, v];
+        case 9:
+          var vv = RGBA<float>.FromHex(s).Vector4;
+          return [vv, vv, vv, vv];
+      }
+    }
+
     return Style.BorderColor switch
     {
       Vector4 v1 => [v1, v1, v1, v1],

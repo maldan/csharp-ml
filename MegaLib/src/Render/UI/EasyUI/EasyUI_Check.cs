@@ -1,3 +1,4 @@
+using MegaLib.IO;
 using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Render.UI.EasyUI;
@@ -10,23 +11,42 @@ public class EasyUI_Check : EasyUI_Element
   public EasyUI_Check()
   {
     var buttonWidth = 24;
+    Style.Height = 21;
 
-    var leftCheck = new EasyUI_Button();
-    leftCheck.Style.Width = 24;
-    leftCheck.Style.Height = 24;
-    leftCheck.Style.BackgroundColor = new Vector4(0.2f, 0.2f, 0.2f, 1.0f);
+    var baseColor = "#232323";
+    var leftCheck = new EasyUI_Element();
+    leftCheck.Style.Width = 21;
+    leftCheck.Style.Height = 21;
+    leftCheck.Style.BackgroundColor = baseColor;
     Children.Add(leftCheck);
     leftCheck.Events.OnClick += () =>
     {
       if (Value is bool v) Value = !v;
     };
 
+    var isOver = false;
+    leftCheck.Events.OnMouseOver += () =>
+    {
+      isOver = true;
+      leftCheck.Style.BackgroundColor = "#262626";
+    };
+    leftCheck.Events.OnMouseOut += () =>
+    {
+      isOver = false;
+      leftCheck.Style.BackgroundColor = baseColor;
+    };
+
+    leftCheck.Events.OnRender += (delta) =>
+    {
+      if (isOver) Mouse.Cursor = MouseCursor.Pointer;
+    };
+
     var check = new EasyUI_Element();
-    check.Style.Width = 24 - 8;
-    check.Style.Height = 24 - 8;
+    check.Style.Width = 21 - 8;
+    check.Style.Height = 21 - 8;
     check.Style.X = 4;
     check.Style.Y = 4;
-    check.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1.0f);
+    check.Style.BackgroundColor = "#ae5c00";
     Children.Add(check);
 
     _text = new EasyUI_Element();

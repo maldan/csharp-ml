@@ -84,7 +84,7 @@ public static class Font
 
     // Создаем шрифт
     var hFont = GDI32.CreateFont((int)(fontSize * scaleFactor), 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
-      GDI32.CLEARTYPE_QUALITY,
+      GDI32.ANTIALIASED_QUALITY,
       0, fontName);
     GDI32.SelectObject(hdcMem, hFont);
 
@@ -139,7 +139,7 @@ public static class Font
     var hFont = GDI32.CreateFont(
       (int)(fontSize * scaleFactor), 0,
       0, 0, 0, 0, 0, 0, 1, 0, 0,
-      GDI32.CLEARTYPE_QUALITY,
+      GDI32.ANTIALIASED_QUALITY,
       0, fontName);
     GDI32.SelectObject(hdcMem, hFont);
 
@@ -161,37 +161,4 @@ public static class Font
 
     return d;
   }
-
-  /*private static void SaveToBMP(IntPtr bits, int width, int height, string outputPath)
-  {
-    // Создание BMP файла вручную
-    using (var fileStream = new FileStream(outputPath, FileMode.Create))
-    using (var writer = new BinaryWriter(fileStream))
-    {
-      // Пишем заголовок BMP файла
-      writer.Write((ushort)0x4D42); // Тип файла 'BM'
-      writer.Write(54 + width * height * 4); // Размер файла
-      writer.Write((ushort)0); // Зарезервировано
-      writer.Write((ushort)0); // Зарезервировано
-      writer.Write(54); // Смещение пиксельных данных
-
-      // Заголовок BITMAPINFOHEADER
-      writer.Write(40); // Размер заголовка
-      writer.Write(width); // Ширина изображения
-      writer.Write(-height); // Высота изображения
-      writer.Write((ushort)1); // Плоскости
-      writer.Write((ushort)32); // Бит на пиксель
-      writer.Write(0); // BI_RGB, без сжатия
-      writer.Write(width * height * 4); // Размер изображения
-      writer.Write(0); // Горизонтальное разрешение
-      writer.Write(0); // Вертикальное разрешение
-      writer.Write(0); // Использованные цвета
-      writer.Write(0); // Важные цвета
-
-      // Пишем пиксельные данные
-      var pixelData = new byte[width * height * 4];
-      Marshal.Copy(bits, pixelData, 0, pixelData.Length);
-      writer.Write(pixelData);
-    }
-  }*/
 }
