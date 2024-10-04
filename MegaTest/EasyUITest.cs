@@ -101,6 +101,16 @@ internal class TestScene3 : Render_Scene
           }
         };
       });
+
+      easyUi.Add<EasyUI_Slider>(t =>
+      {
+        t.Direction = Direction.Vertical;
+
+        t.Style.X = 0;
+        t.Style.Y = 120;
+        t.Value = 0;
+        t.ShowText = false;
+      });
     });
 
     // Кнопка
@@ -125,59 +135,124 @@ internal class TestScene3 : Render_Scene
       t.Style.X = 220;
       t.Style.Y = 90;
 
-      t.SetSize(128, 280);
+      t.SetSize(160, 128);
 
-      easyUi.Add<EasyUI_Layout>(layout =>
+      easyUi.Add<EasyUI_ScrollPane>(scrollPane =>
       {
-        layout.Style.Width = t.Width();
-        layout.Gap = 5;
+        scrollPane.Style.SetArea(2, 1, 160 - 4, 124);
+        //scrollPane.Style.BorderWidth = 1;
+        //scrollPane.Style.BorderColor = "#00ff00";
 
-        // Кнопка
-        EasyUI_Button button = null;
-        easyUi.Add<EasyUI_Button>(t =>
+        easyUi.Add<EasyUI_Layout>(layout =>
         {
-          t.Style.X = 0;
-          t.Style.Y = 0;
-          t.Text = "Click";
-          button = t;
+          layout.Style.Width = scrollPane.ContentWidth() - 5;
+          layout.Style.Height = 10;
+          layout.Gap = 5;
+          layout.Style.X = 2;
+          layout.Style.Y = 2;
+          //layout.Style.BorderWidth = 1;
+          //layout.Style.BorderColor = "#fe0000";
 
-          t.Events.OnMouseOver += () => { Console.WriteLine("A"); };
-          t.Events.OnMouseOut += () => { Console.WriteLine("B"); };
+          // Кнопка
+          EasyUI_Button button = null;
+          easyUi.Add<EasyUI_Button>(t =>
+          {
+            t.Style.X = 0;
+            t.Style.Y = 0;
+            t.Text = "Click";
+            button = t;
+
+            t.Events.OnMouseOver += () => { Console.WriteLine("A"); };
+            t.Events.OnMouseOut += () => { Console.WriteLine("B"); };
+          });
+
+          easyUi.Label("Int");
+          easyUi.Add<EasyUI_TextInput>(input =>
+          {
+            input.Style.X = 0;
+            input.Style.Y = 32;
+            input.Style.Width = 128;
+            input.InputType = TextInputType.Integer;
+          });
+
+          easyUi.Label("Float");
+          easyUi.Add<EasyUI_TextInput>(input =>
+          {
+            input.Style.X = 0;
+            input.Style.Y = 32 + 24 + 2;
+            input.Style.Width = 128;
+            input.InputType = TextInputType.Float;
+          });
+
+          easyUi.Label("Text");
+          easyUi.Add<EasyUI_TextInput>(input =>
+          {
+            input.Style.X = 0;
+            input.Style.Y = 32 + 24 + 24 + 2;
+            input.Style.Width = 128;
+            input.InputType = TextInputType.Text;
+            input.Events.OnChange += o => { button.Text = $"{o}"; };
+          });
+
+          easyUi.Label("Gaayyy");
+          easyUi.Add<EasyUI_Check>(check => { });
+
+          easyUi.Label("Furry sex");
+          easyUi.Add<EasyUI_Slider>(check => { });
+
+          easyUi.Label("Text XX");
+          easyUi.Add<EasyUI_ScrollPane>(scrollPane2 =>
+          {
+            scrollPane2.Style.SetArea(0, 0, 128, 128);
+
+            easyUi.Add<EasyUI_Layout>(layout2 =>
+            {
+              layout2.Style.Width = scrollPane2.ContentWidth();
+              layout2.Gap = 5;
+              layout2.Style.Y = 0;
+
+              for (var i = 0; i < 32; i++)
+              {
+                easyUi.Label($"Text {i}");
+              }
+
+              easyUi.Label("Text Rock");
+
+              easyUi.Label("Text XX");
+              easyUi.Add<EasyUI_ScrollPane>(scrollPane3 =>
+              {
+                scrollPane3.Style.SetArea(0, 0, 128 - 32, 128);
+
+                easyUi.Add<EasyUI_Layout>(layout3 =>
+                {
+                  layout3.Style.Width = scrollPane3.ContentWidth();
+                  layout3.Gap = 5;
+                  layout3.Style.Y = 0;
+
+                  for (var i = 0; i < 32; i++)
+                  {
+                    easyUi.Label($"Text {i}");
+                  }
+
+                  easyUi.Label("Text Rock");
+
+                  easyUi.Label("Int");
+                  easyUi.Add<EasyUI_TextInput>(input =>
+                  {
+                    input.Style.X = 0;
+                    input.Style.Y = 32;
+                    input.InputType = TextInputType.Integer;
+                  });
+                  easyUi.Label("Int");
+                });
+              });
+            });
+          });
+
+          easyUi.Label("Text Sex");
+          easyUi.Label("Text");
+          easyUi.Label("Text");
         });
-
-        easyUi.Label("Int");
-        easyUi.Add<EasyUI_TextInput>(input =>
-        {
-          input.Style.X = 0;
-          input.Style.Y = 32;
-          input.Style.Width = 128;
-          input.InputType = TextInputType.Integer;
-        });
-
-        easyUi.Label("Float");
-        easyUi.Add<EasyUI_TextInput>(input =>
-        {
-          input.Style.X = 0;
-          input.Style.Y = 32 + 24 + 2;
-          input.Style.Width = 128;
-          input.InputType = TextInputType.Float;
-        });
-
-        easyUi.Label("Text");
-        easyUi.Add<EasyUI_TextInput>(input =>
-        {
-          input.Style.X = 0;
-          input.Style.Y = 32 + 24 + 24 + 2;
-          input.Style.Width = 128;
-          input.InputType = TextInputType.Text;
-          input.Events.OnChange += o => { button.Text = $"{o}"; };
-        });
-
-        easyUi.Label("Gaayyy");
-        easyUi.Add<EasyUI_Check>(check => { });
-
-        easyUi.Label("Furry sex");
-        easyUi.Add<EasyUI_Slider>(check => { });
       });
     });
   }

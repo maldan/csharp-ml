@@ -8,6 +8,13 @@ using MegaLib.Render.RenderObject;
 
 namespace MegaLib.Render.UI.EasyUI;
 
+/*
+public struct StencilRectangle
+{
+  public Rectangle Rectangle;
+}
+*/
+
 public class EasyUI_RenderData
 {
   public List<Vector3> Vertices = [];
@@ -20,6 +27,8 @@ public class EasyUI_RenderData
   public bool IsLine;
   public bool IsStencilStart;
   public bool IsStencilStop;
+  public bool IsIgnore;
+  public int StencilId;
 
   private bool _isChanged;
   private Rectangle _boundingBox;

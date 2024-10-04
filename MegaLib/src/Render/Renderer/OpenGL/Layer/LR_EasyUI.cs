@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Buffer;
@@ -264,7 +266,42 @@ public class LR_EasyUI : LR_Base
     // Основной рендер
     renderData.ForEach(rd =>
     {
-      if (rd.IsLine)
+      // Игнорирование данных (это проще чем удалять из массива)
+      if (rd.IsIgnore) return;
+
+      if (rd.IsStencilStop)
+      {
+        OpenGL32.glStencilFunc(OpenGL32.GL_EQUAL, rd.StencilId - 1, 0xFF);
+        OpenGL32.glStencilMask(0x00); // Запрещаем запись в буфер
+        if (rd.StencilId <= 1)
+        {
+          OpenGL32.glDisable(OpenGL32.GL_STENCIL_TEST);
+        }
+      }
+      else if (rd.IsStencilStart)
+      {
+        OpenGL32.glEnable(OpenGL32.GL_STENCIL_TEST);
+
+        // Устанавливаем операцию стэнсила
+        // GL_KEEP — не изменяет стэнсил-буфер при неудачном тесте
+        // GL_REPLACE — записывает новое значение (rd.StencilId) при успешном тесте
+        OpenGL32.glStencilOp(OpenGL32.GL_KEEP, OpenGL32.GL_KEEP, OpenGL32.GL_REPLACE);
+
+        // Настраиваем, чтобы всегда записывать текущее значение (например, 3, 2 или 1)
+        OpenGL32.glStencilFunc(OpenGL32.GL_ALWAYS, rd.StencilId, 0xFF);
+        OpenGL32.glStencilMask(0xFF); // Разрешаем запись в стэнсил-буфер
+
+        if (rd.StencilId == 1) OpenGL32.glClear(OpenGL32.GL_STENCIL_BUFFER_BIT); // Очищаем стэнсил-буфер
+
+        // Отрисовываем маску
+        RenderMain(rd); // Рисуем маску
+
+        // Теперь настраиваем стэнсил, чтобы рисовать только внутри всех предыдущих масок
+        // GL_EQUAL — рисует только в тех местах, где значение в стэнсиле совпадает с rd.StencilId
+        OpenGL32.glStencilFunc(OpenGL32.GL_EQUAL, rd.StencilId, 0xFF);
+        OpenGL32.glStencilMask(0x00); // Запрещаем запись в буфер
+      }
+      else if (rd.IsLine)
       {
         RenderLines(rd);
       }

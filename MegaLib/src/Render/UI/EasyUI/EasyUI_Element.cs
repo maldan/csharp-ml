@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using MegaLib.Ext;
 using MegaLib.IO;
 using MegaLib.Mathematics.Geometry;
@@ -32,6 +33,9 @@ public struct EasyUI_BuildIn
   public EasyUI_Element Parent;
   public float Delta;
   public Vector2 ParentPosition;
+
+  public List<Rectangle> StencilRectangleStack;
+  // public byte ParentStencilId;
 }
 
 public struct EasyUI_BuildOut
@@ -56,7 +60,7 @@ public static class EasyUI_GlobalState
   public static EasyUI_Element FocusedElement;
 }
 
-public enum LayoutDirection
+public enum Direction
 {
   Vertical,
   Horizontal
@@ -65,6 +69,8 @@ public enum LayoutDirection
 public class EasyUI_Element
 {
   public bool IsVisible = true;
+  public bool IsOutsideVisibleArea;
+
   public EasyUI_ElementStyle Style = new();
   public List<EasyUI_RenderData> RenderData = [];
   public EasyUI_ElementEvents Events = new();
@@ -77,6 +83,7 @@ public class EasyUI_Element
   private bool _isMouseOver;
   public object Value; // Пользовательское значение
   protected FontData CurrentFontData;
+  public Rectangle StencilRectangle;
 
   public void InitCollision(Rectangle r)
   {
@@ -173,7 +180,15 @@ public class EasyUI_Element
   public virtual EasyUI_BuildOut Build(EasyUI_BuildIn buildArgs)
   {
     Clear();
-    if (!IsVisible) return new EasyUI_BuildOut();
+    if (!IsVisible || IsOutsideVisibleArea) return new EasyUI_BuildOut();
+
+    var stencilRectangleStack = new List<Rectangle>();
+    if (buildArgs.StencilRectangleStack != null)
+    {
+      stencilRectangleStack.AddRange(buildArgs.StencilRectangleStack);
+    }
+
+    // buildArgs.StencilRectangleStack ??= [];
 
     CurrentFontData = buildArgs.FontData;
 
@@ -186,6 +201,15 @@ public class EasyUI_Element
     // Смещаем относительно родителя
     elementBoundingBox += buildArgs.ParentPosition;
 
+    // Чекаем если элемент за пределами масок
+    for (var i = 0; i < stencilRectangleStack.Count; i++)
+    {
+      if (!elementBoundingBox.IsIntersects(stencilRectangleStack[i]))
+      {
+        return new EasyUI_BuildOut();
+      }
+    }
+
     // Инициализация коллизии
     var hasCollision = Events.OnMouseDown != null || Events.OnMouseUp != null || Events.OnMouseOver != null ||
                        Events.OnMouseOut != null || Events.OnClick != null;
@@ -195,32 +219,40 @@ public class EasyUI_Element
       HandleMouseEvents();
     }
 
-    // Проходимся по чилдам
-    if (Children.Count > 0)
+    if (!StencilRectangle.IsEmpty)
     {
-      var rList = new List<EasyUI_RenderData>();
-      for (var i = 0; i < Children.Count; i++)
+      var newMask = StencilRectangle + buildArgs.ParentPosition;
+      for (var i = 0; i < stencilRectangleStack.Count; i++)
       {
-        Children[i].Build(new EasyUI_BuildIn
-        {
-          Parent = this,
-          FontData = buildArgs.FontData,
-          ParentPosition = buildArgs.ParentPosition + Position(),
-          Delta = buildArgs.Delta
-        });
-
-        // Копируем содержимое чилда
-        rList.AddRange(Children[i].RenderData);
+        newMask = newMask.GetIntersection(stencilRectangleStack[i]);
       }
 
-      // Добавляем в основной список
-      RenderData.AddRange(rList);
+      stencilRectangleStack.Add(newMask);
+    }
+
+    // Установка стенсила если есть
+    var stencilId = stencilRectangleStack.Count;
+
+    if (!StencilRectangle.IsEmpty)
+    {
+      // Начинаем стенсил
+      var stencil = new EasyUI_RenderData
+      {
+        IsStencilStart = true,
+        StencilId = stencilId
+      };
+      stencil.DrawRectangle(stencilRectangleStack.Last(), new Vector4());
+      RenderData.Add(stencil);
     }
 
     // Бэкграунд по bounding box
-    var background = new EasyUI_RenderData();
-    background.DrawRectangle(elementBoundingBox, BackgroundColor());
-    RenderData.Insert(0, background);
+    var bgColor = BackgroundColor();
+    if (bgColor.A > 0)
+    {
+      var background = new EasyUI_RenderData();
+      background.DrawRectangle(elementBoundingBox, BackgroundColor());
+      RenderData.Add(background);
+    }
 
     if (Style.BorderWidth != null)
     {
@@ -243,6 +275,40 @@ public class EasyUI_Element
         elementBoundingBox
       );
       RenderData.Add(textData);
+    }
+
+    // Проходимся по чилдам
+    if (Children.Count > 0)
+    {
+      var rList = new List<EasyUI_RenderData>();
+      for (var i = 0; i < Children.Count; i++)
+      {
+        Children[i].Build(new EasyUI_BuildIn
+        {
+          Parent = this,
+          FontData = buildArgs.FontData,
+          ParentPosition = buildArgs.ParentPosition + Position(),
+          Delta = buildArgs.Delta,
+          StencilRectangleStack = stencilRectangleStack.ToArray().ToList()
+        });
+
+        // Копируем содержимое чилда
+        rList.AddRange(Children[i].RenderData);
+      }
+
+      // Добавляем в основной список
+      RenderData.AddRange(rList);
+    }
+
+    // Завершаем стенцил если установлен
+    if (!StencilRectangle.IsEmpty)
+    {
+      var stencil = new EasyUI_RenderData
+      {
+        IsStencilStop = true,
+        StencilId = stencilId
+      };
+      RenderData.Add(stencil);
     }
 
     // Событие рендера

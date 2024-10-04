@@ -55,6 +55,7 @@ public class IMGUI_Element
   public bool IsDebug = false;
   public bool Scrollable = false;
   public Vector2 ParentScroll;
+  public Rectangle StencilRectangle;
 
   public void InitCollision(Rectangle r)
   {
@@ -231,6 +232,23 @@ public class IMGUI_Element
       var textData = new RenderData();
       textData.DrawText(Text, buildArgs.FontData, new Vector2(10, 10), new Vector4(1, 1, 1, 1), boundingBox);
       RenderData.Add(textData);
+    }
+
+    // Если установлен стенсил
+    if (!StencilRectangle.IsEmpty)
+    {
+      // Stencil
+      var stencil = new RenderData();
+      stencil.IsStencilStart = true;
+      stencil.DrawRectangle(StencilRectangle, new Vector4(0.2f, 0.2f, 0.2f, 0.2f));
+      RenderData.Insert(0, stencil);
+
+      // Stencil
+      stencil = new RenderData
+      {
+        IsStencilStop = true
+      };
+      RenderData.Add(stencil);
     }
 
     /*if (contentBoundingBox.Width > background.BoundingBox.Width ||

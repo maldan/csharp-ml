@@ -1,13 +1,18 @@
+using System;
+using MegaLib.Mathematics.LinearAlgebra;
+
 namespace MegaLib.Render.UI.EasyUI;
 
 public class EasyUI_Layout : EasyUI_Element
 {
-  public LayoutDirection Direction = LayoutDirection.Vertical;
+  public Direction Direction = Direction.Vertical;
   public float Gap;
 
   public EasyUI_Layout()
   {
-    Events.OnRender += (delta) =>
+    Style.BackgroundColor = new Vector4(0, 0, 0, 0.01f);
+
+    Events.OnBeforeRender += (delta) =>
     {
       var w = Width();
       var totalH = 0f;
@@ -21,6 +26,7 @@ public class EasyUI_Layout : EasyUI_Element
       }
 
       Style.Height = totalH;
+      // Console.WriteLine(BoundingBox());
     };
   }
 }
