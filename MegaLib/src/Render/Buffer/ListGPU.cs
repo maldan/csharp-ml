@@ -120,7 +120,7 @@ public class ListGPU<T> : IEnumerable<T>
 
   public void Clear()
   {
-    Array.Clear(_array, 0, _count);
+    // Array.Clear(_array, 0, _count);
     _count = 0;
     IsChanged = true;
   }

@@ -83,7 +83,7 @@ public class EasyUI_Element
 
   public void Clear()
   {
-    foreach (var rd in RenderData) rd.Clear();
+    // foreach (var rd in RenderData) rd.Clear();
     RenderData.Clear();
   }
 
@@ -279,7 +279,7 @@ public class EasyUI_Element
       }
 
       // Добавляем в основной список
-      RenderData.AddRange(rList);
+      if (rList.Count > 0) RenderData.AddRange(rList);
     }
 
     // Завершаем стенцил если установлен

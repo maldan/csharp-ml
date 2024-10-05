@@ -172,13 +172,11 @@ public static partial class OpenGL32
   private static void DebugCallback(uint source, uint type, uint id, uint severity, int length, IntPtr message,
     IntPtr userParam)
   {
-    // Преобразование указателя сообщения в строку
-    var msg = Marshal.PtrToStringAnsi(message, length);
-
-    // Вывод информации об ошибке или предупреждении
     if (type == GL_DEBUG_TYPE_ERROR)
+    {
+      var msg = Marshal.PtrToStringAnsi(message, length);
       Console.WriteLine($"OpenGL Error: [type={type}, severity={severity}] {msg}");
-    // else Console.WriteLine($"OpenGL Debug Message: [type={type}, severity={severity}] {msg}");
+    }
   }
 
   public static void InitDebugCallback()

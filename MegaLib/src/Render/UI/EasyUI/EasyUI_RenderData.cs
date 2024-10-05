@@ -17,11 +17,11 @@ public struct StencilRectangle
 
 public class EasyUI_RenderData
 {
-  public List<Vector3> Vertices = [];
-  public List<Vector4> Colors = [];
-  public List<Vector2> UV = [];
-  public List<uint> Indices = [];
-  public List<RO_Line> Lines = [];
+  public List<Vector3> Vertices;
+  public List<Vector4> Colors;
+  public List<Vector2> UV;
+  public List<uint> Indices;
+  public List<RO_Line> Lines;
   private uint _indexOffset;
   public bool IsText;
   public bool IsLine;
@@ -33,6 +33,15 @@ public class EasyUI_RenderData
 
   private bool _isChanged;
   private Rectangle _boundingBox;
+
+  public EasyUI_RenderData()
+  {
+    Vertices = new List<Vector3>(16);
+    Colors = new List<Vector4>(16);
+    UV = new List<Vector2>(16);
+    Indices = new List<uint>(16);
+    Lines = new List<RO_Line>(16);
+  }
 
   public Rectangle BoundingBox
   {

@@ -98,21 +98,13 @@ public class OpenGL_Shader
   public int GetUniformLocation(string varName)
   {
     // Get shader.varName location
-    var key = $"{Id}_{varName}";
     int uniformLocation;
-    if (_uniformLocationCache.ContainsKey(key))
-    {
-      return _uniformLocationCache[key];
-    }
+    if (_uniformLocationCache.ContainsKey(varName)) return _uniformLocationCache[varName];
 
     uniformLocation = OpenGL32.glGetUniformLocation(Id, varName);
     if (uniformLocation == -1) throw new Exception($"Uniform {varName} not found");
-    _uniformLocationCache[$"{Id}_{varName}"] = uniformLocation;
+    _uniformLocationCache[varName] = uniformLocation;
     return uniformLocation;
-
-    /*var uniformLocation = OpenGL32.glGetUniformLocation(Id, name);
-    if (uniformLocation == -1) throw new Exception($"Uniform {name} not found");
-    return uniformLocation;*/
   }
 
   public void SetUniform(string name, float v)
@@ -250,11 +242,10 @@ public class OpenGL_Shader
     OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, textureId);
 
     // Get shader.varName location
-    var key = $"{Id}_{varName}";
     int uniformLocation;
-    if (_uniformLocationCache.ContainsKey(key))
+    if (_uniformLocationCache.ContainsKey(varName))
     {
-      uniformLocation = _uniformLocationCache[key];
+      uniformLocation = _uniformLocationCache[varName];
     }
     else
     {
@@ -265,7 +256,7 @@ public class OpenGL_Shader
         return;
       }
 
-      _uniformLocationCache[$"{Id}_{varName}"] = uniformLocation;
+      _uniformLocationCache[varName] = uniformLocation;
     }
 
     /*var uniformLocation = OpenGL32.glGetUniformLocation(Id, varName);

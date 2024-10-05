@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
@@ -231,6 +232,9 @@ public class LR_EasyUI : LR_Base
   {
     var layer = (Layer_EasyUI)Layer;
 
+    // Если нет вертексов то смысла дальше нет идти
+    if (rd.Vertices.Count == 0) return;
+
     _vertices.Clear();
     _uv.Clear();
     _colors.Clear();
@@ -288,8 +292,13 @@ public class LR_EasyUI : LR_Base
 
   public override void Render()
   {
+    var tt = new Stopwatch();
+    tt.Start();
+
     var layer = (Layer_EasyUI)Layer;
     var renderData = layer.Build(Scene.DeltaTime);
+    tt.Stop();
+    Console.WriteLine($"Build: {tt.ElapsedTicks}");
 
     Shader.Use();
     Shader.Enable(OpenGL32.GL_BLEND);
@@ -314,6 +323,8 @@ public class LR_EasyUI : LR_Base
     Context.MapTexture(layer.FontTexture);
 
     // Основной рендер
+
+    tt.Start();
     renderData.ForEach(rd =>
     {
       // Игнорирование данных (это проще чем удалять из массива)
@@ -360,5 +371,7 @@ public class LR_EasyUI : LR_Base
         RenderMain(rd);
       }
     });
+    tt.Stop();
+    Console.WriteLine($"Render: {tt.ElapsedTicks}");
   }
 }
