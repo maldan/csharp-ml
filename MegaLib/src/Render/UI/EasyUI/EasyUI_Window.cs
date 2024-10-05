@@ -10,6 +10,7 @@ public class EasyUI_Window : EasyUI_Element
   private EasyUI_Element _header;
   private EasyUI_Element _body;
   private EasyUI_Element _minimize;
+  private EasyUI_Element _close;
 
   public string Title
   {
@@ -25,16 +26,21 @@ public class EasyUI_Window : EasyUI_Element
 
   public EasyUI_Window()
   {
-    _header = new EasyUI_Element();
-    _header.Style.Y = -20;
-    _header.Style.Width = 80;
-    _header.Style.Height = 20;
-    _header.Style.BackgroundColor = "#232323";
-    _header.Style.BorderWidth = 1;
-    _header.Style.BorderColor = "#232323";
-    _header.Style.TextColor = "#c0c0c0";
-    _header.Text = "Window";
-    _header.Style.TextAlign = TextAlignment.VerticalCenter;
+    _header = new EasyUI_Element
+    {
+      Style =
+      {
+        Y = -20,
+        Width = 80,
+        Height = 20,
+        BackgroundColor = "#232323",
+        BorderWidth = 1,
+        BorderColor = "#232323",
+        TextColor = "#c0c0c0",
+        TextAlign = TextAlignment.VerticalCenter
+      },
+      Text = "Window"
+    };
     // Style.BorderWidth = 1;
 
     var isDrag = false;
@@ -76,6 +82,14 @@ public class EasyUI_Window : EasyUI_Element
     _minimize.Events.OnClick += () => { _body.IsVisible = !_body.IsVisible; };
     Children.Add(_minimize);
 
+    _close = new EasyUI_Button();
+    _close.Style.TextColor = "#c0c0c0";
+    _close.Text = "x";
+    _close.Style.Width = 16;
+    _close.Style.Height = 20;
+    _close.Events.OnClick += () => { Parent.Remove(this); };
+    Children.Add(_close);
+
     Events.OnRender += delta =>
     {
       if (isDrag)
@@ -85,13 +99,11 @@ public class EasyUI_Window : EasyUI_Element
         Style.Y = Position().Y + Mouse.ClientDelta.Y;
       }
 
-      if (Position().X < 0) Style.X = 0;
-      if (Position().Y < 20) Style.Y = 20;
-      if (Position().X + Width() > Window.Current.ClientWidth) Style.X = Window.Current.ClientWidth - Width();
-      if (Position().Y + Height() > Window.Current.ClientHeight) Style.Y = Window.Current.ClientHeight - Height();
+      Refresh();
     };
 
     SetSize(100, 100);
+    Refresh();
   }
 
   public void SetSize(float width, float height)
@@ -107,6 +119,24 @@ public class EasyUI_Window : EasyUI_Element
     _body.Style.Height = height;
     Style.Width = width;
     Style.Height = height;
+  }
+
+  private void Refresh()
+  {
+    if (Position().X < 0) Style.X = 0;
+    if (Position().Y < 20) Style.Y = 20;
+    if (Position().X + Width() > Window.Current.ClientWidth) Style.X = Window.Current.ClientWidth - Width();
+    if (Position().Y + Height() > Window.Current.ClientHeight) Style.Y = Window.Current.ClientHeight - Height();
+
+    _close.Style.X = Width() - _close.Width() - 1;
+    _close.Style.Y = -20;
+
+    _minimize.Style.X = Width() - _close.Width() - _minimize.Width() - 1;
+    _minimize.Style.Y = -20;
+
+    _header.Style.Width = Width();
+    _body.Style.Width = Width();
+    _body.Style.Height = Height();
   }
 
   public override void Add(EasyUI_Element element)

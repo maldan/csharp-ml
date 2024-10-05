@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
+using MegaLib.OS;
 using MegaLib.OS.Api;
 using MegaLib.Render.Buffer;
 using MegaLib.Render.Core;
@@ -78,6 +79,8 @@ public class LR_EasyUI : LR_Base
         
         uniform sampler2D uFontTexture;
         uniform vec3 uMode;
+        uniform vec4 uRectangle;
+        uniform vec4 uCornerRadius;
         
         const float PI = 3.141592653589793;
         
@@ -110,23 +113,61 @@ public class LR_EasyUI : LR_Base
             return colorLinear;
         }
         
+        bool isInsideRoundedRect(vec2 p, vec2 rectPos, vec2 rectSize, vec4 cornerRadii) {
+    vec2 localPos = p - rectPos + rectSize / 2.0;
+
+    // Верхний левый угол
+    if (localPos.x < cornerRadii.x && localPos.y < cornerRadii.x) {
+        return length(localPos - vec2(cornerRadii.x, cornerRadii.x)) <= cornerRadii.x;
+    }
+    // Верхний правый угол
+    else if (localPos.x > rectSize.x - cornerRadii.y && localPos.y < cornerRadii.y) {
+        return length(localPos - vec2(rectSize.x - cornerRadii.y, cornerRadii.y)) <= cornerRadii.y;
+    }
+    // Нижний правый угол
+    else if (localPos.x > rectSize.x - cornerRadii.z && localPos.y > rectSize.y - cornerRadii.z) {
+        return length(localPos - vec2(rectSize.x - cornerRadii.z, rectSize.y - cornerRadii.z)) <= cornerRadii.z;
+    }
+    // Нижний левый угол
+    else if (localPos.x < cornerRadii.w && localPos.y > rectSize.y - cornerRadii.w) {
+        return length(localPos - vec2(cornerRadii.w, rectSize.y - cornerRadii.w)) <= cornerRadii.w;
+    }
+
+    // Если это не угол, то проверяем, внутри ли прямоугольника
+    return (localPos.x >= 0.0 && localPos.x <= rectSize.x && localPos.y >= 0.0 && localPos.y <= rectSize.y);
+}
+        
         void main()
         {
+            // Text
             if (uMode == vec3(2, 0, 0)) {
                 vec4 texelColor = texture(uFontTexture, vo_UV) * vo_Color;
                 if (texelColor.a <= 0.01) discard;
                 color = texelColor;
             } else 
+            // Line
             if (uMode == vec3(1, 0, 0)) {
                 color = vo_Color;
             } else {
-                if (vo_UV.x < 0.0) {
+                // Other
+                vec2 p = gl_FragCoord.xy; // Положение текущего пикселя
+                vec2 rectPos = vec2(uRectangle.x, uRectangle.y); // Позиция прямоугольника
+                vec2 rectSize = vec2(uRectangle.z, uRectangle.w); // Размер прямоугольника
+                
+                // Проверка, находится ли пиксель внутри скругленного прямоугольника
+                if (isInsideRoundedRect(p, rectPos, rectSize, uCornerRadius)) {
+                    color = vo_Color; // Цвет прямоугольника
+                } else {
+                    discard; // Пропустить пиксель, если он вне области
+                }
+                
+                /*if (vo_UV.x < 0.0) {
                     color = vo_Color;
                 } else {
                     vec4 texelColor = texture(uFontTexture, vo_UV) * vo_Color;
                     if (texelColor.a <= 0.01) discard;
                     color = texelColor;
-                }
+                }*/
             }
         }";
 
@@ -228,6 +269,15 @@ public class LR_EasyUI : LR_Base
     {
       Shader.SetUniform("uMode", new Vector3(0, 0, 0));
     }
+
+    var bb = rd.BoundingBox;
+    Shader.SetUniform("uRectangle", new Vector4(
+      bb.X + bb.Width / 2f,
+      Window.Current.ClientHeight - (bb.Y + bb.Height / 2f),
+      bb.Width,
+      bb.Height
+    ));
+    Shader.SetUniform("uCornerRadius", rd.BorderRadius);
 
     // Биндим индексы
     OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(_indices));

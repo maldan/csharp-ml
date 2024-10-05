@@ -47,6 +47,7 @@ public class EasyUI_TextInput : EasyUI_Element
     Style.TextAlign = TextAlignment.Left | TextAlignment.VerticalCenter;
     Style.BorderWidth = 1f;
     Style.BorderColor = "#fe000000";
+    Style.BorderRadius = 2;
     Value = "";
     Text = "";
 

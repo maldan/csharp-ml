@@ -35,6 +35,7 @@ public class EasyUI_Element
   private int _clickCount;
   private float _timer;
 
+  public EasyUI_Element Parent;
   public Layer_EasyUI LayerEasyUi;
 
   public void InitCollision(Rectangle r)
@@ -73,6 +74,11 @@ public class EasyUI_Element
   public virtual void Add(EasyUI_Element element)
   {
     Children.Add(element);
+  }
+
+  public virtual void Remove(EasyUI_Element element)
+  {
+    Children.Remove(element);
   }
 
   public void Clear()
@@ -153,6 +159,7 @@ public class EasyUI_Element
   {
     _timer += buildArgs.Delta;
     LayerEasyUi = buildArgs.LayerEasyUi;
+    Parent = buildArgs.Parent;
 
     Clear();
     if (!IsVisible || IsOutsideVisibleArea) return new EasyUI_BuildOut();
@@ -226,6 +233,7 @@ public class EasyUI_Element
     {
       var background = new EasyUI_RenderData();
       background.DrawRectangle(elementBoundingBox, BackgroundColor());
+      background.BorderRadius = BorderRadius();
       RenderData.Add(background);
     }
 
@@ -258,7 +266,8 @@ public class EasyUI_Element
       var rList = new List<EasyUI_RenderData>();
       for (var i = 0; i < Children.Count; i++)
       {
-        Children[i].Build(buildArgs with
+        var child = Children[i];
+        child.Build(buildArgs with
         {
           Parent = this,
           ParentPosition = buildArgs.ParentPosition + Position(),
@@ -266,7 +275,7 @@ public class EasyUI_Element
         });
 
         // Копируем содержимое чилда
-        rList.AddRange(Children[i].RenderData);
+        rList.AddRange(child.RenderData);
       }
 
       // Добавляем в основной список
@@ -333,6 +342,9 @@ public class EasyUI_Element
       string v => string.IsNullOrEmpty(v) ? 0 : float.Parse(v),
       _ => o.Y
     };
+
+    o.X = MathF.Floor(o.X);
+    o.Y = MathF.Floor(o.Y);
 
     return o;
   }
@@ -402,6 +414,18 @@ public class EasyUI_Element
       "green" => new Vector4(0, 1, 0, 1),
       "blue" => new Vector4(0, 0, 1, 1),
       _ => new Vector4(0, 0, 0, 0)
+    };
+  }
+
+  public Vector4 BorderRadius()
+  {
+    return Style.BorderRadius switch
+    {
+      Vector4 v1 => v1,
+      int i => new Vector4(i, i, i, i),
+      float i => new Vector4(i, i, i, i),
+      double i => new Vector4((float)i, (float)i, (float)i, (float)i),
+      _ => new Vector4()
     };
   }
 

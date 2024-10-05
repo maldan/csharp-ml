@@ -15,6 +15,8 @@ public class EasyUI_ElementStyle
   public object BorderWidth;
   public object BorderColor;
 
+  public object BorderRadius;
+
   public void SetArea(float x, float y, float width, float height)
   {
     X = x;

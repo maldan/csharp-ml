@@ -18,6 +18,24 @@ namespace MegaTest;
 
 internal class TestScene3 : Render_Scene
 {
+  private void SpawnWindow()
+  {
+    var easyUi = GetLayer<Layer_EasyUI>();
+
+    var rnd = new Random();
+
+    easyUi.WindowWithScroll("C", (win, layout) =>
+    {
+      win.Style.SetArea(rnd.RangeInt(0, 300), rnd.RangeInt(0, 300), 120, 120);
+      layout.Gap = 5;
+
+      for (var i = 0; i < 16; i++)
+      {
+        easyUi.Button("Click", btn => { btn.Events.OnClick += SpawnWindow; });
+      }
+    });
+  }
+
   public override void OnInit()
   {
     // Инициализируем камеру
@@ -44,6 +62,14 @@ internal class TestScene3 : Render_Scene
 
     var rnd = new Random();
     var sex = 0f;
+
+    /*easyUi.Add<EasyUI_Element>(t =>
+    {
+      t.Style.BackgroundColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
+      t.Style.SetArea(10, 10, 100, 100);
+    });
+
+    return;*/
 
     // Основной контейнер
     easyUi.Add<EasyUI_Element>(t =>
@@ -113,36 +139,23 @@ internal class TestScene3 : Render_Scene
       });
     });
 
-    // Кнопка
-    easyUi.Add<EasyUI_Window>(t =>
-    {
-      t.Style.X = 120;
-      t.Style.Y = 90;
-      t.SetSize(120, 120);
-      t.Title = "A";
+    SpawnWindow();
 
-      // Кнопка
-      easyUi.Add<EasyUI_Button>(t =>
-      {
-        t.Style.X = 0;
-        t.Style.Y = 0;
-        t.Text = "Click";
-      });
+    // Кнопка
+    easyUi.Window("A", win =>
+    {
+      win.Style.SetArea(120, 90, 120, 120);
+      easyUi.Button("Click", btn => { });
     });
 
     // Кнопка
-    easyUi.Add<EasyUI_Window>(t =>
+    easyUi.Window("B", t =>
     {
-      t.Style.X = 220;
-      t.Style.Y = 90;
-      t.SetSize(160, 128);
-      t.Title = "B";
+      t.Style.SetArea(220, 90, 160, 128);
 
       easyUi.Add<EasyUI_ScrollPane>(scrollPane =>
       {
         scrollPane.Style.SetArea(2, 1, 160 - 4, 124);
-        //scrollPane.Style.BorderWidth = 1;
-        //scrollPane.Style.BorderColor = "#00ff00";
 
         easyUi.Add<EasyUI_Layout>(layout =>
         {
@@ -151,8 +164,6 @@ internal class TestScene3 : Render_Scene
           layout.Gap = 5;
           layout.Style.X = 2;
           layout.Style.Y = 2;
-          //layout.Style.BorderWidth = 1;
-          //layout.Style.BorderColor = "#fe0000";
 
           // Кнопка
           EasyUI_Button button = null;
@@ -170,32 +181,13 @@ internal class TestScene3 : Render_Scene
           easyUi.Add<EasyUI_VectorInput>(vi => { vi.Style.Width = 128; });
 
           easyUi.Label("Int");
-          easyUi.Add<EasyUI_TextInput>(input =>
-          {
-            input.Style.X = 0;
-            input.Style.Y = 32;
-            input.Style.Width = 128;
-            input.InputType = TextInputType.Integer;
-          });
+          easyUi.TextInput(TextInputType.Integer, input => { });
 
           easyUi.Label("Float");
-          easyUi.Add<EasyUI_TextInput>(input =>
-          {
-            input.Style.X = 0;
-            input.Style.Y = 32 + 24 + 2;
-            input.Style.Width = 128;
-            input.InputType = TextInputType.Float;
-          });
+          easyUi.TextInput(TextInputType.Float, input => { });
 
           easyUi.Label("Text");
-          easyUi.Add<EasyUI_TextInput>(input =>
-          {
-            input.Style.X = 0;
-            input.Style.Y = 32 + 24 + 24 + 2;
-            input.Style.Width = 128;
-            input.InputType = TextInputType.Text;
-            input.Events.OnChange += o => { button.Text = $"{o}"; };
-          });
+          easyUi.TextInput(TextInputType.Text, input => { });
 
           easyUi.Label("Gaayyy");
           easyUi.Add<EasyUI_Check>(check => { });

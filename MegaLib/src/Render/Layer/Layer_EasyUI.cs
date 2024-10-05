@@ -18,7 +18,7 @@ public class Layer_EasyUI : Layer_Base
 
   private FontData _fontData;
   private Stack<EasyUI_Element> _currentElement = new();
-  private EasyUI_Element _root = new();
+  private EasyUI_Element _root;
 
   public EasyUI_Element FocusedElement;
   public Stack<EasyUI_Element> ScrollElementStack = new();
@@ -26,12 +26,12 @@ public class Layer_EasyUI : Layer_Base
 
   public Layer_EasyUI()
   {
-    _fontData = Font.Generate("Consolas", 15, 1);
+    _fontData = Font.Generate("Consolas", 16, 1);
     FontTexture = _fontData.Texture;
 
     FontTexture.Options.UseMipMaps = false;
     FontTexture.Options.WrapMode = TextureWrapMode.Clamp;
-    FontTexture.Options.FiltrationMode = TextureFiltrationMode.Linear;
+    FontTexture.Options.FiltrationMode = TextureFiltrationMode.Nearest;
 
     _root = new EasyUI_Element()
     {
@@ -47,9 +47,49 @@ public class Layer_EasyUI : Layer_Base
 
   public EasyUI_Window Window(string title, Action<EasyUI_Window> onInit = null)
   {
-    var win = Add<EasyUI_Window>(onInit);
+    var win = Add(onInit);
     win.Title = title;
     return win;
+  }
+
+  public EasyUI_Window WindowWithScroll(string title, Action<EasyUI_Window, EasyUI_Layout> onInit = null)
+  {
+    var win = Add<EasyUI_Window>(window =>
+    {
+      Add<EasyUI_ScrollPane>(scroll =>
+      {
+        Add<EasyUI_Layout>(layout =>
+        {
+          onInit?.Invoke(window, layout);
+
+          window.Events.OnRender += (d) =>
+          {
+            scroll.Style.Width = window.Width();
+            scroll.Style.Height = window.Height();
+
+            layout.Style.Width = scroll.ContentWidth();
+            layout.Style.Height = window.Height();
+          };
+        });
+      });
+    });
+    win.Title = title;
+
+    return win;
+  }
+
+  public EasyUI_Button Button(string title, Action<EasyUI_Button> onInit = null)
+  {
+    var btn = Add(onInit);
+    btn.Text = title;
+    return btn;
+  }
+
+  public EasyUI_TextInput TextInput(TextInputType type, Action<EasyUI_TextInput> onInit = null)
+  {
+    var textInput = Add(onInit);
+    textInput.InputType = type;
+    return textInput;
   }
 
   public T Add<T>(Action<T> onInit = null) where T : EasyUI_Element, new()

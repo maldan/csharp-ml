@@ -29,6 +29,7 @@ public class EasyUI_RenderData
   public bool IsStencilStop;
   public bool IsIgnore;
   public int StencilId;
+  public Vector4 BorderRadius;
 
   private bool _isChanged;
   private Rectangle _boundingBox;
@@ -220,6 +221,11 @@ public class EasyUI_RenderData
       }
     }
 
+    for (var i = 0; i < vectorList.Count; i++)
+    {
+      vectorList[i] = vectorList[i].Floor();
+    }
+
     Vertices.AddRange(vectorList);
 
     return textSize;
@@ -227,6 +233,11 @@ public class EasyUI_RenderData
 
   private void CalculateBoundingBox()
   {
+    _boundingBox.FromX = float.MaxValue;
+    _boundingBox.FromY = float.MaxValue;
+    _boundingBox.ToX = float.MinValue;
+    _boundingBox.ToY = float.MinValue;
+
     for (var i = 0; i < Vertices.Count; i++)
     {
       _boundingBox.FromX = Math.Min(Vertices[i].X, _boundingBox.FromX);

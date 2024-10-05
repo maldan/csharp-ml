@@ -364,6 +364,11 @@ public struct Vector3
     return new Vector3 { X = X, Y = Y, Z = Z };
   }
 
+  public Vector3 Floor()
+  {
+    return new Vector3(MathF.Floor(X), MathF.Floor(Y), MathF.Floor(Z));
+  }
+
   public float this[int index]
   {
     get

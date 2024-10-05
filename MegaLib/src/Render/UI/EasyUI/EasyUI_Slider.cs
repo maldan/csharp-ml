@@ -51,6 +51,7 @@ public class EasyUI_Slider : EasyUI_Element
 
     Style.BackgroundColor = "#232323";
     Style.TextAlign = TextAlignment.Center;
+    Style.BorderRadius = 2f;
 
     if (Direction == Direction.Horizontal)
     {
@@ -70,6 +71,7 @@ public class EasyUI_Slider : EasyUI_Element
       };
       _bar.Events.OnMouseOver += () => { _bar.Style.BackgroundColor = "#db7400"; };
       _bar.Events.OnMouseOut += () => { _bar.Style.BackgroundColor = "#ae5c00"; };
+      _bar.Style.BorderRadius = 2f;
 
       Children.Add(_bar);
 
@@ -119,6 +121,7 @@ public class EasyUI_Slider : EasyUI_Element
       _bar.Events.OnMouseDown += () => { isDrag = true; };
       _bar.Events.OnMouseUp += () => { isDrag = false; };
       _bar.Style.Width = Width() - 8;
+      _bar.Style.BorderRadius = 2;
 
       ValueRender();
       Events.OnRender += delta =>

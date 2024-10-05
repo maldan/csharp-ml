@@ -12,6 +12,7 @@ public class EasyUI_Button : EasyUI_Element
     Style.SetArea(0, 0, 64, 24);
     Style.TextAlign = TextAlignment.Center;
     Style.TextColor = "#c0c0c0";
+    Style.BorderRadius = 2;
 
     var isOver = false;
 
