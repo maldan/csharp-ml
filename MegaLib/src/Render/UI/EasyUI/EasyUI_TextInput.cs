@@ -8,13 +8,6 @@ using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Render.UI.EasyUI;
 
-public enum TextInputType
-{
-  Text,
-  Integer,
-  Float
-}
-
 public class EasyUI_TextInput : EasyUI_Element
 {
   private int _cursorPosition;
@@ -37,7 +30,14 @@ public class EasyUI_TextInput : EasyUI_Element
   public int MaxCharacters;
   public TextInputType InputType = TextInputType.Text;
 
-  public bool IsFocused => EasyUI_GlobalState.FocusedElement == this;
+  public bool IsFocused
+  {
+    get
+    {
+      if (LayerEasyUi?.FocusedElement == null) return false;
+      return LayerEasyUi.FocusedElement == this;
+    }
+  }
 
   public EasyUI_TextInput()
   {
@@ -99,8 +99,8 @@ public class EasyUI_TextInput : EasyUI_Element
     {
       _isSelectionMode = false;
 
-      if (EasyUI_GlobalState.FocusedElement == this) return;
-      EasyUI_GlobalState.FocusedElement = this;
+      if (LayerEasyUi.FocusedElement == this) return;
+      LayerEasyUi.FocusedElement = this;
       Events.OnFocus?.Invoke();
     };
     Events.OnDoubleClick += () =>
@@ -208,8 +208,8 @@ public class EasyUI_TextInput : EasyUI_Element
 
   private void LoseFocus()
   {
-    if (EasyUI_GlobalState.FocusedElement != this) return;
-    EasyUI_GlobalState.FocusedElement = null;
+    if (LayerEasyUi.FocusedElement != this) return;
+    LayerEasyUi.FocusedElement = null;
     Events.OnBlur?.Invoke();
 
     switch (InputType)
@@ -259,6 +259,13 @@ public class EasyUI_TextInput : EasyUI_Element
     var x = Keyboard.GetCurrentInput();
     if (x != "")
     {
+      // Если есть выделение и что-то печатаем, сначала удаляем выделение
+      if (_isSelectionMode)
+      {
+        RemoveCharacter();
+        _isSelectionMode = false;
+      }
+
       var currentString = (string)Value;
       if (currentString == "")
       {

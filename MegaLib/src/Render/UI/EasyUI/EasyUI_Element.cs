@@ -8,65 +8,9 @@ using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS;
 using MegaLib.OS.Api;
 using MegaLib.Render.Color;
+using MegaLib.Render.Layer;
 
 namespace MegaLib.Render.UI.EasyUI;
-
-public class EasyUI_ElementEvents
-{
-  public Action OnClick;
-  public Action OnDoubleClick;
-  public Action OnMouseOver;
-  public Action OnMouseOut;
-  public Action OnMouseDown;
-  public Action OnMouseUp;
-
-  public Action OnFocus;
-  public Action OnBlur;
-
-  public Action<object> OnChange;
-  public Action<float> OnBeforeRender;
-  public Action<float> OnRender;
-}
-
-public struct EasyUI_BuildIn
-{
-  public FontData FontData;
-  public EasyUI_Element Parent;
-  public float Delta;
-  public Vector2 ParentPosition;
-
-  public List<Rectangle> StencilRectangleStack;
-  // public byte ParentStencilId;
-}
-
-public struct EasyUI_BuildOut
-{
-}
-
-[Flags]
-public enum TextAlignment
-{
-  Left = 1,
-  Right = 2,
-  Top = 4,
-  Bottom = 8,
-
-  HorizontalCenter = 16,
-  VerticalCenter = 32,
-  Center = 64
-}
-
-public static class EasyUI_GlobalState
-{
-  public static EasyUI_Element FocusedElement;
-  public static Stack<EasyUI_Element> ScrollElementStack = new();
-}
-
-public enum Direction
-{
-  Vertical,
-  Horizontal
-}
 
 public class EasyUI_Element
 {
@@ -90,6 +34,8 @@ public class EasyUI_Element
   private float _lastClickTime;
   private int _clickCount;
   private float _timer;
+
+  public Layer_EasyUI LayerEasyUi;
 
   public void InitCollision(Rectangle r)
   {
@@ -206,6 +152,7 @@ public class EasyUI_Element
   public virtual EasyUI_BuildOut Build(EasyUI_BuildIn buildArgs)
   {
     _timer += buildArgs.Delta;
+    LayerEasyUi = buildArgs.LayerEasyUi;
 
     Clear();
     if (!IsVisible || IsOutsideVisibleArea) return new EasyUI_BuildOut();
@@ -311,12 +258,10 @@ public class EasyUI_Element
       var rList = new List<EasyUI_RenderData>();
       for (var i = 0; i < Children.Count; i++)
       {
-        Children[i].Build(new EasyUI_BuildIn
+        Children[i].Build(buildArgs with
         {
           Parent = this,
-          FontData = buildArgs.FontData,
           ParentPosition = buildArgs.ParentPosition + Position(),
-          Delta = buildArgs.Delta,
           StencilRectangleStack = stencilRectangleStack.ToArray().ToList()
         });
 

@@ -1,3 +1,4 @@
+using System;
 using MegaLib.IO;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS;
@@ -37,27 +38,32 @@ public class EasyUI_Window : EasyUI_Element
     // Style.BorderWidth = 1;
 
     var isDrag = false;
-    var isHover = false;
-    _header.Events.OnMouseOver += () => { isHover = true; };
-    _header.Events.OnMouseOut += () => { isHover = false; };
+    _header.Events.OnMouseOver += () => { LayerEasyUi.HoverElementList.Add(this); };
+    _header.Events.OnMouseOut += () => { LayerEasyUi.HoverElementList.Remove(this); };
     _header.Events.OnMouseDown += () =>
     {
-      if (isHover)
+      if (LayerEasyUi.CheckHover(this))
       {
         // Проверка, что курсор над заголовком
+        LayerEasyUi.AtTop(this);
         isDrag = true;
       }
     };
     _header.Events.OnMouseUp += () => { isDrag = false; };
     Children.Add(_header);
 
-    _body = new EasyUI_Element();
-    _body.Style.Y = 0;
-    _body.Style.Width = 80;
-    _body.Style.Height = 40;
-    _body.Style.BackgroundColor = "#343434";
-    _body.Style.BorderWidth = 1;
-    _body.Style.BorderColor = "#232323";
+    _body = new EasyUI_Element
+    {
+      Style =
+      {
+        Y = 0,
+        Width = 80,
+        Height = 40,
+        BackgroundColor = "#343434",
+        BorderWidth = 1,
+        BorderColor = "#232323"
+      }
+    };
     Children.Add(_body);
 
     _minimize = new EasyUI_Button();
@@ -66,7 +72,6 @@ public class EasyUI_Window : EasyUI_Element
     _minimize.Style.Width = 16;
     _minimize.Style.Height = 20;
     _minimize.Style.TextColor = "#c0c0c0";
-    // _minimize.Style.BackgroundColor = "#545454";
     _minimize.Text = "_";
     _minimize.Events.OnClick += () => { _body.IsVisible = !_body.IsVisible; };
     Children.Add(_minimize);

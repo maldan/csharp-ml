@@ -23,12 +23,12 @@ public class EasyUI_ScrollPane : EasyUI_Element
     var isOver = false;
     Events.OnMouseOver += () =>
     {
-      EasyUI_GlobalState.ScrollElementStack.Push(this);
+      LayerEasyUi.ScrollElementStack.Push(this);
       isOver = true;
     };
     Events.OnMouseOut += () =>
     {
-      if (EasyUI_GlobalState.ScrollElementStack.Count > 0) EasyUI_GlobalState.ScrollElementStack.Pop();
+      if (LayerEasyUi.ScrollElementStack.Count > 0) LayerEasyUi.ScrollElementStack.Pop();
       isOver = false;
     };
 
@@ -54,8 +54,8 @@ public class EasyUI_ScrollPane : EasyUI_Element
         }
       }
 
-      if (Mouse.WheelDirection != 0 && isOver && EasyUI_GlobalState.ScrollElementStack.Count > 0 &&
-          EasyUI_GlobalState.ScrollElementStack.Peek() == this)
+      if (Mouse.WheelDirection != 0 && isOver && LayerEasyUi.ScrollElementStack.Count > 0 &&
+          LayerEasyUi.ScrollElementStack.Peek() == this)
       {
         _scroll.Scroll(Mouse.WheelDirection * delta * -220);
       }

@@ -40,12 +40,12 @@ public class EasyUI_Slider : EasyUI_Element
     var isDrag = false;
     Events.OnMouseOver += () =>
     {
-      EasyUI_GlobalState.ScrollElementStack.Push(this);
+      LayerEasyUi.ScrollElementStack.Push(this);
       isOver = true;
     };
     Events.OnMouseOut += () =>
     {
-      if (EasyUI_GlobalState.ScrollElementStack.Count > 0) EasyUI_GlobalState.ScrollElementStack.Pop();
+      if (LayerEasyUi.ScrollElementStack.Count > 0) LayerEasyUi.ScrollElementStack.Pop();
       isOver = false;
     };
 
@@ -118,6 +118,7 @@ public class EasyUI_Slider : EasyUI_Element
 
       _bar.Events.OnMouseDown += () => { isDrag = true; };
       _bar.Events.OnMouseUp += () => { isDrag = false; };
+      _bar.Style.Width = Width() - 8;
 
       ValueRender();
       Events.OnRender += delta =>

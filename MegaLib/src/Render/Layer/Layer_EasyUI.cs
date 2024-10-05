@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using MegaLib.OS.Api;
 using MegaLib.Render.Camera;
 using MegaLib.Render.Color;
@@ -17,6 +18,11 @@ public class Layer_EasyUI : Layer_Base
 
   private FontData _fontData;
   private Stack<EasyUI_Element> _currentElement = new();
+  private EasyUI_Element _root = new();
+
+  public EasyUI_Element FocusedElement;
+  public Stack<EasyUI_Element> ScrollElementStack = new();
+  public List<EasyUI_Element> HoverElementList = new();
 
   public Layer_EasyUI()
   {
@@ -27,10 +33,11 @@ public class Layer_EasyUI : Layer_Base
     FontTexture.Options.WrapMode = TextureWrapMode.Clamp;
     FontTexture.Options.FiltrationMode = TextureFiltrationMode.Linear;
 
-    _currentElement.Push(new EasyUI_Element()
+    _root = new EasyUI_Element()
     {
       Style = new EasyUI_ElementStyle()
-    });
+    };
+    _currentElement.Push(_root);
   }
 
   public EasyUI_Label Label(string text)
@@ -64,9 +71,28 @@ public class Layer_EasyUI : Layer_Base
     root.Build(new EasyUI_BuildIn
     {
       Delta = delta,
-      FontData = _fontData
+      FontData = _fontData,
+      LayerEasyUi = this
     });
 
     return root.RenderData;
+  }
+
+  public void AtTop(EasyUI_Element me)
+  {
+    if (_root.Children.Contains(me))
+    {
+      var index = _root.Children.IndexOf(me);
+      var a = _root.Children[^1];
+      var b = _root.Children[index];
+      _root.Children[index] = a;
+      _root.Children[^1] = b;
+    }
+  }
+
+  public bool CheckHover(EasyUI_Element me)
+  {
+    if (HoverElementList.Count == 0) return false;
+    return HoverElementList.Last() == me;
   }
 }

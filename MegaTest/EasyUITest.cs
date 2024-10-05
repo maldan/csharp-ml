@@ -119,6 +119,7 @@ internal class TestScene3 : Render_Scene
       t.Style.X = 120;
       t.Style.Y = 90;
       t.SetSize(120, 120);
+      t.Title = "A";
 
       // Кнопка
       easyUi.Add<EasyUI_Button>(t =>
@@ -134,8 +135,8 @@ internal class TestScene3 : Render_Scene
     {
       t.Style.X = 220;
       t.Style.Y = 90;
-
       t.SetSize(160, 128);
+      t.Title = "B";
 
       easyUi.Add<EasyUI_ScrollPane>(scrollPane =>
       {
