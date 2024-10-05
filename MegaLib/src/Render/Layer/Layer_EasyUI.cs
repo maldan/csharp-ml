@@ -78,10 +78,11 @@ public class Layer_EasyUI : Layer_Base
     return win;
   }
 
-  public EasyUI_Button Button(string title, Action<EasyUI_Button> onInit = null)
+  public EasyUI_Button Button(string title, Action onClick)
   {
-    var btn = Add(onInit);
+    var btn = Add<EasyUI_Button>();
     btn.Text = title;
+    btn.Events.OnClick += onClick;
     return btn;
   }
 

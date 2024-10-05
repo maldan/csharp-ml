@@ -83,7 +83,7 @@ public class ListGPU<T> : IEnumerable<T>
     IsChanged = true;
   }
 
-  public void AddRange(T[] items)
+  public void AddRange(IEnumerable<T> items)
   {
     foreach (var item in items)
     {

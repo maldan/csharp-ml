@@ -236,13 +236,10 @@ public class LR_EasyUI : LR_Base
     _colors.Clear();
     _indices.Clear();
 
-    _vertices.AddRange(rd.Vertices.ToArray());
-    _uv.AddRange(rd.UV.ToArray());
-    _colors.AddRange(rd.Colors.ToArray());
-    _indices.AddRange(rd.Indices.ToArray());
-
-    // Маппим текстуру шрифтов
-    Context.MapTexture(layer.FontTexture);
+    _vertices.AddRange(rd.Vertices);
+    _uv.AddRange(rd.UV);
+    _colors.AddRange(rd.Colors);
+    _indices.AddRange(rd.Indices);
 
     // Загружаем на гпу
     _vertices.Sync();
@@ -312,6 +309,9 @@ public class LR_EasyUI : LR_Base
     }
 
     Shader.SetUniform("uModelMatrix", _mx);
+
+    // Маппим текстуру шрифтов
+    Context.MapTexture(layer.FontTexture);
 
     // Основной рендер
     renderData.ForEach(rd =>

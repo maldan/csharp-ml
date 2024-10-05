@@ -31,7 +31,7 @@ internal class TestScene3 : Render_Scene
 
       for (var i = 0; i < 16; i++)
       {
-        easyUi.Button("Click", btn => { btn.Events.OnClick += SpawnWindow; });
+        easyUi.Button("Click", () => { SpawnWindow(); });
       }
     });
   }
@@ -145,7 +145,7 @@ internal class TestScene3 : Render_Scene
     easyUi.Window("A", win =>
     {
       win.Style.SetArea(120, 90, 120, 120);
-      easyUi.Button("Click", btn => { });
+      easyUi.Button("Click", () => { });
     });
 
     // Кнопка

@@ -14,6 +14,9 @@ public class OpenGL_Shader
   public uint Id { get; private set; }
   public OpenGL_Context Context;
 
+  private Dictionary<string, int> _attributeLocationCache = new();
+  private Dictionary<string, int> _uniformLocationCache = new();
+
   public void Compile()
   {
     // Create program
@@ -92,11 +95,24 @@ public class OpenGL_Shader
     OpenGL32.glDisable(v);
   }
 
-  public int GetUniformLocation(string name)
+  public int GetUniformLocation(string varName)
   {
-    var uniformLocation = OpenGL32.glGetUniformLocation(Id, name);
-    if (uniformLocation == -1) throw new Exception($"Uniform {name} not found");
+    // Get shader.varName location
+    var key = $"{Id}_{varName}";
+    int uniformLocation;
+    if (_uniformLocationCache.ContainsKey(key))
+    {
+      return _uniformLocationCache[key];
+    }
+
+    uniformLocation = OpenGL32.glGetUniformLocation(Id, varName);
+    if (uniformLocation == -1) throw new Exception($"Uniform {varName} not found");
+    _uniformLocationCache[$"{Id}_{varName}"] = uniformLocation;
     return uniformLocation;
+
+    /*var uniformLocation = OpenGL32.glGetUniformLocation(Id, name);
+    if (uniformLocation == -1) throw new Exception($"Uniform {name} not found");
+    return uniformLocation;*/
   }
 
   public void SetUniform(string name, float v)
@@ -169,9 +185,19 @@ public class OpenGL_Shader
         throw new Exception($"Unknown type {type}");
     }
 
-    // Get location
-    var attributeLocation = OpenGL32.glGetAttribLocation(Id, attributeName);
-    if (attributeLocation == -1) throw new Exception($"Attribute {attributeName} not found");
+    // Получаем позицию атрибута. С кэшированием.
+    var key = $"{Id}_{attributeName}";
+    var attributeLocation = -1;
+    if (_attributeLocationCache.ContainsKey(key))
+    {
+      attributeLocation = _attributeLocationCache[key];
+    }
+    else
+    {
+      attributeLocation = OpenGL32.glGetAttribLocation(Id, attributeName);
+      if (attributeLocation == -1) throw new Exception($"Attribute {attributeName} not found");
+      _attributeLocationCache[$"{Id}_{attributeName}"] = attributeLocation;
+    }
 
     // Sync if changed
     buffer.Sync();
@@ -224,13 +250,31 @@ public class OpenGL_Shader
     OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, textureId);
 
     // Get shader.varName location
-    var uniformLocation = OpenGL32.glGetUniformLocation(Id, varName);
+    var key = $"{Id}_{varName}";
+    int uniformLocation;
+    if (_uniformLocationCache.ContainsKey(key))
+    {
+      uniformLocation = _uniformLocationCache[key];
+    }
+    else
+    {
+      uniformLocation = OpenGL32.glGetUniformLocation(Id, varName);
+      if (uniformLocation == -1)
+      {
+        OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, 0);
+        return;
+      }
+
+      _uniformLocationCache[$"{Id}_{varName}"] = uniformLocation;
+    }
+
+    /*var uniformLocation = OpenGL32.glGetUniformLocation(Id, varName);
     if (uniformLocation == -1)
     {
       // Unbind
       OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, 0);
       return;
-    }
+    }*/
 
     // Set shader.varName = slot;
     OpenGL32.glUniform1i(uniformLocation, (int)slot);

@@ -15,16 +15,29 @@ using GLfloat = float;
 public static partial class OpenGL32
 {
   private static Dictionary<string, IntPtr> _cache = new();
+  private static Dictionary<string, object> _cache2 = new();
+  private static Dictionary<string, IntPtr> _stringNamesCache = new();
 
   private static T GetProcedure<T>(string name)
   {
     if (_cache.ContainsKey(name))
-      return Marshal.GetDelegateForFunctionPointer<T>(_cache[name]);
+      return (T)_cache2[name];
+    //return Marshal.GetDelegateForFunctionPointer<T>(_cache[name]);
 
     var ptr = wglGetProcAddress(name);
     if (ptr == IntPtr.Zero) throw new Exception($"Procedure {name} not found");
     _cache[name] = ptr;
-    return Marshal.GetDelegateForFunctionPointer<T>(ptr);
+    var fn = Marshal.GetDelegateForFunctionPointer<T>(ptr);
+    _cache2[name] = fn;
+    return fn;
+  }
+
+  private static IntPtr GetStringNamePtr(string name)
+  {
+    if (_stringNamesCache.ContainsKey(name)) return _stringNamesCache[name];
+    var namePtr = Marshal.StringToHGlobalAnsi(name);
+    _stringNamesCache[name] = namePtr;
+    return namePtr;
   }
 
   public delegate void DebugMessageDelegate(uint source, uint type, uint id, uint severity, int length,
@@ -73,17 +86,15 @@ public static partial class OpenGL32
 
   public static int glGetUniformLocation(uint program, string name)
   {
-    var namePtr = Marshal.StringToHGlobalAnsi(name);
+    var namePtr = GetStringNamePtr(name);
     var uniformLocation = glGetUniformLocation(program, namePtr);
-    Marshal.FreeHGlobal(namePtr);
     return uniformLocation;
   }
 
   public static int glGetAttribLocation(uint program, string name)
   {
-    var namePtr = Marshal.StringToHGlobalAnsi(name);
+    var namePtr = GetStringNamePtr(name);
     var attribLocation = glGetAttribLocation(program, namePtr);
-    Marshal.FreeHGlobal(namePtr);
     return attribLocation;
   }
 

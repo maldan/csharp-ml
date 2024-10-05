@@ -142,7 +142,7 @@ public class EasyUI_RenderData
     // uint indexOffset = 0;
 
     var textSize = new Rectangle(float.MaxValue, float.MaxValue, float.MinValue, float.MinValue);
-    var vectorList = new List<Vector3>();
+    var vectorList = new List<Vector3>(text.Length * 4);
 
     for (var i = 0; i < text.Length; i++)
     {

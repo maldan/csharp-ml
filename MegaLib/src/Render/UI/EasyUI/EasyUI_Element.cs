@@ -305,7 +305,7 @@ public class EasyUI_Element
     {
       float v => v,
       int v => v,
-      string v => string.IsNullOrEmpty(v) ? 0 : float.Parse(v),
+      //string v => string.IsNullOrEmpty(v) ? 0 : float.Parse(v),
       _ => 0
     };
   }
@@ -316,7 +316,7 @@ public class EasyUI_Element
     {
       float v => v,
       int v => v,
-      string v => string.IsNullOrEmpty(v) ? 0 : float.Parse(v),
+      //string v => string.IsNullOrEmpty(v) ? 0 : float.Parse(v),
       _ => 0
     };
   }

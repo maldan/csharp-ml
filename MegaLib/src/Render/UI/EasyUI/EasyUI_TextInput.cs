@@ -22,6 +22,7 @@ public class EasyUI_TextInput : EasyUI_Element
   private float _deleteTimer;
   private float _deleteTimer2;
   private bool _isSelectionMode;
+  private object _lastValue;
 
   private EasyUI_Element _cursor;
   private EasyUI_Element _selection;
@@ -157,7 +158,10 @@ public class EasyUI_TextInput : EasyUI_Element
   {
     Events.OnBeforeRender += (_) =>
     {
-      if (!IsFocused) Value = $"{read()}".Replace(",", ".");
+      if (!IsFocused)
+      {
+        Value = $"{read()}".Replace(",", ".");
+      }
     };
   }
 
