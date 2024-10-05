@@ -14,6 +14,7 @@ namespace MegaLib.Render.UI.EasyUI;
 public class EasyUI_ElementEvents
 {
   public Action OnClick;
+  public Action OnDoubleClick;
   public Action OnMouseOver;
   public Action OnMouseOut;
   public Action OnMouseDown;
@@ -58,6 +59,7 @@ public enum TextAlignment
 public static class EasyUI_GlobalState
 {
   public static EasyUI_Element FocusedElement;
+  public static Stack<EasyUI_Element> ScrollElementStack = new();
 }
 
 public enum Direction
@@ -84,6 +86,10 @@ public class EasyUI_Element
   public object Value; // Пользовательское значение
   protected FontData CurrentFontData;
   public Rectangle StencilRectangle;
+
+  private float _lastClickTime;
+  private int _clickCount;
+  private float _timer;
 
   public void InitCollision(Rectangle r)
   {
@@ -166,7 +172,27 @@ public class EasyUI_Element
     // Клик только если мышь опущена на элементе
     if (_isMouseDown && _isMouseOver && Mouse.IsKeyUp(MouseKey.Left))
     {
-      Events?.OnClick?.Invoke();
+      var currentTime = _timer; // Предположим, что у вас есть способ получить текущее время
+      if (currentTime - _lastClickTime <= 0.3f)
+      {
+        _clickCount++;
+      }
+      else
+      {
+        _clickCount = 1; // Сброс количества кликов
+      }
+
+      _lastClickTime = currentTime;
+
+      if (_clickCount == 2)
+      {
+        Events?.OnDoubleClick?.Invoke();
+        _clickCount = 0; // Сброс после двойного клика
+      }
+      else
+      {
+        Events?.OnClick?.Invoke();
+      }
     }
 
     // Отпустил мышь с нажатого элемента, причем неважно, где курсор
@@ -179,6 +205,8 @@ public class EasyUI_Element
 
   public virtual EasyUI_BuildOut Build(EasyUI_BuildIn buildArgs)
   {
+    _timer += buildArgs.Delta;
+
     Clear();
     if (!IsVisible || IsOutsideVisibleArea) return new EasyUI_BuildOut();
 

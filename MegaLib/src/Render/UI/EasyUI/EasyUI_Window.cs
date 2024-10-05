@@ -16,6 +16,12 @@ public class EasyUI_Window : EasyUI_Element
     get => _header.Text;
   }
 
+  public new string Text
+  {
+    set => _body.Text = value;
+    get => _body.Text;
+  }
+
   public EasyUI_Window()
   {
     _header = new EasyUI_Element();

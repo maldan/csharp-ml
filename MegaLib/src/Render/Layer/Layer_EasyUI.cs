@@ -38,6 +38,13 @@ public class Layer_EasyUI : Layer_Base
     return Add<EasyUI_Label>(label => { label.Text = text; });
   }
 
+  public EasyUI_Window Window(string title, Action<EasyUI_Window> onInit = null)
+  {
+    var win = Add<EasyUI_Window>(onInit);
+    win.Title = title;
+    return win;
+  }
+
   public T Add<T>(Action<T> onInit = null) where T : EasyUI_Element, new()
   {
     var cnt = _currentElement.Peek();

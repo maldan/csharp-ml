@@ -166,6 +166,8 @@ internal class TestScene3 : Render_Scene
             t.Events.OnMouseOut += () => { Console.WriteLine("B"); };
           });
 
+          easyUi.Add<EasyUI_VectorInput>(vi => { vi.Style.Width = 128; });
+
           easyUi.Label("Int");
           easyUi.Add<EasyUI_TextInput>(input =>
           {

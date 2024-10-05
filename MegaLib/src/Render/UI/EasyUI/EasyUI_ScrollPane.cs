@@ -1,4 +1,5 @@
 using System;
+using MegaLib.IO;
 using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Render.UI.EasyUI;
@@ -18,6 +19,18 @@ public class EasyUI_ScrollPane : EasyUI_Element
     Style.BorderColor = new Vector4(0, 0, 0, 0.25f);
 
     Children.Add(_scroll);
+
+    var isOver = false;
+    Events.OnMouseOver += () =>
+    {
+      EasyUI_GlobalState.ScrollElementStack.Push(this);
+      isOver = true;
+    };
+    Events.OnMouseOut += () =>
+    {
+      if (EasyUI_GlobalState.ScrollElementStack.Count > 0) EasyUI_GlobalState.ScrollElementStack.Pop();
+      isOver = false;
+    };
 
     Events.OnRender += (delta) =>
     {
@@ -39,6 +52,12 @@ public class EasyUI_ScrollPane : EasyUI_Element
           var pp = innerElement.Height() - Height();
           innerElement.Style.Y = (float)_scroll.Value * -pp;
         }
+      }
+
+      if (Mouse.WheelDirection != 0 && isOver && EasyUI_GlobalState.ScrollElementStack.Count > 0 &&
+          EasyUI_GlobalState.ScrollElementStack.Peek() == this)
+      {
+        _scroll.Scroll(Mouse.WheelDirection * delta * -220);
       }
     };
   }
