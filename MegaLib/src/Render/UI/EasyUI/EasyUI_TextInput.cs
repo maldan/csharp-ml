@@ -128,7 +128,7 @@ public class EasyUI_TextInput : EasyUI_Element
       }
     };
 
-    Events.OnRender += delta =>
+    Events.OnBeforeRender += delta =>
     {
       if (isOver) Mouse.Cursor = MouseCursor.TextInput;
 
@@ -152,6 +152,8 @@ public class EasyUI_TextInput : EasyUI_Element
 
       _textContent.Text = $"{Value}";
     };
+
+    InitKeys();
   }
 
   public void OnRead(Func<float> read)
@@ -264,6 +266,20 @@ public class EasyUI_TextInput : EasyUI_Element
     _cursorPosition = ((string)Value).Length;
     _fromCursorPosition = 0;
     _isSelectionMode = false;
+  }
+
+  private void InitKeys()
+  {
+    _keyState[(byte)KeyboardKey.Backspace] = Keyboard.IsKeyDown(KeyboardKey.Backspace);
+    _keyState[(byte)KeyboardKey.ArrowLeft] = Keyboard.IsKeyDown(KeyboardKey.ArrowLeft);
+    _keyState[(byte)KeyboardKey.ArrowRight] = Keyboard.IsKeyDown(KeyboardKey.ArrowRight);
+    _keyState[(byte)KeyboardKey.ArrowUp] = Keyboard.IsKeyDown(KeyboardKey.ArrowUp);
+    _keyState[(byte)KeyboardKey.ArrowDown] = Keyboard.IsKeyDown(KeyboardKey.ArrowDown);
+    _keyState[(byte)KeyboardKey.Enter] = Keyboard.IsKeyDown(KeyboardKey.Enter);
+    _keyState[(byte)KeyboardKey.Shift] = Keyboard.IsKeyDown(KeyboardKey.Shift);
+
+    // Предыдущее состояние клавиш
+    foreach (var (key, value) in _keyState) _keyPreviousState[key] = value;
   }
 
   private void HandleInput(float delta)

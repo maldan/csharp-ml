@@ -18,6 +18,8 @@ public struct EasyUI_BuildIn
   public bool IsParentChanged;
 
   public List<EasyUI_RenderData> RenderData;
+
+  public List<int> Changes;
   // public byte ParentStencilId;
 }
 

@@ -362,10 +362,10 @@ public struct EasyUI_RenderData
     var offset = new Vector2(area.FromX, area.FromY);
 
     Vertices.AddRange([
-      (new Vector3(-0.5f, -0.5f, 0) + pivot) * size + offset,
-      (new Vector3(-0.5f, 0.5f, 0) + pivot) * size + offset,
-      (new Vector3(0.5f, 0.5f, 0) + pivot) * size + offset,
-      (new Vector3(0.5f, -0.5f, 0) + pivot) * size + offset
+      ((new Vector3(-0.5f, -0.5f, 0) + pivot) * size + offset).Floor(),
+      ((new Vector3(-0.5f, 0.5f, 0) + pivot) * size + offset).Floor(),
+      ((new Vector3(0.5f, 0.5f, 0) + pivot) * size + offset).Floor(),
+      ((new Vector3(0.5f, -0.5f, 0) + pivot) * size + offset).Floor()
     ]);
     UV.AddRange([
       new Vector2(0, 0) + new Vector2(-1, -1),

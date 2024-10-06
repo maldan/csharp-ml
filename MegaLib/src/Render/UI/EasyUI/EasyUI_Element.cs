@@ -25,6 +25,7 @@ public class EasyUI_Element
     get => _text;
     set
     {
+      if (_text == value) return;
       _text = value;
       _isTextChanged = true;
     }
@@ -230,7 +231,8 @@ public class EasyUI_Element
       var stencil = new EasyUI_RenderData
       {
         Type = RenderDataType.StencilStart,
-        StencilId = stencilId
+        StencilId = stencilId,
+        BorderRadius = Style.BorderRadius
         //IsStencilStart = true,
       };
       stencil.DrawRectangle(stencilRectangleStack.Last(), new Vector4());
@@ -243,7 +245,10 @@ public class EasyUI_Element
       _backgroundRenderData.BorderRadius = Style.BorderRadius;
       _backgroundRenderData.Clear();
       if (Style.BackgroundColor.A > 0)
+      {
         _backgroundRenderData.DrawRectangle(elementBoundingBox, Style.BackgroundColor);
+        buildArgs.Changes.Add(1);
+      }
     }
 
     // Если есть видимая область, то отправляем в рендер
@@ -253,21 +258,20 @@ public class EasyUI_Element
     }
 
     // Обводка. Если тело переместилось, обводку придется перерисовать
-    if (Style.IsBorderChanged || Style.IsBackgroundChanged || buildArgs.IsParentChanged)
+    /*if (Style.IsBorderChanged || Style.IsBackgroundChanged || buildArgs.IsParentChanged)
     {
       _borderRenderData.BorderRadius = Style.BorderRadius;
       _borderRenderData.Clear();
       if (Style.BorderWidth.LengthSquared > 0)
         _borderRenderData.DrawOutline(elementBoundingBox, Style.BorderWidth, Style.BorderColor);
-      //Style.IsBorderChanged = false;
-      //Style.IsBackgroundChanged = false;
+      buildArgs.Changes.Add(1);
     }
 
     // Если обводка есть то перерисовать
     if (Style.BorderWidth.LengthSquared > 0)
     {
       buildArgs.RenderData.Add(_borderRenderData);
-    }
+    }*/
 
     // Обработка текста
     if (_isTextChanged || Style.IsTextChanged || Style.IsBackgroundChanged || buildArgs.IsParentChanged)
@@ -282,6 +286,8 @@ public class EasyUI_Element
           elementBoundingBox
         );
       _isTextChanged = false;
+      buildArgs.Changes.Add(1);
+      // Console.WriteLine("X");
     }
 
     if (Text != "") buildArgs.RenderData.Add(_textRenderData);
@@ -324,7 +330,8 @@ public class EasyUI_Element
           Parent = this,
           ParentPosition = buildArgs.ParentPosition + Style.Position,
           StencilRectangleStack = stencilRectangleStack.ToArray().ToList(),
-          IsParentChanged = Style.IsBackgroundChanged || Style.IsBorderChanged || Style.IsTextChanged
+          IsParentChanged = Style.IsBackgroundChanged || Style.IsBorderChanged || Style.IsTextChanged ||
+                            buildArgs.IsParentChanged
         });
 
         // Копируем содержимое чилда
@@ -353,8 +360,6 @@ public class EasyUI_Element
     if (Style.IsBackgroundChanged) Style.IsBackgroundChanged = false;
     if (Style.IsTextChanged) Style.IsTextChanged = false;
     if (Style.IsBorderChanged) Style.IsBorderChanged = false;
-
-    return;
   }
 }
 

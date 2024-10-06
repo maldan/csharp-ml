@@ -11,7 +11,7 @@ public class EasyUI_Layout : EasyUI_Element
 
   public EasyUI_Layout()
   {
-    Style.BackgroundColor = new Vector4(0, 0, 0, 0.01f);
+    // Style.BackgroundColor = new Vector4(1, 0, 0, 0.01f);
 
     Events.OnBeforeRender += (delta) =>
     {

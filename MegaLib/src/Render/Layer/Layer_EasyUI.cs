@@ -108,13 +108,17 @@ public class Layer_EasyUI : Layer_Base
   {
     _renderData.Clear();
     var root = _currentElement.Peek();
+    var changes = new List<int>();
     root.Build(new EasyUI_BuildIn
     {
       Delta = delta,
       FontData = _fontData,
       LayerEasyUi = this,
-      RenderData = _renderData
+      RenderData = _renderData,
+      Changes = changes
     });
+
+    // Console.WriteLine($"Changes: {changes.Count} | Elements: {_renderData.Count}");
 
     return _renderData;
   }

@@ -182,6 +182,19 @@ public struct Vector4
     };
   }
 
+  public static bool operator ==(Vector4 v1, Vector4 v2)
+  {
+    return MathF.Abs(v1.X - v2.X) < float.Epsilon &&
+           MathF.Abs(v1.Y - v2.Y) < float.Epsilon &&
+           MathF.Abs(v1.Z - v2.Z) < float.Epsilon &&
+           MathF.Abs(v1.W - v2.W) < float.Epsilon;
+  }
+
+  public static bool operator !=(Vector4 v1, Vector4 v2)
+  {
+    return !(v1 == v2);
+  }
+
   #region Set
 
   public static Vector4 One => new(1, 1, 1, 1);

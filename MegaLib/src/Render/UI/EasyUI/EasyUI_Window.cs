@@ -91,7 +91,7 @@ public class EasyUI_Window : EasyUI_Element
     _close.Events.OnClick += () => { Parent.Remove(this); };
     Children.Add(_close);
 
-    Events.OnRender += delta =>
+    Events.OnBeforeRender += delta =>
     {
       if (isDrag)
       {

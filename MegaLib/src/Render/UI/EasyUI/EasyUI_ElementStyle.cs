@@ -1,10 +1,11 @@
+using System;
 using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.Render.Color;
 
 namespace MegaLib.Render.UI.EasyUI;
 
-public class EasyUI_ElementStyle
+/*public class EasyUI_ElementStyle
 {
   public object Width;
   public object Height;
@@ -26,7 +27,7 @@ public class EasyUI_ElementStyle
     Width = width;
     Height = height;
   }
-}
+}*/
 
 public struct ElementStyle
 {
@@ -46,6 +47,7 @@ public struct ElementStyle
     get => _x;
     set
     {
+      if (Math.Abs(_x - value) < float.Epsilon) return;
       _x = value;
       _isBackgroundChanged = true;
     }
@@ -56,6 +58,7 @@ public struct ElementStyle
     get => _y;
     set
     {
+      if (Math.Abs(_y - value) < float.Epsilon) return;
       _y = value;
       _isBackgroundChanged = true;
     }
@@ -66,6 +69,7 @@ public struct ElementStyle
     get => _width;
     set
     {
+      if (Math.Abs(_width - value) < float.Epsilon) return;
       _width = value;
       _isBackgroundChanged = true;
     }
@@ -76,6 +80,7 @@ public struct ElementStyle
     get => _height;
     set
     {
+      if (Math.Abs(_height - value) < float.Epsilon) return;
       _height = value;
       _isBackgroundChanged = true;
     }
@@ -86,6 +91,7 @@ public struct ElementStyle
     get => _borderRadius;
     set
     {
+      if (_borderRadius == value) return;
       _borderRadius = value;
       _isBackgroundChanged = true;
     }
@@ -96,6 +102,7 @@ public struct ElementStyle
     get => _backgroundColor;
     set
     {
+      if (_backgroundColor == value) return;
       _backgroundColor = value;
       _isBackgroundChanged = true;
     }
@@ -107,9 +114,9 @@ public struct ElementStyle
     set => _isBackgroundChanged = value;
   }
 
-  public Vector2 Position => new(X, Y);
-  public Vector2 Size => new(Width, Height);
-  public Rectangle BoundingBox => Rectangle.FromLeftTopWidthHeight(X, Y, Width, Height);
+  public Vector2 Position => new(_x, _y);
+  public Vector2 Size => new(_width, _height);
+  public Rectangle BoundingBox => Rectangle.FromLeftTopWidthHeight(_x, _y, _width, _height);
 
   public void SetArea(float x, float y, float width, float height)
   {
@@ -143,6 +150,7 @@ public struct ElementStyle
     get => _borderWidth;
     set
     {
+      if (_borderWidth == value) return;
       _borderWidth = value;
       _isBorderChanged = true;
     }
@@ -153,6 +161,7 @@ public struct ElementStyle
     get => _borderColor;
     set
     {
+      if (_borderColor == value) return;
       _borderColor = value;
       _isBorderChanged = true;
     }
@@ -193,6 +202,7 @@ public struct ElementStyle
     get => _textColor;
     set
     {
+      if (_textColor == value) return;
       _textColor = value;
       _isTextChanged = true;
     }
@@ -203,6 +213,7 @@ public struct ElementStyle
     get => _textAlignment;
     set
     {
+      if (_textAlignment == value) return;
       _textAlignment = value;
       _isTextChanged = true;
     }

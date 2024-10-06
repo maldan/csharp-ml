@@ -71,110 +71,84 @@ public class LR_EasyUI : LR_Base
 
     // language=glsl
     var fragment = @"
-        #version 330 core
-        precision highp float;
-        precision highp int;
-        precision highp sampler2D;
+      #version 330 core
+      precision highp float;
+      precision highp int;
+      precision highp sampler2D;
 
-        in vec3 vo_Position;
-        in vec4 vo_Color;
-        in vec2 vo_UV;
-        
-        out vec4 color;
-        
-        uniform sampler2D uFontTexture;
-        uniform vec3 uMode;
-        uniform vec4 uRectangle;
-        uniform vec4 uCornerRadius;
-        
-        const float PI = 3.141592653589793;
-        
-        float remap(float value, float fromMin, float fromMax, float toMin, float toMax) {
-            float normalizedValue = (value - fromMin) / (fromMax - fromMin);
-            return mix(toMin, toMax, normalizedValue);
-        }
-        
-        vec3 linearToSRGB(vec3 colorLinear) {
-            vec3 colorSRGB;
-            for (int i = 0; i < 3; ++i) {
-                if (colorLinear[i] <= 0.0031308) {
-                    colorSRGB[i] = 12.92 * colorLinear[i];
-                } else {
-                    colorSRGB[i] = 1.055 * pow(colorLinear[i], 1.0 / 2.4) - 0.055;
-                }
-            }
-            return colorSRGB;
-        }
-            
-        vec3 sRGBToLinear(vec3 colorSRGB) {
-            vec3 colorLinear;
-            for (int i = 0; i < 3; ++i) {
-                if (colorSRGB[i] <= 0.04045) {
-                    colorLinear[i] = colorSRGB[i] / 12.92;
-                } else {
-                    colorLinear[i] = pow((colorSRGB[i] + 0.055) / 1.055, 2.4);
-                }
-            }
-            return colorLinear;
-        }
-        
-        bool isInsideRoundedRect(vec2 p, vec2 rectPos, vec2 rectSize, vec4 cornerRadii) {
-    vec2 localPos = p - rectPos + rectSize / 2.0;
+      in vec3 vo_Position; // Позиция вершины
+      in vec4 vo_Color;    // Цвет вершины
+      in vec2 vo_UV;       // UV координаты для текстуры
 
-    // Верхний левый угол
-    if (localPos.x < cornerRadii.x && localPos.y < cornerRadii.x) {
-        return length(localPos - vec2(cornerRadii.x, cornerRadii.x)) <= cornerRadii.x;
-    }
-    // Верхний правый угол
-    else if (localPos.x > rectSize.x - cornerRadii.y && localPos.y < cornerRadii.y) {
-        return length(localPos - vec2(rectSize.x - cornerRadii.y, cornerRadii.y)) <= cornerRadii.y;
-    }
-    // Нижний правый угол
-    else if (localPos.x > rectSize.x - cornerRadii.z && localPos.y > rectSize.y - cornerRadii.z) {
-        return length(localPos - vec2(rectSize.x - cornerRadii.z, rectSize.y - cornerRadii.z)) <= cornerRadii.z;
-    }
-    // Нижний левый угол
-    else if (localPos.x < cornerRadii.w && localPos.y > rectSize.y - cornerRadii.w) {
-        return length(localPos - vec2(cornerRadii.w, rectSize.y - cornerRadii.w)) <= cornerRadii.w;
-    }
+      out vec4 color;      // Выходной цвет фрагмента
 
-    // Если это не угол, то проверяем, внутри ли прямоугольника
-    return (localPos.x >= 0.0 && localPos.x <= rectSize.x && localPos.y >= 0.0 && localPos.y <= rectSize.y);
-}
-        
-        void main()
-        {
-            // Text
-            if (uMode == vec3(2, 0, 0)) {
-                vec4 texelColor = texture(uFontTexture, vo_UV) * vo_Color;
-                if (texelColor.a <= 0.01) discard;
-                color = texelColor;
-            } else 
-            // Line
-            if (uMode == vec3(1, 0, 0)) {
-                color = vo_Color;
-            } else {
-                // Other
-                vec2 p = gl_FragCoord.xy; // Положение текущего пикселя
-                vec2 rectPos = vec2(uRectangle.x, uRectangle.y); // Позиция прямоугольника
-                vec2 rectSize = vec2(uRectangle.z, uRectangle.w); // Размер прямоугольника
-                
-                // Проверка, находится ли пиксель внутри скругленного прямоугольника
-                if (isInsideRoundedRect(p, rectPos, rectSize, uCornerRadius)) {
-                    color = vo_Color; // Цвет прямоугольника
-                } else {
-                    discard; // Пропустить пиксель, если он вне области
-                }
-                
-                /*if (vo_UV.x < 0.0) {
-                    color = vo_Color;
-                } else {
-                    vec4 texelColor = texture(uFontTexture, vo_UV) * vo_Color;
-                    if (texelColor.a <= 0.01) discard;
-                    color = texelColor;
-                }*/
-            }
-        }";
+      uniform sampler2D uFontTexture;
+      uniform vec3 uMode;          // Режим рендеринга
+      uniform vec4 uRectangle;     // Прямоугольник: (centerX, centerY, halfWidth, halfHeight)
+      uniform vec4 uCornerRadius;  // Радиусы скругления углов: (bottomLeft, bottomRight, topRight, topLeft)
+      uniform vec4 uBorderWidths;  // Толщина обводки для каждой стороны: (top, right, bottom, left)
+      uniform vec4 uBorderColors;  // Цвет обводки для каждой стороны: (top, right, bottom, left)
+
+      // Определяем, в каком квадранте находится текущая точка
+          float getRadius(vec2 p, vec4 radii) {
+              if (p.x > 0.0 && p.y > 0.0)
+                  return radii.y; // Верхний правый
+              if (p.x < 0.0 && p.y > 0.0)
+                  return radii.x; // Верхний левый
+              if (p.x < 0.0 && p.y < 0.0)
+                  return radii.w; // Нижний левый
+              if (p.x > 0.0 && p.y < 0.0)
+                  return radii.z; // Нижний правый
+              return 0.0;
+          }
+          
+      // Функция для расчёта SDF для прямоугольника с закруглёнными углами
+      float sdfRoundedRect(vec2 uv, vec2 rectPos, vec2 rectSize, vec4 radii) {
+          // Половина размеров прямоугольника
+          vec2 halfSize = rectSize * 0.5;
+          
+          // Текущий радиус угла
+          float radius = getRadius(uv - rectPos, radii);
+
+          // Корректировка размеров прямоугольника с учётом радиуса
+          vec2 adjustedHalfSize = halfSize - vec2(
+              uv.x > rectPos.x ? radii.y : radii.x,
+              uv.y > rectPos.y ? radii.y : radii.w
+          );
+
+          // SDF для прямоугольника с закруглёнными углами
+          vec2 d = abs(uv - rectPos) - halfSize + vec2(radius);
+          return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - radius;
+      }
+
+      void main() {
+          // Проверка режима рендеринга
+          if (uMode == vec3(2.0, 0.0, 0.0)) {
+              // Режим 2: Отображение текстуры шрифта
+              vec4 texelColor = texture(uFontTexture, vo_UV) * vo_Color;
+              if (texelColor.a <= 0.01) discard;
+              color = texelColor;
+          }
+          else if (uMode == vec3(1.0, 0.0, 0.0)) {
+              // Режим 1: Отображение сплошного цвета
+              color = vo_Color;
+          }
+          else {
+              // Позиция фрагмента относительно центра прямоугольника
+              vec2 uv = gl_FragCoord.xy;
+
+              // Вызываем функцию SDF для расчёта дистанции
+              float dist = sdfRoundedRect(uv, uRectangle.xy, uRectangle.zw, uCornerRadius);
+              
+              // Плавный переход края
+              float alpha = smoothstep(0.0, 1.0, -dist);
+              
+              // Устанавливаем цвет фрагмента с альфа-каналом
+              color = vec4(vo_Color.rgb, alpha);
+          }
+      }
+
+    ";
 
     #endregion
 
@@ -282,7 +256,9 @@ public class LR_EasyUI : LR_Base
       bb.Width,
       bb.Height
     ));
-    Shader.SetUniform("uCornerRadius", rd.BorderRadius);
+    Shader.SetUniform("uCornerRadius", new Vector4(0, 0, 8, 8));
+    //Shader.SetUniform("uBorderWidths", new Vector4(0, 4, 0, 0)); // Толщина обводки
+    //Shader.SetUniform("uBorderColors", new Vector4(1, 1, 1, 1)); // Цвет обводки для каждой стороны
 
     // Биндим индексы
     OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(_indices));
@@ -387,6 +363,6 @@ public class LR_EasyUI : LR_Base
       }
     });
     tt.Stop();
-    Console.WriteLine($"Render: {tt.ElapsedTicks}");
+    // Console.WriteLine($"Render: {tt.ElapsedTicks}");
   }
 }
