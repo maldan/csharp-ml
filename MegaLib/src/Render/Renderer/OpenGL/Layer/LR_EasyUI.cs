@@ -25,6 +25,10 @@ public class LR_EasyUI : LR_Base
   private ListGPU<Vector2> _uv;
   private uint _vaoId;
   private Matrix4x4 _mx = Matrix4x4.Identity;
+  private float _tick;
+  private int _minBuild;
+  private int _maxBuild;
+  private List<int> _history = [];
 
   public LR_EasyUI(OpenGL_Context context, Layer_Base layer, Render_Scene scene) : base(context, layer, scene)
   {
@@ -262,7 +266,7 @@ public class LR_EasyUI : LR_Base
     // Texture
     Shader.ActivateTexture(layer.FontTexture, "uFontTexture", 0);
 
-    if (rd.IsText)
+    if (rd.Type == RenderDataType.Text)
     {
       Shader.SetUniform("uMode", new Vector3(2, 0, 0));
     }
@@ -298,7 +302,18 @@ public class LR_EasyUI : LR_Base
     var layer = (Layer_EasyUI)Layer;
     var renderData = layer.Build(Scene.DeltaTime);
     tt.Stop();
-    Console.WriteLine($"Build: {tt.ElapsedTicks}");
+
+    _history.Add((int)tt.ElapsedTicks);
+
+    _tick += 1;
+    if (_tick > 300)
+    {
+      _minBuild = Math.Min(_minBuild, (int)tt.ElapsedTicks);
+      _maxBuild = Math.Max(_maxBuild, (int)tt.ElapsedTicks);
+      Console.WriteLine($"Build: {_minBuild} {_history.Average()} {_maxBuild}");
+      _tick = 0;
+      _history.Clear();
+    }
 
     Shader.Use();
     Shader.Enable(OpenGL32.GL_BLEND);
@@ -328,9 +343,9 @@ public class LR_EasyUI : LR_Base
     renderData.ForEach(rd =>
     {
       // Игнорирование данных (это проще чем удалять из массива)
-      if (rd.IsIgnore) return;
+      // if (rd.IsIgnore) return;
 
-      if (rd.IsStencilStop)
+      if (rd.Type == RenderDataType.StencilStop)
       {
         OpenGL32.glStencilFunc(OpenGL32.GL_EQUAL, rd.StencilId - 1, 0xFF);
         OpenGL32.glStencilMask(0x00); // Запрещаем запись в буфер
@@ -339,7 +354,7 @@ public class LR_EasyUI : LR_Base
           OpenGL32.glDisable(OpenGL32.GL_STENCIL_TEST);
         }
       }
-      else if (rd.IsStencilStart)
+      else if (rd.Type == RenderDataType.StencilStart)
       {
         OpenGL32.glEnable(OpenGL32.GL_STENCIL_TEST);
 
@@ -362,7 +377,7 @@ public class LR_EasyUI : LR_Base
         OpenGL32.glStencilFunc(OpenGL32.GL_EQUAL, rd.StencilId, 0xFF);
         OpenGL32.glStencilMask(0x00); // Запрещаем запись в буфер
       }
-      else if (rd.IsLine)
+      else if (rd.Type == RenderDataType.Line)
       {
         RenderLines(rd);
       }

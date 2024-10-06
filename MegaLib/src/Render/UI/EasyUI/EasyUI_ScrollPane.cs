@@ -15,8 +15,8 @@ public class EasyUI_ScrollPane : EasyUI_Element
     _scroll.ShowText = false;
     _scroll.Direction = Direction.Vertical;
 
-    Style.BorderWidth = 1;
-    Style.BorderColor = new Vector4(0, 0, 0, 0.25f);
+    //Style.BorderWidth = 1;
+    //Style.BorderColor = new Vector4(0, 0, 0, 0.25f);
 
     Children.Add(_scroll);
 
@@ -34,11 +34,11 @@ public class EasyUI_ScrollPane : EasyUI_Element
 
     Events.OnRender += (delta) =>
     {
-      _scroll.Style.X = Width() - 16;
+      _scroll.Style.X = Style.Width - 16;
       _scroll.Style.Y = 0;
       _scroll.Style.Width = 16;
-      _scroll.Style.Height = Height();
-      StencilRectangle = BoundingBox();
+      _scroll.Style.Height = Style.Height;
+      StencilRectangle = Style.BoundingBox;
 
       for (var i = 0; i < Children.Count; i++)
       {
@@ -47,9 +47,9 @@ public class EasyUI_ScrollPane : EasyUI_Element
         var innerElement = Children[i];
 
         // Если внутренний элемент больше основного элемента
-        if (innerElement.Height() > Height())
+        if (innerElement.Style.Height > Style.Height)
         {
-          var pp = innerElement.Height() - Height();
+          var pp = innerElement.Style.Height - Style.Height;
           innerElement.Style.Y = (float)_scroll.Value * -pp;
         }
       }
@@ -64,6 +64,6 @@ public class EasyUI_ScrollPane : EasyUI_Element
 
   public float ContentWidth()
   {
-    return Width() - 16;
+    return Style.Width - 16;
   }
 }

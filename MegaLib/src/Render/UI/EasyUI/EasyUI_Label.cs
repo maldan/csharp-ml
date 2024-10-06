@@ -12,10 +12,10 @@ public class EasyUI_Label : EasyUI_Element
   public EasyUI_Label()
   {
     Style.BackgroundColor = new Vector4(0, 0, 0, 0);
-    Style.TextAlign = TextAlignment.Left | TextAlignment.VerticalCenter;
+    Style.TextAlignment = TextAlignment.Left | TextAlignment.VerticalCenter;
     Text = "";
     Style.Width = 20;
     Style.Height = 14;
-    Style.TextColor = "#c0c0c0";
+    Style.SetTextColor("#c0c0c0");
   }
 }

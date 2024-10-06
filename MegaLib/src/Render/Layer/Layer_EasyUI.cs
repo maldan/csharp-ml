@@ -19,6 +19,7 @@ public class Layer_EasyUI : Layer_Base
   private FontData _fontData;
   private Stack<EasyUI_Element> _currentElement = new();
   private EasyUI_Element _root;
+  private List<EasyUI_RenderData> _renderData = [];
 
   public EasyUI_Element FocusedElement;
   public Stack<EasyUI_Element> ScrollElementStack = new();
@@ -33,10 +34,7 @@ public class Layer_EasyUI : Layer_Base
     FontTexture.Options.WrapMode = TextureWrapMode.Clamp;
     FontTexture.Options.FiltrationMode = TextureFiltrationMode.Nearest;
 
-    _root = new EasyUI_Element()
-    {
-      Style = new EasyUI_ElementStyle()
-    };
+    _root = new EasyUI_Element();
     _currentElement.Push(_root);
   }
 
@@ -64,11 +62,11 @@ public class Layer_EasyUI : Layer_Base
 
           window.Events.OnRender += (d) =>
           {
-            scroll.Style.Width = window.Width();
-            scroll.Style.Height = window.Height();
+            scroll.Style.Width = window.Style.Width;
+            scroll.Style.Height = window.Style.Height;
 
             layout.Style.Width = scroll.ContentWidth();
-            layout.Style.Height = window.Height();
+            layout.Style.Height = window.Style.Height;
           };
         });
       });
@@ -108,15 +106,17 @@ public class Layer_EasyUI : Layer_Base
 
   public List<EasyUI_RenderData> Build(float delta)
   {
+    _renderData.Clear();
     var root = _currentElement.Peek();
     root.Build(new EasyUI_BuildIn
     {
       Delta = delta,
       FontData = _fontData,
-      LayerEasyUi = this
+      LayerEasyUi = this,
+      RenderData = _renderData
     });
 
-    return root.RenderData;
+    return _renderData;
   }
 
   public void AtTop(EasyUI_Element me)

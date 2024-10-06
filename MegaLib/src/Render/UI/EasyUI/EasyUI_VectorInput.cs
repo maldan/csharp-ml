@@ -13,19 +13,19 @@ public class EasyUI_VectorInput : EasyUI_Element
   public EasyUI_VectorInput()
   {
     Style.Height = 48 + 8;
-    Style.BorderWidth = 1;
-    Style.BorderColor = new Vector4(0, 0, 0, 0.25f);
+    Style.SetBorderWidth(1f);
+    Style.SetBorderColor(new Vector4(0, 0, 0, 0.25f));
 
     var labelLayout = new EasyUI_Layout();
     labelLayout.Direction = Direction.Horizontal;
     labelLayout.IsAdjustChildrenSize = true;
-    labelLayout.Style.Height = Height();
+    labelLayout.Style.Height = Style.Height;
     labelLayout.Gap = 5;
     labelLayout.Style.Height = 24;
 
     var l1 = new EasyUI_Label();
     l1.Text = "X";
-    l1.Style.TextAlign = TextAlignment.VerticalCenter;
+    l1.Style.TextAlignment = TextAlignment.VerticalCenter;
     labelLayout.Add(l1);
 
     var l2 = new EasyUI_Label();
@@ -44,11 +44,11 @@ public class EasyUI_VectorInput : EasyUI_Element
       IsAdjustChildrenSize = true,
       Style =
       {
-        Height = Height()
+        Height = Style.Height
       },
       Gap = 5
     };
-    valueLayout.Style.Height = Height() - labelLayout.Height();
+    valueLayout.Style.Height = Style.Height - labelLayout.Style.Height;
 
     var v1 = new EasyUI_TextInput
     {
@@ -77,25 +77,27 @@ public class EasyUI_VectorInput : EasyUI_Element
 
     Events.OnRender += delta =>
     {
-      labelLayout.Style.Width = Width();
-      valueLayout.Style.Y = labelLayout.Height() - 5;
-      valueLayout.Style.Width = Width();
+      labelLayout.Style.Width = Style.Width;
+      valueLayout.Style.Y = labelLayout.Style.Height - 5;
+      valueLayout.Style.Width = Style.Width;
       Style.Height = 48 + 3;
     };
   }
 
+  public void OnRead(Func<Vector3> read)
+  {
+    var vec = read();
+    _textInputs[0].OnRead(() => vec.X);
+    _textInputs[1].OnRead(() => vec.Y);
+    _textInputs[2].OnRead(() => vec.Z);
+  }
+
   public void OnRead<T>(Func<T> read) where T : struct
   {
-    Events.OnBeforeRender += (_) =>
-    {
-      if (!IsFocused)
-      {
-        var vec = (Vector3)(object)read();
-        _textInputs[0].OnRead(() => vec.X);
-        _textInputs[1].OnRead(() => vec.Y);
-        _textInputs[2].OnRead(() => vec.Z);
-      }
-    };
+    var vec = (Vector3)(object)read();
+    _textInputs[0].OnRead(() => vec.X);
+    _textInputs[1].OnRead(() => vec.Y);
+    _textInputs[2].OnRead(() => vec.Z);
   }
 
   public void OnWrite<T>(Action<T> write) where T : struct

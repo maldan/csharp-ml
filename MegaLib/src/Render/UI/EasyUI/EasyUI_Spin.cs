@@ -18,7 +18,7 @@ public class EasyUI_Spin : EasyUI_Element
     _center.Style.Width = buttonWidth * 2;
     _center.Style.Height = 24;
     _center.Style.X = buttonWidth;
-    _center.Style.TextAlign = TextAlignment.Center;
+    _center.Style.TextAlignment = TextAlignment.Center;
     _center.Text = $"0";
 
     var rightButton = new EasyUI_Button();

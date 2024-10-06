@@ -17,7 +17,7 @@ public class EasyUI_Check : EasyUI_Element
     var leftCheck = new EasyUI_Element();
     leftCheck.Style.Width = 21;
     leftCheck.Style.Height = 21;
-    leftCheck.Style.BackgroundColor = baseColor;
+    //leftCheck.Style.BackgroundColor = baseColor;
     Children.Add(leftCheck);
     leftCheck.Events.OnClick += () =>
     {
@@ -28,12 +28,12 @@ public class EasyUI_Check : EasyUI_Element
     leftCheck.Events.OnMouseOver += () =>
     {
       isOver = true;
-      leftCheck.Style.BackgroundColor = "#262626";
+      //leftCheck.Style.BackgroundColor = "#262626";
     };
     leftCheck.Events.OnMouseOut += () =>
     {
       isOver = false;
-      leftCheck.Style.BackgroundColor = baseColor;
+      //leftCheck.Style.BackgroundColor = baseColor;
     };
 
     leftCheck.Events.OnRender += (delta) =>
@@ -46,14 +46,14 @@ public class EasyUI_Check : EasyUI_Element
     check.Style.Height = 21 - 8;
     check.Style.X = 4;
     check.Style.Y = 4;
-    check.Style.BackgroundColor = "#ae5c00";
+    // check.Style.BackgroundColor = "#ae5c00";
     Children.Add(check);
 
     _text = new EasyUI_Element();
     _text.Style.Width = buttonWidth * 2;
     _text.Style.Height = 24;
     _text.Style.X = buttonWidth;
-    _text.Style.TextAlign = TextAlignment.Center;
+    _text.Style.TextAlignment = TextAlignment.Center;
     _text.Text = $"0";
     Children.Add(_text);
 

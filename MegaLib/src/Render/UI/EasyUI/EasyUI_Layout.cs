@@ -17,7 +17,7 @@ public class EasyUI_Layout : EasyUI_Element
     {
       if (Direction == Direction.Vertical)
       {
-        var w = Width();
+        var w = Style.Width;
         var totalH = 0f;
 
         for (var i = 0; i < Children.Count; i++)
@@ -25,7 +25,7 @@ public class EasyUI_Layout : EasyUI_Element
           Children[i].Style.Width = w - Gap * 2;
           Children[i].Style.Y = Gap + totalH;
           Children[i].Style.X = Gap;
-          totalH += Children[i].Height() + Gap;
+          totalH += Children[i].Style.Height + Gap;
         }
 
         Style.Height = totalH;
@@ -35,8 +35,8 @@ public class EasyUI_Layout : EasyUI_Element
       {
         if (IsAdjustChildrenSize)
         {
-          var h = Height();
-          var w = Width();
+          var h = Style.Height;
+          var w = Style.Width;
           var availableWidth = w - Gap * (Children.Count + 1);
           var itemSize = availableWidth / Children.Count;
           var totalW = 0f;
@@ -52,7 +52,7 @@ public class EasyUI_Layout : EasyUI_Element
         }
         else
         {
-          var h = Height();
+          var h = Style.Height;
           var totalW = 0f;
 
           for (var i = 0; i < Children.Count; i++)
@@ -60,7 +60,7 @@ public class EasyUI_Layout : EasyUI_Element
             Children[i].Style.Height = h - Gap * 2;
             Children[i].Style.Y = Gap;
             Children[i].Style.X = Gap + totalW;
-            totalW += Children[i].Width() + Gap;
+            totalW += Children[i].Style.Width + Gap;
           }
 
           Style.Width = totalW;

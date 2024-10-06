@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.InteropServices;
 
 namespace MegaLib.Mathematics.LinearAlgebra;
@@ -59,6 +60,9 @@ public struct Vector4
     set => W = value;
   }
 
+  public float LengthSquared => X * X + Y * Y + Z * Z + W * W;
+  public float Length => MathF.Sqrt(X * X + Y * Y + Z * Z + W * W);
+
   public Vector4(Vector3 v, float w)
   {
     X = v.X;
@@ -73,6 +77,39 @@ public struct Vector4
     Y = y;
     Z = z;
     W = w;
+  }
+
+  public float this[int index]
+  {
+    get
+    {
+      return index switch
+      {
+        0 => X,
+        1 => Y,
+        2 => Z,
+        3 => W,
+        _ => 0
+      };
+    }
+    set
+    {
+      switch (index)
+      {
+        case 0:
+          X = value;
+          break;
+        case 1:
+          Y = value;
+          break;
+        case 2:
+          Z = value;
+          break;
+        case 3:
+          W = value;
+          break;
+      }
+    }
   }
 
   public Vector3 XYZ => new(X, Y, Z);

@@ -15,7 +15,352 @@ namespace MegaLib.Render.UI.EasyUI;
 public class EasyUI_Element
 {
   public bool IsVisible = true;
-  public bool IsOutsideVisibleArea;
+
+  public EasyUI_ElementEvents Events = new();
+  public List<Triangle> Collision = [];
+  public List<EasyUI_Element> Children = [];
+
+  public string Text
+  {
+    get => _text;
+    set
+    {
+      _text = value;
+      _isTextChanged = true;
+    }
+  }
+
+  private string _text;
+  private bool _isTextChanged;
+
+  public ElementStyle Style = new();
+  private EasyUI_RenderData _backgroundRenderData = new() { Type = RenderDataType.Background };
+  private EasyUI_RenderData _borderRenderData = new() { Type = RenderDataType.Border };
+  private EasyUI_RenderData _textRenderData = new() { Type = RenderDataType.Text };
+
+  private bool _isClick;
+  private bool _isMouseDown;
+  private bool _isMouseDownIgnore;
+  private bool _isMouseOver;
+  public object Value; // Пользовательское значение
+
+  protected FontData CurrentFontData;
+  public Rectangle StencilRectangle;
+
+  private float _lastClickTime;
+  private int _clickCount;
+  private float _timer;
+
+  public EasyUI_Element Parent;
+  public Layer_EasyUI LayerEasyUi;
+
+  public void InitCollision(Rectangle r)
+  {
+    Collision.Clear();
+    Collision.Add(new Triangle
+    {
+      A = new Vector3(r.FromX, r.FromY, 0),
+      B = new Vector3(r.ToX, r.FromY, 0),
+      C = new Vector3(r.ToX, r.ToY, 0)
+    });
+    Collision.Add(new Triangle
+    {
+      A = new Vector3(r.FromX, r.ToY, 0),
+      B = new Vector3(r.FromX, r.FromY, 0),
+      C = new Vector3(r.ToX, r.ToY, 0)
+    });
+  }
+
+  public bool CheckCollision()
+  {
+    var ray = new Ray(
+      new Vector3(Mouse.ClientClamped.X, Mouse.ClientClamped.Y, -10),
+      new Vector3(Mouse.ClientClamped.X, Mouse.ClientClamped.Y, 10)
+    );
+
+    for (var i = 0; i < Collision.Count; i++)
+    {
+      Collision[i].RayIntersection(ray, out _, out var isHit);
+      if (isHit) return true;
+    }
+
+    return false;
+  }
+
+  public virtual void Add(EasyUI_Element element)
+  {
+    Children.Add(element);
+  }
+
+  public virtual void Remove(EasyUI_Element element)
+  {
+    Children.Remove(element);
+  }
+
+  protected void HandleMouseEvents()
+  {
+    var isHovering = CheckCollision();
+
+    // Если курсор над элементом. Вызываем OnMouseOver
+    if (isHovering && !_isMouseOver)
+    {
+      _isMouseOver = true;
+      Events?.OnMouseOver?.Invoke();
+    }
+
+    // Если курсор покинул элемент
+    if (!isHovering && _isMouseOver)
+    {
+      _isMouseOver = false;
+      Events?.OnMouseOut?.Invoke();
+    }
+
+    // Сбрасываем статус игнора если мышь отпущена
+    if (Mouse.IsKeyUp(MouseKey.Left))
+    {
+      _isMouseDownIgnore = false;
+    }
+
+    // Нажал мышь за пределами элемента
+    if (!_isMouseOver && Mouse.IsKeyDown(MouseKey.Left)) _isMouseDownIgnore = true;
+
+    // Нажал мышь над элементом
+    if (_isMouseOver && Mouse.IsKeyDown(MouseKey.Left) && !_isMouseDownIgnore && !_isMouseDown)
+    {
+      _isMouseDown = true;
+      Events?.OnMouseDown?.Invoke();
+    }
+
+    // Клик только если мышь опущена на элементе
+    if (_isMouseDown && _isMouseOver && Mouse.IsKeyUp(MouseKey.Left))
+    {
+      var currentTime = _timer; // Предположим, что у вас есть способ получить текущее время
+      if (currentTime - _lastClickTime <= 0.3f)
+      {
+        _clickCount++;
+      }
+      else
+      {
+        _clickCount = 1; // Сброс количества кликов
+      }
+
+      _lastClickTime = currentTime;
+
+      if (_clickCount == 2)
+      {
+        Events?.OnDoubleClick?.Invoke();
+        _clickCount = 0; // Сброс после двойного клика
+      }
+      else
+      {
+        Events?.OnClick?.Invoke();
+      }
+    }
+
+    // Отпустил мышь с нажатого элемента, причем неважно, где курсор
+    if (_isMouseDown && Mouse.IsKeyUp(MouseKey.Left))
+    {
+      _isMouseDown = false;
+      Events?.OnMouseUp?.Invoke();
+    }
+  }
+
+  public void Build(EasyUI_BuildIn buildArgs)
+  {
+    _timer += buildArgs.Delta;
+    LayerEasyUi = buildArgs.LayerEasyUi;
+    Parent = buildArgs.Parent;
+
+    if (!IsVisible) return;
+
+    var stencilRectangleStack = new List<Rectangle>();
+    if (buildArgs.StencilRectangleStack != null)
+    {
+      stencilRectangleStack.AddRange(buildArgs.StencilRectangleStack);
+    }
+
+    // buildArgs.StencilRectangleStack ??= [];
+
+    CurrentFontData = buildArgs.FontData;
+
+    // Событие до основного рендера
+    Events?.OnBeforeRender?.Invoke(buildArgs.Delta);
+
+    // Получаем bounding box текущего объекта в локальных координатах
+    var elementBoundingBox = Style.BoundingBox;
+
+    // Смещаем относительно родителя
+    elementBoundingBox += buildArgs.ParentPosition;
+
+    // Чекаем если элемент за пределами масок
+    for (var i = 0; i < stencilRectangleStack.Count; i++)
+    {
+      if (!elementBoundingBox.IsIntersects(stencilRectangleStack[i]))
+      {
+        return;
+      }
+    }
+
+    // Инициализация коллизии
+    var hasCollision = Events.OnMouseDown != null || Events.OnMouseUp != null || Events.OnMouseOver != null ||
+                       Events.OnMouseOut != null || Events.OnClick != null || Events.OnDoubleClick != null;
+    if (hasCollision)
+    {
+      InitCollision(elementBoundingBox);
+      HandleMouseEvents();
+    }
+
+    if (!StencilRectangle.IsEmpty)
+    {
+      var newMask = StencilRectangle + buildArgs.ParentPosition;
+      for (var i = 0; i < stencilRectangleStack.Count; i++)
+      {
+        newMask = newMask.GetIntersection(stencilRectangleStack[i]);
+      }
+
+      stencilRectangleStack.Add(newMask);
+    }
+
+    // Установка стенсила если есть
+    var stencilId = stencilRectangleStack.Count;
+
+    if (!StencilRectangle.IsEmpty)
+    {
+      // Начинаем стенсил
+      var stencil = new EasyUI_RenderData
+      {
+        Type = RenderDataType.StencilStart,
+        StencilId = stencilId
+        //IsStencilStart = true,
+      };
+      stencil.DrawRectangle(stencilRectangleStack.Last(), new Vector4());
+      buildArgs.RenderData.Add(stencil);
+    }
+
+    // Бэкграунд по bounding box
+    if (Style.IsBackgroundChanged || buildArgs.IsParentChanged)
+    {
+      _backgroundRenderData.BorderRadius = Style.BorderRadius;
+      _backgroundRenderData.Clear();
+      if (Style.BackgroundColor.A > 0)
+        _backgroundRenderData.DrawRectangle(elementBoundingBox, Style.BackgroundColor);
+    }
+
+    // Если есть видимая область, то отправляем в рендер
+    if (Style.BackgroundColor.A > 0)
+    {
+      buildArgs.RenderData.Add(_backgroundRenderData);
+    }
+
+    // Обводка. Если тело переместилось, обводку придется перерисовать
+    if (Style.IsBorderChanged || Style.IsBackgroundChanged || buildArgs.IsParentChanged)
+    {
+      _borderRenderData.BorderRadius = Style.BorderRadius;
+      _borderRenderData.Clear();
+      if (Style.BorderWidth.LengthSquared > 0)
+        _borderRenderData.DrawOutline(elementBoundingBox, Style.BorderWidth, Style.BorderColor);
+      //Style.IsBorderChanged = false;
+      //Style.IsBackgroundChanged = false;
+    }
+
+    // Если обводка есть то перерисовать
+    if (Style.BorderWidth.LengthSquared > 0)
+    {
+      buildArgs.RenderData.Add(_borderRenderData);
+    }
+
+    // Обработка текста
+    if (_isTextChanged || Style.IsTextChanged || Style.IsBackgroundChanged || buildArgs.IsParentChanged)
+    {
+      _textRenderData.Clear();
+      if (Text != "")
+        _textRenderData.DrawText(
+          Text,
+          Style.TextAlignment,
+          buildArgs.FontData,
+          Style.TextColor,
+          elementBoundingBox
+        );
+      _isTextChanged = false;
+    }
+
+    if (Text != "") buildArgs.RenderData.Add(_textRenderData);
+
+    /*if (Style.IsTextChanged)
+    {
+      _textRenderData = new RenderData
+      {
+        Type = RenderDataType.Text,
+      };
+      _textRenderData.DrawOutline(elementBoundingBox, Style.BorderWidth, Style.BorderColor);
+      Style.IsTextChanged = false;
+    }
+
+    if (Text != "")
+    {
+      var textData = new EasyUI_RenderData
+      {
+        IsText = true
+      };
+      textData.DrawText(
+        Text,
+        Style.TextAlign,
+        buildArgs.FontData,
+        TextColor(),
+        elementBoundingBox
+      );
+      RenderData.Add(textData);
+    }*/
+
+    // Проходимся по чилдам
+    if (Children.Count > 0)
+    {
+      // var rList = new List<EasyUI_RenderData>();
+      for (var i = 0; i < Children.Count; i++)
+      {
+        var child = Children[i];
+        child.Build(buildArgs with
+        {
+          Parent = this,
+          ParentPosition = buildArgs.ParentPosition + Style.Position,
+          StencilRectangleStack = stencilRectangleStack.ToArray().ToList(),
+          IsParentChanged = Style.IsBackgroundChanged || Style.IsBorderChanged || Style.IsTextChanged
+        });
+
+        // Копируем содержимое чилда
+        // rList.AddRange(child.RenderData);
+      }
+
+      // Добавляем в основной список
+      // if (rList.Count > 0) RenderData.AddRange(rList);
+    }
+
+    // Завершаем стенцил если установлен
+    if (!StencilRectangle.IsEmpty)
+    {
+      var stencil = new EasyUI_RenderData
+      {
+        Type = RenderDataType.StencilStop,
+        StencilId = stencilId
+      };
+      buildArgs.RenderData.Add(stencil);
+    }
+
+    // Событие рендера
+    Events?.OnRender?.Invoke(buildArgs.Delta);
+
+    // Применяем измнения
+    if (Style.IsBackgroundChanged) Style.IsBackgroundChanged = false;
+    if (Style.IsTextChanged) Style.IsTextChanged = false;
+    if (Style.IsBorderChanged) Style.IsBorderChanged = false;
+
+    return;
+  }
+}
+
+/*public class EasyUI_Element
+{
+  public bool IsVisible = true;
 
   public EasyUI_ElementStyle Style = new();
   public List<EasyUI_RenderData> RenderData = [];
@@ -23,11 +368,13 @@ public class EasyUI_Element
   public List<Triangle> Collision = [];
   public List<EasyUI_Element> Children = [];
   public string Text;
+
   private bool _isClick;
   private bool _isMouseDown;
   private bool _isMouseDownIgnore;
   private bool _isMouseOver;
   public object Value; // Пользовательское значение
+
   protected FontData CurrentFontData;
   public Rectangle StencilRectangle;
 
@@ -83,7 +430,6 @@ public class EasyUI_Element
 
   public void Clear()
   {
-    // foreach (var rd in RenderData) rd.Clear();
     RenderData.Clear();
   }
 
@@ -162,7 +508,7 @@ public class EasyUI_Element
     Parent = buildArgs.Parent;
 
     Clear();
-    if (!IsVisible || IsOutsideVisibleArea) return new EasyUI_BuildOut();
+    if (!IsVisible) return new EasyUI_BuildOut();
 
     var stencilRectangleStack = new List<Rectangle>();
     if (buildArgs.StencilRectangleStack != null)
@@ -465,4 +811,4 @@ public class EasyUI_Element
       _ => [0, 0, 0, 0]
     };
   }
-}
+}*/

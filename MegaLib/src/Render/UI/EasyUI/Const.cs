@@ -13,11 +13,11 @@ public struct EasyUI_BuildIn
   public EasyUI_Element Parent;
   public float Delta;
   public Vector2 ParentPosition;
-
   public List<Rectangle> StencilRectangleStack;
-
   public Layer_EasyUI LayerEasyUi;
+  public bool IsParentChanged;
 
+  public List<EasyUI_RenderData> RenderData;
   // public byte ParentStencilId;
 }
 

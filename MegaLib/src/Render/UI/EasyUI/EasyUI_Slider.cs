@@ -49,9 +49,9 @@ public class EasyUI_Slider : EasyUI_Element
       isOver = false;
     };
 
-    Style.BackgroundColor = "#232323";
-    Style.TextAlign = TextAlignment.Center;
-    Style.BorderRadius = 2f;
+    Style.SetBackgroundColor("#232323");
+    Style.TextAlignment = TextAlignment.Center;
+    Style.SetBorderRadius(2f);
 
     if (Direction == Direction.Horizontal)
     {
@@ -65,13 +65,14 @@ public class EasyUI_Slider : EasyUI_Element
           Width = 8,
           Height = 16,
           X = 4f,
-          Y = 4,
-          BackgroundColor = "#ae5c00"
+          Y = 4
+          //BackgroundColor = "#ae5c00"
         }
       };
-      _bar.Events.OnMouseOver += () => { _bar.Style.BackgroundColor = "#db7400"; };
-      _bar.Events.OnMouseOut += () => { _bar.Style.BackgroundColor = "#ae5c00"; };
-      _bar.Style.BorderRadius = 2f;
+      _bar.Style.SetBackgroundColor("#ae5c00");
+      _bar.Style.SetBorderRadius(2f);
+      _bar.Events.OnMouseOver += () => { _bar.Style.SetBackgroundColor("#db7400"); };
+      _bar.Events.OnMouseOut += () => { _bar.Style.SetBackgroundColor("#ae5c00"); };
 
       Children.Add(_bar);
 
@@ -84,13 +85,13 @@ public class EasyUI_Slider : EasyUI_Element
         if (!isOver) return;
         if (isDrag || Mouse.WheelDirection != 0f)
         {
-          if (isDrag) _bar.Style.X = _bar.Position().X + Mouse.ClientDelta.X;
-          else _bar.Style.X = _bar.Position().X + Mouse.WheelDirection * delta * 220;
+          if (isDrag) _bar.Style.X = _bar.Style.Position.X + Mouse.ClientDelta.X;
+          else _bar.Style.X = _bar.Style.Position.X + Mouse.WheelDirection * delta * 220;
 
-          if (_bar.Position().X < 4) _bar.Style.X = 4;
-          if (_bar.Position().X > Size().X - 8 - 4) _bar.Style.X = Size().X - 8 - 4;
+          if (_bar.Style.Position.X < 4) _bar.Style.X = 4;
+          if (_bar.Style.Position.X > Style.Width - 8 - 4) _bar.Style.X = Style.Width - 8 - 4;
 
-          var percentage = (_bar.Position().X - 4) / (Size().X - 8 - 4 - 4);
+          var percentage = (_bar.Style.Position.X - 4) / (Style.Width - 8 - 4 - 4);
           Value = percentage.Remap(0, 1, Min, Max);
           Events.OnChange?.Invoke(Value);
 
@@ -110,18 +111,18 @@ public class EasyUI_Slider : EasyUI_Element
           Width = 16,
           Height = 8,
           X = 4f,
-          Y = 4,
-          BackgroundColor = "#ae5c00"
+          Y = 4
         }
       };
-      _bar.Events.OnMouseOver += () => { _bar.Style.BackgroundColor = "#db7400"; };
-      _bar.Events.OnMouseOut += () => { _bar.Style.BackgroundColor = "#ae5c00"; };
+      _bar.Style.SetBackgroundColor("#ae5c00");
+      _bar.Events.OnMouseOver += () => { _bar.Style.SetBackgroundColor("#db7400"); };
+      _bar.Events.OnMouseOut += () => { _bar.Style.SetBackgroundColor("#ae5c00"); };
       Children.Add(_bar);
 
       _bar.Events.OnMouseDown += () => { isDrag = true; };
       _bar.Events.OnMouseUp += () => { isDrag = false; };
-      _bar.Style.Width = Width() - 8;
-      _bar.Style.BorderRadius = 2;
+      _bar.Style.Width = Style.Width - 8;
+      _bar.Style.SetBorderRadius(2);
 
       ValueRender();
       Events.OnRender += delta =>
@@ -130,15 +131,15 @@ public class EasyUI_Slider : EasyUI_Element
         if (isDrag || Mouse.WheelDirection != 0f)
         {
           _bar.Style.X = 4;
-          _bar.Style.Width = Width() - 8;
+          _bar.Style.Width = Style.Width - 8;
 
-          if (isDrag) _bar.Style.Y = _bar.Position().Y + Mouse.ClientDelta.Y;
-          else _bar.Style.Y = _bar.Position().Y + Mouse.WheelDirection * delta * -220f;
+          if (isDrag) _bar.Style.Y = _bar.Style.Position.Y + Mouse.ClientDelta.Y;
+          else _bar.Style.Y = _bar.Style.Position.Y + Mouse.WheelDirection * delta * -220f;
 
-          if (_bar.Position().Y < 4) _bar.Style.Y = 4;
-          if (_bar.Position().Y > Size().Y - 8 - 4) _bar.Style.Y = Size().Y - 8 - 4;
+          if (_bar.Style.Position.Y < 4) _bar.Style.Y = 4;
+          if (_bar.Style.Position.Y > Style.Height - 8 - 4) _bar.Style.Y = Style.Height - 8 - 4;
 
-          var percentage = (_bar.Position().Y - 4) / (Size().Y - 8 - 4 - 4);
+          var percentage = (_bar.Style.Position.Y - 4) / (Style.Height - 8 - 4 - 4);
           Value = percentage.Remap(0, 1, Min, Max);
           Events.OnChange?.Invoke(Value);
 
@@ -150,16 +151,16 @@ public class EasyUI_Slider : EasyUI_Element
 
   public bool OnTopBorder()
   {
-    return _bar.Position().Y <= 4;
+    return _bar.Style.Position.Y <= 4;
   }
 
   public void Scroll(float v)
   {
-    _bar.Style.Y = _bar.Position().Y + v;
-    if (_bar.Position().Y < 4) _bar.Style.Y = 4;
-    if (_bar.Position().Y > Size().Y - 8 - 4) _bar.Style.Y = Size().Y - 8 - 4;
+    _bar.Style.Y = _bar.Style.Position.Y + v;
+    if (_bar.Style.Position.Y < 4) _bar.Style.Y = 4;
+    if (_bar.Style.Position.Y > Style.Height - 8 - 4) _bar.Style.Y = Style.Height - 8 - 4;
 
-    var percentage = (_bar.Position().Y - 4) / (Size().Y - 8 - 4 - 4);
+    var percentage = (_bar.Style.Position.Y - 4) / (Style.Height - 8 - 4 - 4);
     Value = percentage.Remap(0, 1, Min, Max);
     Events.OnChange?.Invoke(Value);
 
