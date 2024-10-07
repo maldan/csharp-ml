@@ -13,8 +13,9 @@ public class EasyUI_VectorInput : EasyUI_Element
   public EasyUI_VectorInput()
   {
     Style.Height = 48 + 8;
-    Style.SetBorderWidth(1f);
+    Style.SetBorderWidth(2f);
     Style.SetBorderColor(new Vector4(0, 0, 0, 0.25f));
+    // Style.BackgroundColor = new Vector4(0, 0, 0, 0.1f);
 
     var labelLayout = new EasyUI_Layout();
     labelLayout.Direction = Direction.Horizontal;

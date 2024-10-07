@@ -71,7 +71,7 @@ public class LR_EasyUI : LR_Base
 
     // language=glsl
     var fragment = @"
-      #version 330 core
+        #version 330 core
       precision highp float;
       precision highp int;
       precision highp sampler2D;
@@ -83,24 +83,24 @@ public class LR_EasyUI : LR_Base
       out vec4 color;      // Выходной цвет фрагмента
 
       uniform sampler2D uFontTexture;
-      uniform vec3 uMode;          // Режим рендеринга
+      uniform float uMode;          // Режим рендеринга
       uniform vec4 uRectangle;     // Прямоугольник: (centerX, centerY, halfWidth, halfHeight)
       uniform vec4 uCornerRadius;  // Радиусы скругления углов: (bottomLeft, bottomRight, topRight, topLeft)
-      uniform vec4 uBorderWidths;  // Толщина обводки для каждой стороны: (top, right, bottom, left)
-      uniform vec4 uBorderColors;  // Цвет обводки для каждой стороны: (top, right, bottom, left)
-
+      uniform vec4 uBorderWidths;  // Радиусы скругления углов: (bottomLeft, bottomRight, topRight, topLeft)
+      uniform vec4[4] uBorderColor;  // Радиусы скругления углов: (bottomLeft, bottomRight, topRight, topLeft)
+        
       // Определяем, в каком квадранте находится текущая точка
-          float getRadius(vec2 p, vec4 radii) {
-              if (p.x > 0.0 && p.y > 0.0)
-                  return radii.y; // Верхний правый
-              if (p.x < 0.0 && p.y > 0.0)
-                  return radii.x; // Верхний левый
-              if (p.x < 0.0 && p.y < 0.0)
-                  return radii.w; // Нижний левый
-              if (p.x > 0.0 && p.y < 0.0)
-                  return radii.z; // Нижний правый
-              return 0.0;
-          }
+      float getRadius(vec2 p, vec4 radii) {
+          if (p.x > 0.0 && p.y > 0.0)
+              return radii.y; // Верхний правый
+          if (p.x < 0.0 && p.y > 0.0)
+              return radii.x; // Верхний левый
+          if (p.x < 0.0 && p.y < 0.0)
+              return radii.w; // Нижний левый
+          if (p.x > 0.0 && p.y < 0.0)
+              return radii.z; // Нижний правый
+          return 0.0;
+      }
           
       // Функция для расчёта SDF для прямоугольника с закруглёнными углами
       float sdfRoundedRect(vec2 uv, vec2 rectPos, vec2 rectSize, vec4 radii) {
@@ -120,16 +120,80 @@ public class LR_EasyUI : LR_Base
           vec2 d = abs(uv - rectPos) - halfSize + vec2(radius);
           return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - radius;
       }
+        
+      int getRectRegion(vec2 uv, vec2 rectPos, vec2 rectHalfSize) {
+    // Вершины прямоугольника относительно его центра
+    vec2 topLeft = rectPos - rectHalfSize;
+    vec2 topRight = vec2(rectPos.x + rectHalfSize.x, rectPos.y - rectHalfSize.y);
+    vec2 bottomLeft = vec2(rectPos.x - rectHalfSize.x, rectPos.y + rectHalfSize.y);
+    vec2 bottomRight = rectPos + rectHalfSize;
 
+    // Уравнение первой диагонали (от верхнего левого до нижнего правого)
+    float diag1 = (bottomRight.y - topLeft.y) / (bottomRight.x - topLeft.x);
+    float line1 = diag1 * (uv.x - topLeft.x) + topLeft.y;
+
+    // Уравнение второй диагонали (от верхнего правого до нижнего левого)
+    float diag2 = (bottomLeft.y - topRight.y) / (bottomLeft.x - topRight.x);
+    float line2 = diag2 * (uv.x - topRight.x) + topRight.y;
+
+    // Определяем, в каком треугольнике находится точка
+    if (uv.y < line1 && uv.y < line2) {
+        return 3; 
+    } else if (uv.y < line1 && uv.y > line2) {
+        return 2; 
+    } else if (uv.y > line1 && uv.y > line2) {
+        return 1; 
+    } else if (uv.y > line1 && uv.y < line2) {
+        return 4;
+    }
+
+    return 0;  // На диагоналях
+}
+
+    int getBorderRegion(vec2 uv, vec2 rectPos, vec2 rectSize, vec4 borderWidths) {
+        if (uv.y > rectPos.y + rectSize.y * 0.5 - borderWidths[0]) {
+            return 1;
+        }
+        if (uv.y < rectPos.y - rectSize.y * 0.5 + borderWidths[2]) {
+            return 3;
+        }
+        if (uv.x > rectPos.x + rectSize.x * 0.5 - borderWidths[1]) {
+            return 2;
+        }
+        
+        if (uv.x < rectPos.x - rectSize.x * 0.5 + borderWidths[3]) {
+            return 4;
+        }
+        /*if (uv.y > rectPos.y + rectHalfSize.y - borderWidths[2]) {
+            return 3;
+        }*/
+        return 0;
+    }
+
+
+
+        
       void main() {
+        // Stencil mode
+           if (uMode == 3.0) {
+             // Позиция фрагмента относительно центра прямоугольника
+              vec2 uv = gl_FragCoord.xy;
+
+              // Вызываем функцию SDF для расчёта дистанции
+              float dist = sdfRoundedRect(uv, uRectangle.xy, uRectangle.zw, uCornerRadius);
+              float alpha = smoothstep(0.0, 1.0, -dist);
+              if (alpha <= 0.0) discard;
+              color = vo_Color;
+             return;
+           } else
           // Проверка режима рендеринга
-          if (uMode == vec3(2.0, 0.0, 0.0)) {
+          if (uMode == 2.0) {
               // Режим 2: Отображение текстуры шрифта
               vec4 texelColor = texture(uFontTexture, vo_UV) * vo_Color;
               if (texelColor.a <= 0.01) discard;
               color = texelColor;
           }
-          else if (uMode == vec3(1.0, 0.0, 0.0)) {
+          else if (uMode == 1.0) {
               // Режим 1: Отображение сплошного цвета
               color = vo_Color;
           }
@@ -140,14 +204,37 @@ public class LR_EasyUI : LR_Base
               // Вызываем функцию SDF для расчёта дистанции
               float dist = sdfRoundedRect(uv, uRectangle.xy, uRectangle.zw, uCornerRadius);
               
-              // Плавный переход края
+              // Уменьшение размеров прямоугольника на ширину обводки
+              float hh = (uBorderWidths[0] + uBorderWidths[1]) * 1.0;
+              float ww = (uBorderWidths[2] + uBorderWidths[3]) * 1.0;
+              //mm = max(mm, uBorderWidths.z);
+              //mm = max(mm, uBorderWidths.w);
+              vec2 xx = vec2(ww, hh);
+              /*float ab = uRectangle.z / uRectangle.w;
+              float ba = uRectangle.w / uRectangle.z;
+              if (uRectangle.z > uRectangle.w) xx = vec2(0.0, uRectangle.w / hh / ba);
+              if (uRectangle.w > uRectangle.z) xx = vec2(uRectangle.z / ww / ab, 0.0);*/
+              
+              //float a1 = uRectangle.z / uRectangle.w;
+              //float a2 = uRectangle.w / uRectangle.z;
+              vec2 reducedRectSize = uRectangle.zw - xx;
+
+              // Рассчитываем новый центр прямоугольника с учетом смещения границ обводки
+              vec2 reducedRectPos = uRectangle.xy;  // Центр не меняется
+
+              int rectId = getBorderRegion(uv, uRectangle.xy, uRectangle.zw, uBorderWidths) - 1;
               float alpha = smoothstep(0.0, 1.0, -dist);
+              if (rectId >= 0) {
+                //if (dist >= -uBorderWidths[rectId] && dist <= uBorderWidths[rectId]) {
+                  color = uBorderColor[rectId].rgba * vec4(1.0, 1.0, 1.0, alpha);
+                  return;
+                //}
+              }
               
               // Устанавливаем цвет фрагмента с альфа-каналом
-              color = vec4(vo_Color.rgb, alpha);
+              color = vo_Color.rgba * vec4(1.0, 1.0, 1.0, alpha);
           }
       }
-
     ";
 
     #endregion
@@ -197,7 +284,7 @@ public class LR_EasyUI : LR_Base
     Shader.EnableAttribute(_vertices, "aPosition");
     Shader.EnableAttribute(_colors, "aColor");
 
-    Shader.SetUniform("uMode", new Vector3(1, 0, 0));
+    Shader.SetUniform("uMode", 1);
 
     // Рисуем
     OpenGL32.glDrawArrays(OpenGL32.GL_LINES, 0, rd.Lines.Count * 2);
@@ -240,13 +327,17 @@ public class LR_EasyUI : LR_Base
     // Texture
     Shader.ActivateTexture(layer.FontTexture, "uFontTexture", 0);
 
-    if (rd.Type == RenderDataType.Text)
+    if (rd.Type == RenderDataType.StencilStart)
     {
-      Shader.SetUniform("uMode", new Vector3(2, 0, 0));
+      Shader.SetUniform("uMode", 3);
+    }
+    else if (rd.Type == RenderDataType.Text)
+    {
+      Shader.SetUniform("uMode", 2);
     }
     else
     {
-      Shader.SetUniform("uMode", new Vector3(0, 0, 0));
+      Shader.SetUniform("uMode", 0);
     }
 
     var bb = rd.BoundingBox;
@@ -256,8 +347,17 @@ public class LR_EasyUI : LR_Base
       bb.Width,
       bb.Height
     ));
-    Shader.SetUniform("uCornerRadius", new Vector4(0, 0, 8, 8));
-    //Shader.SetUniform("uBorderWidths", new Vector4(0, 4, 0, 0)); // Толщина обводки
+    Shader.SetUniform("uCornerRadius", rd.BorderRadius);
+    Shader.SetUniform("uBorderWidths", rd.BorderWidth); // Толщина обводки
+
+    if (rd.BorderColor != null)
+    {
+      Shader.SetUniform("uBorderColor[0]", rd.BorderColor[0]); // Толщина обводки
+      Shader.SetUniform("uBorderColor[1]", rd.BorderColor[1]); // Толщина обводки
+      Shader.SetUniform("uBorderColor[2]", rd.BorderColor[2]); // Толщина обводки
+      Shader.SetUniform("uBorderColor[3]", rd.BorderColor[3]); // Толщина обводки
+    }
+
     //Shader.SetUniform("uBorderColors", new Vector4(1, 1, 1, 1)); // Цвет обводки для каждой стороны
 
     // Биндим индексы

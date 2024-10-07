@@ -23,6 +23,9 @@ public struct Rectangle
   public float MinY => Math.Min(FromY, ToY);
   public float MaxY => Math.Max(FromY, ToY);
 
+  public Vector2 Center => new(X + Width / 2f, Y + Height / 2f);
+  public Vector2 Size => new(Width, Height);
+
   public Rectangle(float x1, float y1, float x2, float y2)
   {
     FromX = x1;

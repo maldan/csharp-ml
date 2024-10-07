@@ -13,6 +13,8 @@ public class EasyUI_Button : EasyUI_Element
     Style.SetBackgroundColor(baseColor);
     Style.SetTextColor("#c0c0c0");
     Style.SetBorderRadius(8f);
+    Style.BorderWidth = new Vector4(2, 2, 2, 2);
+    Style.SetBorderColor(new Vector4(0.1f, 0.1f, 0.1f, 1f));
 
     var isOver = false;
 

@@ -142,10 +142,19 @@ internal class TestScene3 : Render_Scene
     SpawnWindow();
 
     // Кнопка
+    var btn1 = new EasyUI_Button();
+    var btn2 = new EasyUI_Button();
+    var btn3 = new EasyUI_Button();
     easyUi.Window("A", win =>
     {
       win.Style.SetArea(120, 90, 120, 120);
-      easyUi.Button("Click", () => { });
+      btn1 = easyUi.Button("Click", () => { });
+      btn1.Style.SetArea(0, 0, 120, 40);
+      btn2 = easyUi.Button("Click", () => { });
+      btn2.Style.SetArea(20, 20, 40, 40);
+
+      btn3 = easyUi.Button("Click", () => { });
+      btn3.Style.SetArea(40, 40, 20, 60);
     });
 
     // Кнопка
@@ -249,6 +258,40 @@ internal class TestScene3 : Render_Scene
           easyUi.Label("Text");
         });
       });
+    });
+
+    easyUi.WindowWithScroll("Border Test", (win, layout) =>
+    {
+      win.Style.SetArea(300, 300, 220, 300);
+      layout.Gap = 5;
+
+      var btn = easyUi.Button("Click", () => { });
+      easyUi.Slider(0, 6,
+        f =>
+        {
+          btn1.Style.BorderWidth =
+            btn2.Style.BorderWidth =
+              btn3.Style.BorderWidth = btn.Style.BorderWidth = btn.Style.BorderWidth with { X = f };
+        });
+      easyUi.Slider(0, 6, f =>
+      {
+        btn1.Style.BorderWidth =
+          btn2.Style.BorderWidth =
+            btn3.Style.BorderWidth = btn.Style.BorderWidth = btn.Style.BorderWidth with { Y = f };
+      });
+      easyUi.Slider(0, 6, f =>
+      {
+        btn1.Style.BorderWidth =
+          btn2.Style.BorderWidth =
+            btn3.Style.BorderWidth = btn.Style.BorderWidth = btn.Style.BorderWidth with { Z = f };
+      });
+      easyUi.Slider(0, 6, f =>
+      {
+        btn1.Style.BorderWidth =
+          btn2.Style.BorderWidth =
+            btn3.Style.BorderWidth = btn.Style.BorderWidth = btn.Style.BorderWidth with { W = f };
+      });
+      easyUi.Slider(0, 12, f => { btn.Style.SetBorderRadius(f); });
     });
   }
 }

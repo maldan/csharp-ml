@@ -16,6 +16,8 @@ public class EasyUI_ScrollPane : EasyUI_Element
     _scroll.Direction = Direction.Vertical;
 
     //Style.BorderWidth = 1;
+    Style.SetBorderWidth(2f);
+    Style.SetBorderColor(new Vector4(0, 0, 0, 0.25f));
     // Style.BackgroundColor = new Vector4(1, 0, 0, 0.25f);
 
     Children.Add(_scroll);

@@ -239,31 +239,19 @@ public class EasyUI_Element
       buildArgs.RenderData.Add(stencil);
     }
 
-    // Бэкграунд по bounding box
-    if (Style.IsBackgroundChanged || buildArgs.IsParentChanged)
-    {
-      _backgroundRenderData.BorderRadius = Style.BorderRadius;
-      _backgroundRenderData.Clear();
-      if (Style.BackgroundColor.A > 0)
-      {
-        _backgroundRenderData.DrawRectangle(elementBoundingBox, Style.BackgroundColor);
-        buildArgs.Changes.Add(1);
-      }
-    }
-
-    // Если есть видимая область, то отправляем в рендер
-    if (Style.BackgroundColor.A > 0)
-    {
-      buildArgs.RenderData.Add(_backgroundRenderData);
-    }
-
-    // Обводка. Если тело переместилось, обводку придется перерисовать
-    /*if (Style.IsBorderChanged || Style.IsBackgroundChanged || buildArgs.IsParentChanged)
+    /*// Обводка. Если тело переместилось, обводку придется перерисовать
+    if (Style.IsBorderChanged || Style.IsBackgroundChanged || buildArgs.IsParentChanged)
     {
       _borderRenderData.BorderRadius = Style.BorderRadius;
       _borderRenderData.Clear();
       if (Style.BorderWidth.LengthSquared > 0)
-        _borderRenderData.DrawOutline(elementBoundingBox, Style.BorderWidth, Style.BorderColor);
+      {
+        var borderBox = elementBoundingBox;
+        borderBox.FromX -= Style.BorderWidth.X;
+        // borderBox.ToX += Style.BorderWidth.X;
+        _borderRenderData.DrawRectangle(borderBox, Style.BorderColor[0]);
+      }
+
       buildArgs.Changes.Add(1);
     }
 
@@ -272,6 +260,27 @@ public class EasyUI_Element
     {
       buildArgs.RenderData.Add(_borderRenderData);
     }*/
+
+    // Бэкграунд по bounding box
+    if (Style.IsBackgroundChanged || Style.IsBorderChanged || buildArgs.IsParentChanged)
+    {
+      _backgroundRenderData.BorderRadius = Style.BorderRadius;
+      _backgroundRenderData.BorderWidth = Style.BorderWidth;
+      _backgroundRenderData.BorderColor = Style.BorderColor;
+      _backgroundRenderData.Clear();
+
+      if (Style.BackgroundColor.A > 0 || Style.BorderWidth.LengthSquared > 0)
+      {
+        _backgroundRenderData.DrawRectangle(elementBoundingBox, Style.BackgroundColor);
+        buildArgs.Changes.Add(1);
+      }
+    }
+
+    // Если есть видимая область, то отправляем в рендер
+    if (Style.BackgroundColor.A > 0 || Style.BorderWidth.LengthSquared > 0)
+    {
+      buildArgs.RenderData.Add(_backgroundRenderData);
+    }
 
     // Обработка текста
     if (_isTextChanged || Style.IsTextChanged || Style.IsBackgroundChanged || buildArgs.IsParentChanged)

@@ -282,6 +282,8 @@ public struct EasyUI_RenderData
 
   public int StencilId;
   public Vector4 BorderRadius;
+  public Vector4 BorderWidth;
+  public Vector4[] BorderColor;
 
   public Rectangle BoundingBox
   {

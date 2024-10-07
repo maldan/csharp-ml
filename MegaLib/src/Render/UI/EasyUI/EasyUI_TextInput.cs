@@ -46,9 +46,10 @@ public class EasyUI_TextInput : EasyUI_Element
     Style.SetBackgroundColor(baseColor);
     Style.SetArea(0, 0, 64, 24);
     Style.TextAlignment = TextAlignment.Left | TextAlignment.VerticalCenter;
-    Style.SetBorderWidth(1f);
+    Style.SetBorderWidth(2f);
     Style.SetBorderColor("#fe000000");
     Style.SetBorderRadius(2);
+
     Value = "";
     Text = "";
 
@@ -144,7 +145,7 @@ public class EasyUI_TextInput : EasyUI_Element
       }
       else
       {
-        Style.SetBorderColor(new Vector4(0, 0, 0, 0));
+        Style.SetBorderColor(new Vector4(0, 0, 0, 0.5f));
       }
 
       DrawCursor();

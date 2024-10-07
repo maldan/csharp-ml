@@ -91,6 +91,18 @@ public class Layer_EasyUI : Layer_Base
     return textInput;
   }
 
+  public EasyUI_Slider Slider(float min, float max, Action<float> onChange = null)
+  {
+    var slider = Add<EasyUI_Slider>();
+    slider.Min = min;
+    slider.Max = max;
+    slider.Events.OnChange += o =>
+    {
+      if (o is float f) onChange?.Invoke(f);
+    };
+    return slider;
+  }
+
   public T Add<T>(Action<T> onInit = null) where T : EasyUI_Element, new()
   {
     var cnt = _currentElement.Peek();
