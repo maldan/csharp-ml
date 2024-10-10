@@ -5,7 +5,7 @@ using MegaLib.Mathematics.LinearAlgebra;
 namespace MegaLib.Render.Color;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public readonly struct RGBA<T>
+public readonly struct RGBA<T> where T : struct
 {
   public readonly T R;
   public readonly T G;
@@ -20,7 +20,16 @@ public readonly struct RGBA<T>
     A = a;
   }
 
-  public Vector4 Vector4 => new(Convert.ToSingle(R), Convert.ToSingle(G), Convert.ToSingle(B), Convert.ToSingle(A));
+  //public Vector4 Vector4 => new(Convert.ToSingle(R), Convert.ToSingle(G), Convert.ToSingle(B), Convert.ToSingle(A));
+
+  public Vector4 Vector4
+  {
+    get
+    {
+      if (this is RGBA<float> r) return new Vector4(r.R, r.G, r.B, r.A);
+      return new Vector4(Convert.ToSingle(R), Convert.ToSingle(G), Convert.ToSingle(B), Convert.ToSingle(A));
+    }
+  }
 
   public static RGBA<T> White => new(
     (T)Convert.ChangeType(Convert.ToSingle(1), typeof(T)),

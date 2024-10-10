@@ -36,7 +36,7 @@ public class Layer_Line : Layer_Base
     _lineList.Clear();
   }
 
-  public void Draw(VerletLine line)
+  /*public void Draw(VerletLine line)
   {
     for (var i = 0; i < line.Points.Count - 1; i++)
     {
@@ -48,7 +48,7 @@ public class Layer_Line : Layer_Base
   public void Draw(Ray ray, RGBA<float> color)
   {
     Add(new RO_Line(ray.Start, ray.End, color));
-  }
+  }*/
 
   public void DrawBoxCollider(BoxCollider box, RGBA<float> color)
   {
@@ -176,6 +176,136 @@ public class Layer_Line : Layer_Base
         Add(new RO_Line(p1, p2, color));
       }
     }
+  }
+
+  public void DrawSimpleSphere(
+    Sphere sphere,
+    RGBA<float> color,
+    float latitudeSegments = 16 / 2f,
+    float longitudeSegments = 16 / 2f
+  )
+  {
+    //var longitudeSegments = 16 / 2;
+    //var latitudeSegments = 16 / 2;
+    var radius = sphere.Radius;
+
+    // матрица трансформации сферы (позиция, вращение, масштаб)
+
+    // Пройтись по долготе (угол вокруг Y оси)
+    for (var i = 0; i <= longitudeSegments; i++)
+    {
+      var lon = (float)(i * MathF.PI * 2 / longitudeSegments);
+      var cosLon = (float)MathF.Cos(lon);
+      var sinLon = (float)MathF.Sin(lon);
+
+      // Пройтись по широте (угол от полюса к полюсу)
+      for (var j = 0; j <= latitudeSegments; j++)
+      {
+        var lat = (float)(j * Math.PI / latitudeSegments - Math.PI / 2); // от -PI/2 до PI/2
+        var cosLat = (float)Math.Cos(lat);
+        var sinLat = (float)Math.Sin(lat);
+
+        // Координаты точки на поверхности сферы в локальных координатах
+        var p1 = new Vector3(
+          radius * cosLat * cosLon, // x
+          radius * sinLat, // y
+          radius * cosLat * sinLon // z
+        );
+
+        // Следующая точка по широте (для соединения линией)
+        var nextLat = (float)((j + 1) * Math.PI / latitudeSegments - Math.PI / 2);
+        var p2 = new Vector3(
+          radius * (float)Math.Cos(nextLat) * cosLon,
+          radius * (float)Math.Sin(nextLat),
+          radius * (float)Math.Cos(nextLat) * sinLon
+        );
+
+        p1 += sphere.Position;
+        p2 += sphere.Position;
+        //p1 *= transform.Matrix;
+        //p2 *= transform.Matrix;
+
+        // Рисуем линию между этими двумя точками
+        Add(new RO_Line(p1, p2, color));
+      }
+    }
+
+    // Повторить то же самое для другой стороны (соединение вдоль долготы)
+    for (var i = 0; i <= longitudeSegments; i++)
+    {
+      var lon = (float)(i * Math.PI * 2 / longitudeSegments);
+      var nextLon = (float)((i + 1) * Math.PI * 2 / longitudeSegments);
+
+      for (var j = 0; j <= latitudeSegments; j++)
+      {
+        var lat = (float)(j * Math.PI / latitudeSegments - Math.PI / 2);
+
+        // Текущая и следующая долгота
+        var p1 = new Vector3(
+          radius * (float)Math.Cos(lat) * (float)Math.Cos(lon),
+          radius * (float)Math.Sin(lat),
+          radius * (float)Math.Cos(lat) * (float)Math.Sin(lon)
+        );
+
+        var p2 = new Vector3(
+          radius * (float)Math.Cos(lat) * (float)Math.Cos(nextLon),
+          radius * (float)Math.Sin(lat),
+          radius * (float)Math.Cos(lat) * (float)Math.Sin(nextLon)
+        );
+
+        p1 += sphere.Position;
+        p2 += sphere.Position;
+
+        // Рисуем линию между этими двумя точками
+        Add(new RO_Line(p1, p2, color));
+      }
+    }
+  }
+
+  public void DrawBox(Box box, RGBA<float> color)
+  {
+    // Половина размеров коробки (это будут смещения для вершин)
+    var halfSize = box.Size * 0.5f;
+
+    // Вершины коробки в локальной системе координат
+    var vertices = new Vector3[8]
+    {
+      new(-halfSize.X, -halfSize.Y, -halfSize.Z), // Нижняя передняя левая
+      new(halfSize.X, -halfSize.Y, -halfSize.Z), // Нижняя передняя правая
+      new(halfSize.X, halfSize.Y, -halfSize.Z), // Верхняя передняя правая
+      new(-halfSize.X, halfSize.Y, -halfSize.Z), // Верхняя передняя левая
+
+      new(-halfSize.X, -halfSize.Y, halfSize.Z), // Нижняя задняя левая
+      new(halfSize.X, -halfSize.Y, halfSize.Z), // Нижняя задняя правая
+      new(halfSize.X, halfSize.Y, halfSize.Z), // Верхняя задняя правая
+      new(-halfSize.X, halfSize.Y, halfSize.Z) // Верхняя задняя левая
+    };
+
+    // Преобразуем вершины в мировые координаты через матрицу трансформации
+    for (var i = 0; i < vertices.Length; i++)
+    {
+      vertices[i] = Vector3.Transform(vertices[i], box.Matrix);
+    }
+
+    // Рисуем линии между соответствующими вершинами (12 ребер)
+
+    // Передняя грань
+    DrawLine(vertices[0], vertices[1], color); // Нижняя
+    DrawLine(vertices[1], vertices[2], color); // Правая
+    DrawLine(vertices[2], vertices[3], color); // Верхняя
+    DrawLine(vertices[3], vertices[0], color); // Левая
+
+    // Задняя грань
+    DrawLine(vertices[4], vertices[5], color); // Нижняя
+    DrawLine(vertices[5], vertices[6], color); // Правая
+    DrawLine(vertices[6], vertices[7], color); // Верхняя
+    DrawLine(vertices[7], vertices[4], color); // Левая
+
+    // Соединяем переднюю и заднюю грань
+    DrawLine(vertices[0], vertices[4], color); // Нижняя левая
+    DrawLine(vertices[1], vertices[5], color); // Нижняя правая
+    DrawLine(vertices[2], vertices[6], color); // Верхняя правая
+    DrawLine(vertices[3], vertices[7], color); // Верхняя левая
   }
 
   public void DrawSphere(Transform transform, float radius, RGBA<float> color)

@@ -28,6 +28,8 @@ public class Layer_EasyUI : Layer_Base
 
   private List<Action> _delayedCalls = [];
 
+  public bool HasFocusedField => FocusedElement != null;
+
   // private List<EasyUI_Element> _objectList = [];
 
   public Layer_EasyUI()
@@ -108,6 +110,17 @@ public class Layer_EasyUI : Layer_Base
     return slider;
   }
 
+  public EasyUI_Check CheckBox(bool value, Action<bool> onChange = null)
+  {
+    var check = Add<EasyUI_Check>();
+    check.Value = value;
+    check.Events.OnChange += o =>
+    {
+      if (o is bool f) onChange?.Invoke(f);
+    };
+    return check;
+  }
+
   public T Add<T>(Action<T> onInit = null) where T : EasyUI_Element, new()
   {
     var cnt = _currentElement.Peek();
@@ -167,6 +180,7 @@ public class Layer_EasyUI : Layer_Base
     if (HoverElementList.Count == 0) return false;
     return HoverElementList.Last() == me;
   }
+
 
   /*public void Add(EasyUI_Element element)
   {

@@ -17,23 +17,27 @@ public class EasyUI_Check : EasyUI_Element
     var leftCheck = new EasyUI_Element();
     leftCheck.Style.Width = 21;
     leftCheck.Style.Height = 21;
-    //leftCheck.Style.BackgroundColor = baseColor;
+    leftCheck.Style.SetBackgroundColor(baseColor);
     Children.Add(leftCheck);
     leftCheck.Events.OnClick += () =>
     {
-      if (Value is bool v) Value = !v;
+      if (Value is bool v)
+      {
+        Value = !v;
+        Events.OnChange?.Invoke(Value);
+      }
     };
 
     var isOver = false;
     leftCheck.Events.OnMouseOver += () =>
     {
       isOver = true;
-      //leftCheck.Style.BackgroundColor = "#262626";
+      leftCheck.Style.SetBackgroundColor("#262626");
     };
     leftCheck.Events.OnMouseOut += () =>
     {
       isOver = false;
-      //leftCheck.Style.BackgroundColor = baseColor;
+      leftCheck.Style.SetBackgroundColor(baseColor);
     };
 
     leftCheck.Events.OnRender += (delta) =>
@@ -46,7 +50,7 @@ public class EasyUI_Check : EasyUI_Element
     check.Style.Height = 21 - 8;
     check.Style.X = 4;
     check.Style.Y = 4;
-    // check.Style.BackgroundColor = "#ae5c00";
+    check.Style.SetBackgroundColor("#ae5c00");
     Children.Add(check);
 
     _text = new EasyUI_Element();
@@ -54,7 +58,7 @@ public class EasyUI_Check : EasyUI_Element
     _text.Style.Height = 24;
     _text.Style.X = buttonWidth;
     _text.Style.TextAlignment = TextAlignment.Center;
-    _text.Text = $"0";
+    // _text.Text = $"0";
     Children.Add(_text);
 
     // Чекаем обновления
@@ -64,8 +68,8 @@ public class EasyUI_Check : EasyUI_Element
     };
   }
 
-  public void UpdateLabel(string text)
+  /*public void UpdateLabel(string text)
   {
     _text.Text = text;
-  }
+  }*/
 }

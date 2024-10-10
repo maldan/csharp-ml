@@ -10,10 +10,10 @@ using MegaLib.Render.Shader;
 
 namespace MegaLib.Render.Renderer.OpenGL.Layer;
 
-internal class GG
+internal class LineStorage
 {
-  public List<Vector3> Lines = [];
-  public List<Vector4> Colors = [];
+  public readonly List<Vector3> Lines = new(2048);
+  public readonly List<Vector4> Colors = new(2048);
 }
 
 public class LR_Line : LR_Base
@@ -21,6 +21,7 @@ public class LR_Line : LR_Base
   private ListGPU<Vector3> _lines;
   private ListGPU<Vector4> _colors;
   private uint _vaoId;
+  private readonly Dictionary<float, LineStorage> _linesByWidth = new();
 
   public LR_Line(OpenGL_Context context, Layer_Base layer, Render_Scene scene) : base(context, layer, scene)
   {
@@ -107,15 +108,12 @@ public class LR_Line : LR_Base
 
     // OpenGL32.glLineWidth(layer.LineWidth);
 
-
-    var dict = new Dictionary<float, GG>();
-
     layer.ForEach((line) =>
     {
-      if (!dict.ContainsKey(line.Width)) dict[line.Width] = new GG();
+      if (!_linesByWidth.ContainsKey(line.Width)) _linesByWidth[line.Width] = new LineStorage();
 
-      var from = line.From;
-      var to = line.To;
+      //var from = line.From;
+      //var to = line.To;
 
       /*if (line.Transform != null)
       {
@@ -128,13 +126,15 @@ public class LR_Line : LR_Base
       _colors.Add(new Vector4(line.FromColor.R, line.FromColor.G, line.FromColor.B, line.FromColor.A));
       _colors.Add(new Vector4(line.ToColor.R, line.ToColor.G, line.ToColor.B, line.ToColor.A));*/
 
-      dict[line.Width].Lines.Add(from);
-      dict[line.Width].Lines.Add(to);
-      dict[line.Width].Colors.Add(line.FromColor.Vector4);
-      dict[line.Width].Colors.Add(line.ToColor.Vector4);
+      var d = _linesByWidth[line.Width];
+
+      d.Lines.Add(line.From);
+      d.Lines.Add(line.To);
+      d.Colors.Add(new Vector4(line.FromColor.R, line.FromColor.G, line.FromColor.B, line.FromColor.A));
+      d.Colors.Add(new Vector4(line.ToColor.R, line.ToColor.G, line.ToColor.B, line.ToColor.A));
     });
 
-    foreach (var (width, value) in dict)
+    foreach (var (width, value) in _linesByWidth)
     {
       // Устанавливаем ширину
       OpenGL32.glLineWidth(width);
@@ -158,6 +158,12 @@ public class LR_Line : LR_Base
 
       // Рисуем линии
       OpenGL32.glDrawArrays(OpenGL32.GL_LINES, 0, _lines.Count);
+    }
+
+    foreach (var (key, _) in _linesByWidth)
+    {
+      _linesByWidth[key].Colors.Clear();
+      _linesByWidth[key].Lines.Clear();
     }
 
     // Очищаем список

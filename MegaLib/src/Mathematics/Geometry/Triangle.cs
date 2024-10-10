@@ -2,7 +2,7 @@ using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Mathematics.Geometry;
 
-public struct Triangle
+public struct Triangle : IRayIntersectable
 {
   public Vector3 A;
   public Vector3 B;
@@ -61,5 +61,11 @@ public struct Triangle
 
     point = Vector3.Zero;
     isHit = false;
+  }
+
+  public bool RayIntersection(Ray ray, out Vector3 point)
+  {
+    RayIntersection(ray, out point, out var isHit);
+    return isHit;
   }
 }

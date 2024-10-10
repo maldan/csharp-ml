@@ -369,6 +369,9 @@ public class EasyUI_TextInput : EasyUI_Element
     }
 
     // Увеличить значение
+    var offsetValue = 0.1f;
+    if (Keyboard.IsKeyDown(KeyboardKey.Shift)) offsetValue *= 10f;
+
     var arrowUp = _keyState[(byte)KeyboardKey.ArrowUp] && !_keyPreviousState[(byte)KeyboardKey.ArrowUp];
     arrowUp = arrowUp || Keyboard.KeyDownTimer(KeyboardKey.ArrowUp) > 0.5f;
     if (arrowUp)
@@ -384,7 +387,7 @@ public class EasyUI_TextInput : EasyUI_Element
         case TextInputType.Float:
         {
           var v = float.TryParse($"{Value}", NumberStyles.Float, CultureInfo.InvariantCulture, out var vv)
-            ? vv + 0.1f
+            ? vv + offsetValue
             : 0;
           Value = $"{v:F2}".Replace(",", ".");
           break;
@@ -409,7 +412,7 @@ public class EasyUI_TextInput : EasyUI_Element
         case TextInputType.Float:
         {
           var v = float.TryParse($"{Value}", NumberStyles.Float, CultureInfo.InvariantCulture, out var vv)
-            ? vv - 0.1f
+            ? vv - offsetValue
             : 0;
           Value = $"{v:F2}".Replace(",", ".");
           break;

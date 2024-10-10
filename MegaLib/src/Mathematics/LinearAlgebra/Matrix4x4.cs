@@ -9,13 +9,13 @@ public struct Matrix4x4
   public float M20, M21, M22, M23;
   public float M30, M31, M32, M33;
 
-  public float[] Raw => new[]
-  {
+  public float[] Raw =>
+  [
     M00, M01, M02, M03,
     M10, M11, M12, M13,
     M20, M21, M22, M23,
     M30, M31, M32, M33
-  };
+  ];
 
   public Vector3 Position => new(M30, M31, M32);
 
