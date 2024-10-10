@@ -25,6 +25,10 @@ public class Layer_EasyUI : Layer_Base
   public Stack<EasyUI_Element> ScrollElementStack = new();
   public List<EasyUI_Element> HoverElementList = new();
 
+  public EasyUI_Element CollisionOverElementList = null;
+
+  private List<Action> _delayedCalls = [];
+
   public Layer_EasyUI()
   {
     _fontData = Font.Generate("Consolas", 16, 1);
@@ -66,7 +70,7 @@ public class Layer_EasyUI : Layer_Base
             scroll.Style.Height = window.Style.Height;
 
             layout.Style.Width = scroll.ContentWidth();
-            layout.Style.Height = window.Style.Height;
+            // layout.Style.Height = window.Style.Height;
           };
         });
       });
@@ -119,6 +123,7 @@ public class Layer_EasyUI : Layer_Base
   public List<EasyUI_RenderData> Build(float delta)
   {
     _renderData.Clear();
+    CollisionOverElementList = null;
     var root = _currentElement.Peek();
     var changes = new List<int>();
     root.Build(new EasyUI_BuildIn
@@ -127,16 +132,25 @@ public class Layer_EasyUI : Layer_Base
       FontData = _fontData,
       LayerEasyUi = this,
       RenderData = _renderData,
-      Changes = changes
+      Changes = changes,
+      IsParentChanged = false
     });
 
-    // Console.WriteLine($"Changes: {changes.Count} | Elements: {_renderData.Count}");
+    Console.WriteLine($"Changes: {changes.Count} | Elements: {_renderData.Count}");
+    _delayedCalls.ForEach(x => { x.Invoke(); });
+    _delayedCalls.Clear();
 
     return _renderData;
   }
 
-  public void AtTop(EasyUI_Element me)
+  public void AtTop(EasyUI_Element me, bool isDelayed = true)
   {
+    if (isDelayed)
+    {
+      _delayedCalls.Add(() => { AtTop(me, false); });
+      return;
+    }
+
     if (_root.Children.Contains(me))
     {
       var index = _root.Children.IndexOf(me);

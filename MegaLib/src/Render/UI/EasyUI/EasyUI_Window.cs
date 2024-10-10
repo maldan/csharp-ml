@@ -11,11 +11,12 @@ public class EasyUI_Window : EasyUI_Element
   private EasyUI_Element _body;
   private EasyUI_Element _minimize;
   private EasyUI_Element _close;
+  private EasyUI_Element _headerText;
 
   public string Title
   {
-    set => _header.Text = value;
-    get => _header.Text;
+    set => _headerText.Text = value;
+    get => _headerText.Text;
   }
 
   public new string Text
@@ -35,12 +36,18 @@ public class EasyUI_Window : EasyUI_Element
         Height = 20,
         TextAlignment = TextAlignment.VerticalCenter
       },
-      Text = "Window"
+      Text = ""
     };
     _header.Style.SetBackgroundColor("#232323");
     _header.Style.SetBorderColor("#232323");
     _header.Style.SetTextColor("#c0c0c0");
     _header.Style.SetBorderWidth(1);
+    _header.Style.BorderRadius = new Vector4(6, 6, 0, 0);
+
+    _headerText = new EasyUI_Element();
+    _headerText.Style.SetTextColor("#999999");
+    _headerText.Style.TextAlignment = TextAlignment.VerticalCenter;
+    _header.Add(_headerText);
 
     // Style.BorderWidth = 1;
 
@@ -79,8 +86,10 @@ public class EasyUI_Window : EasyUI_Element
     _minimize.Style.Width = 16;
     _minimize.Style.Height = 20;
     _minimize.Style.SetTextColor("#c0c0c0");
-    _minimize.Text = "_";
+    _minimize.Text = "-";
+    _minimize.Style.TextAlignment = TextAlignment.Center;
     _minimize.Events.OnClick += () => { _body.IsVisible = !_body.IsVisible; };
+    _minimize.Style.SetBorderRadius(0);
     Children.Add(_minimize);
 
     _close = new EasyUI_Button();
@@ -88,7 +97,9 @@ public class EasyUI_Window : EasyUI_Element
     _close.Text = "x";
     _close.Style.Width = 16;
     _close.Style.Height = 20;
+    _close.Style.TextAlignment = TextAlignment.Center;
     _close.Events.OnClick += () => { Parent.Remove(this); };
+    _close.Style.SetBorderRadius(0);
     Children.Add(_close);
 
     Events.OnBeforeRender += delta =>
@@ -103,11 +114,13 @@ public class EasyUI_Window : EasyUI_Element
       Refresh();
     };
 
-    SetSize(100, 100);
+    Style.Width = 100;
+    Style.Height = 100;
+    // SetSize(100, 100);
     Refresh();
   }
 
-  public void SetSize(float width, float height)
+  /*public void SetSize(float width, float height)
   {
     _header.Style.Width = width;
 
@@ -120,7 +133,7 @@ public class EasyUI_Window : EasyUI_Element
     _body.Style.Height = height;
     Style.Width = width;
     Style.Height = height;
-  }
+  }*/
 
   private void Refresh()
   {
@@ -130,13 +143,21 @@ public class EasyUI_Window : EasyUI_Element
     if (Style.Position.Y + Style.Height > Window.Current.ClientHeight)
       Style.Y = Window.Current.ClientHeight - Style.Height;
 
-    _close.Style.X = Style.Width - _close.Style.Width - 1;
-    _close.Style.Y = -20;
+    _close.Style.X = Style.Width - _close.Style.Width - 3;
+    _close.Style.Y = -18;
+    _close.Style.Width = 16;
+    _close.Style.Height = 16;
 
-    _minimize.Style.X = Style.Width - _close.Style.Width - _minimize.Style.Width - 1;
-    _minimize.Style.Y = -20;
+    _minimize.Style.X = Style.Width - _close.Style.Width - _minimize.Style.Width - 3;
+    _minimize.Style.Y = -18;
+    _minimize.Style.Width = 16;
+    _minimize.Style.Height = 16;
 
     _header.Style.Width = Style.Width;
+    _headerText.Style.Width = _header.Style.Width - 10;
+    _headerText.Style.X = 6;
+    _headerText.Style.Y = 1;
+    _headerText.Style.Height = _header.Style.Height;
     _body.Style.Width = Style.Width;
     _body.Style.Height = Style.Height;
   }

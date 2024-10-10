@@ -5,6 +5,7 @@ using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS;
 using MegaLib.OS.Api;
 using MegaLib.Render.Camera;
+using MegaLib.Render.Color;
 using MegaLib.Render.Core.Layer;
 using MegaLib.Render.IMGUI;
 using MegaLib.Render.Layer;
@@ -62,6 +63,8 @@ internal class TestScene3 : Render_Scene
 
     var rnd = new Random();
     var sex = 0f;
+
+    BackgroundColor = new RGBA<float>(0.3f, 0.3f, 0.3f, 1);
 
     /*easyUi.Add<EasyUI_Element>(t =>
     {
@@ -155,6 +158,12 @@ internal class TestScene3 : Render_Scene
 
       btn3 = easyUi.Button("Click", () => { });
       btn3.Style.SetArea(40, 40, 20, 60);
+
+      /*easyUi.Add<EasyUI_Chart>(chart =>
+      {
+        chart.Values.AddRange([1, 2]);
+        chart.Style.SetArea(0, 0, 100, 100);
+      });*/
     });
 
     // Кнопка
@@ -264,6 +273,14 @@ internal class TestScene3 : Render_Scene
     {
       win.Style.SetArea(300, 300, 220, 300);
       layout.Gap = 5;
+
+      easyUi.Add<EasyUI_Chart>(chart =>
+      {
+        chart.Events.OnBeforeRender += d => { chart.AddValue(d); };
+        chart.Style.SetArea(0, 0, 100, 100);
+      });
+
+      easyUi.Add<EasyUI_Select>(select => { });
 
       var btn = easyUi.Button("Click", () => { });
       easyUi.Slider(0, 6,

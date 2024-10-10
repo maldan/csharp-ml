@@ -29,6 +29,24 @@ namespace MegaLib.Render.UI.EasyUI;
   }
 }*/
 
+public struct BorderColor
+{
+  public Vector4 Top;
+  public Vector4 Left;
+  public Vector4 Bottom;
+  public Vector4 Right;
+
+  public static bool operator ==(BorderColor v1, BorderColor v2)
+  {
+    return v1.Top == v2.Top && v1.Left == v2.Left && v1.Bottom == v2.Bottom && v1.Right == v2.Right;
+  }
+
+  public static bool operator !=(BorderColor v1, BorderColor v2)
+  {
+    return !(v1 == v2);
+  }
+}
+
 public struct ElementStyle
 {
   #region Основная область
@@ -47,7 +65,7 @@ public struct ElementStyle
     get => _x;
     set
     {
-      if (Math.Abs(_x - value) < float.Epsilon) return;
+      if (MathF.Abs(_x - value) < float.Epsilon) return;
       _x = value;
       _isBackgroundChanged = true;
     }
@@ -58,7 +76,7 @@ public struct ElementStyle
     get => _y;
     set
     {
-      if (Math.Abs(_y - value) < float.Epsilon) return;
+      if (MathF.Abs(_y - value) < float.Epsilon) return;
       _y = value;
       _isBackgroundChanged = true;
     }
@@ -69,7 +87,7 @@ public struct ElementStyle
     get => _width;
     set
     {
-      if (Math.Abs(_width - value) < float.Epsilon) return;
+      if (MathF.Abs(_width - value) < float.Epsilon) return;
       _width = value;
       _isBackgroundChanged = true;
     }
@@ -80,7 +98,7 @@ public struct ElementStyle
     get => _height;
     set
     {
-      if (Math.Abs(_height - value) < float.Epsilon) return;
+      if (MathF.Abs(_height - value) < float.Epsilon) return;
       _height = value;
       _isBackgroundChanged = true;
     }
@@ -142,7 +160,7 @@ public struct ElementStyle
   #region Обводка
 
   private Vector4 _borderWidth;
-  private Vector4[] _borderColor;
+  private BorderColor _borderColor;
   private bool _isBorderChanged;
 
   public Vector4 BorderWidth
@@ -156,7 +174,7 @@ public struct ElementStyle
     }
   }
 
-  public Vector4[] BorderColor
+  public BorderColor BorderColor
   {
     get => _borderColor;
     set
@@ -176,7 +194,24 @@ public struct ElementStyle
   // Установка цвета из строки
   public void SetBorderColor(Vector4 color)
   {
-    BorderColor = [color, color, color, color];
+    BorderColor = new BorderColor
+    {
+      Top = color,
+      Right = color,
+      Bottom = color,
+      Left = color
+    };
+  }
+
+  public void SetBorderColor(Vector4 top, Vector4 right, Vector4 bottom, Vector4 left)
+  {
+    BorderColor = new BorderColor
+    {
+      Top = top,
+      Right = right,
+      Bottom = bottom,
+      Left = left
+    };
   }
 
   public void SetBorderColor(string color)
@@ -196,6 +231,18 @@ public struct ElementStyle
   private TextAlignment _textAlignment;
   private Vector4 _textColor;
   private bool _isTextChanged;
+  private Vector2 _textOffset;
+
+  public Vector2 TextOffset
+  {
+    get => _textOffset;
+    set
+    {
+      if (_textOffset == value) return;
+      _textOffset = value;
+      _isTextChanged = true;
+    }
+  }
 
   public Vector4 TextColor
   {
@@ -235,6 +282,7 @@ public struct ElementStyle
   public ElementStyle()
   {
     _textAlignment = TextAlignment.Left;
+    _textColor = new Vector4(1, 1, 1, 1);
     _isBackgroundChanged = true;
     _isBorderChanged = true;
     _isTextChanged = true;

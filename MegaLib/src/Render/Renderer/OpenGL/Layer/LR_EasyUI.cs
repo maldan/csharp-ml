@@ -150,7 +150,72 @@ public class LR_EasyUI : LR_Base
     return 0;  // На диагоналях
 }
 
-    int getBorderRegion(vec2 uv, vec2 rectPos, vec2 rectSize, vec4 borderWidths) {
+bool isAboveDiagonal(vec2 point, vec2 v1, vec2 v3) {
+    float diagonal = (v3.x - v1.x) * (point.y - v1.y) - (v3.y - v1.y) * (point.x - v1.x);
+    return diagonal > 0.0;
+}
+
+int getBorderRegion(vec2 uv, vec2 rectPos, vec2 rectSize, vec4 borderWidths, vec4 cornerRadius) {
+    // Вершины прямоугольника относительно его центра
+    vec2 topLeft = rectPos + vec2(rectSize.x * -0.5, rectSize.y * 0.5);
+    vec2 topRight = rectPos + rectSize * 0.5;
+    vec2 bottomRight = rectPos + vec2(rectSize.x * 0.5, rectSize.y * -0.5);
+    vec2 bottomLeft = rectPos + vec2(rectSize.x * -0.5, rectSize.y * -0.5);
+    
+    float topSection = rectPos.y + rectSize.y * 0.5 - borderWidths[0];
+    float bottomSection = rectPos.y - rectSize.y * 0.5 + borderWidths[2];
+    float rightSection = rectPos.x + rectSize.x * 0.5 - borderWidths[1];
+    float leftSection = rectPos.x - rectSize.x * 0.5 + borderWidths[3];
+    
+    // if (distance(uv, bottomLeft) < 15.0) return 1;
+    
+    if (uv.y > topSection && uv.x > rightSection) {
+        if (isAboveDiagonal(uv, topRight - vec2(borderWidths[1], borderWidths[0]), topRight)) {
+            return 1;
+        } else {
+            return 2;
+        }
+    }
+    
+    if (uv.y > topSection && uv.x < leftSection) {
+        if (isAboveDiagonal(uv, topLeft + vec2(borderWidths[3], -borderWidths[0]), topLeft)) {
+            return 4;
+        } else {
+            return 1;
+        }
+    }
+
+    if (uv.y < bottomSection && uv.x < leftSection) {
+        if (isAboveDiagonal(uv, bottomLeft + vec2(borderWidths[3], borderWidths[2]), bottomLeft)) {
+            return 3;
+        } else {
+            return 4;
+        }
+    }
+    
+    if (uv.y < bottomSection && uv.x > rightSection) {
+        if (isAboveDiagonal(uv, bottomRight - vec2(borderWidths[1], -borderWidths[2]), bottomRight)) {
+            return 2;
+        } else {
+            return 3;
+        }
+    }
+    
+    if (uv.y > topSection) return 1;
+    if (uv.y < bottomSection) return 3;
+    if (uv.x > rightSection) return 2;
+    if (uv.x < leftSection) return 4;
+    
+    return 0;
+}
+
+
+
+
+
+
+
+    int getBorderRegion2(vec2 uv, vec2 rectPos, vec2 rectSize, vec4 borderWidths, vec4 cornerRadius) {
         if (uv.y > rectPos.y + rectSize.y * 0.5 - borderWidths[0]) {
             return 1;
         }
@@ -160,13 +225,9 @@ public class LR_EasyUI : LR_Base
         if (uv.x > rectPos.x + rectSize.x * 0.5 - borderWidths[1]) {
             return 2;
         }
-        
         if (uv.x < rectPos.x - rectSize.x * 0.5 + borderWidths[3]) {
             return 4;
         }
-        /*if (uv.y > rectPos.y + rectHalfSize.y - borderWidths[2]) {
-            return 3;
-        }*/
         return 0;
     }
 
@@ -203,32 +264,26 @@ public class LR_EasyUI : LR_Base
 
               // Вызываем функцию SDF для расчёта дистанции
               float dist = sdfRoundedRect(uv, uRectangle.xy, uRectangle.zw, uCornerRadius);
-              
-              // Уменьшение размеров прямоугольника на ширину обводки
-              float hh = (uBorderWidths[0] + uBorderWidths[1]) * 1.0;
-              float ww = (uBorderWidths[2] + uBorderWidths[3]) * 1.0;
-              //mm = max(mm, uBorderWidths.z);
-              //mm = max(mm, uBorderWidths.w);
-              vec2 xx = vec2(ww, hh);
-              /*float ab = uRectangle.z / uRectangle.w;
-              float ba = uRectangle.w / uRectangle.z;
-              if (uRectangle.z > uRectangle.w) xx = vec2(0.0, uRectangle.w / hh / ba);
-              if (uRectangle.w > uRectangle.z) xx = vec2(uRectangle.z / ww / ab, 0.0);*/
-              
-              //float a1 = uRectangle.z / uRectangle.w;
-              //float a2 = uRectangle.w / uRectangle.z;
-              vec2 reducedRectSize = uRectangle.zw - xx;
-
-              // Рассчитываем новый центр прямоугольника с учетом смещения границ обводки
-              vec2 reducedRectPos = uRectangle.xy;  // Центр не меняется
-
-              int rectId = getBorderRegion(uv, uRectangle.xy, uRectangle.zw, uBorderWidths) - 1;
               float alpha = smoothstep(0.0, 1.0, -dist);
-              if (rectId >= 0) {
-                //if (dist >= -uBorderWidths[rectId] && dist <= uBorderWidths[rectId]) {
-                  color = uBorderColor[rectId].rgba * vec4(1.0, 1.0, 1.0, alpha);
+              float alpha2 = smoothstep(0.0, 0.05, -dist);
+              
+              // Если углы закругленные. То работает только 1 цвет и 1 толщина на все
+              if (length(uCornerRadius) > 0.0) {
+                if (dist > -uBorderWidths[0]) {
+                  color = uBorderColor[0].rgba * vec4(1.0, 1.0, 1.0, alpha2);
                   return;
-                //}
+                }
+                color = vo_Color.rgba * vec4(1.0, 1.0, 1.0, alpha);
+                return;
+              }
+              
+              // Без закругления работает нормально
+              int rectId = getBorderRegion(uv, uRectangle.xy, uRectangle.zw, uBorderWidths, uCornerRadius) - 1;
+              if (rectId >= 0) {
+                if (dist >= -uBorderWidths[rectId] && dist <= uBorderWidths[rectId]) {
+                  color = uBorderColor[rectId].rgba;
+                  return;
+                }
               }
               
               // Устанавливаем цвет фрагмента с альфа-каналом
@@ -284,6 +339,7 @@ public class LR_EasyUI : LR_Base
     Shader.EnableAttribute(_vertices, "aPosition");
     Shader.EnableAttribute(_colors, "aColor");
 
+    // Режим линий
     Shader.SetUniform("uMode", 1);
 
     // Рисуем
@@ -350,15 +406,16 @@ public class LR_EasyUI : LR_Base
     Shader.SetUniform("uCornerRadius", rd.BorderRadius);
     Shader.SetUniform("uBorderWidths", rd.BorderWidth); // Толщина обводки
 
-    if (rd.BorderColor != null)
-    {
-      Shader.SetUniform("uBorderColor[0]", rd.BorderColor[0]); // Толщина обводки
-      Shader.SetUniform("uBorderColor[1]", rd.BorderColor[1]); // Толщина обводки
-      Shader.SetUniform("uBorderColor[2]", rd.BorderColor[2]); // Толщина обводки
-      Shader.SetUniform("uBorderColor[3]", rd.BorderColor[3]); // Толщина обводки
-    }
+    if (rd.BorderColor.Top.LengthSquared > 0)
+      Shader.SetUniform("uBorderColor[0]", rd.BorderColor.Top); // Толщина обводки
+    if (rd.BorderColor.Right.LengthSquared > 0)
+      Shader.SetUniform("uBorderColor[1]", rd.BorderColor.Right); // Толщина обводки
+    if (rd.BorderColor.Bottom.LengthSquared > 0)
+      Shader.SetUniform("uBorderColor[2]", rd.BorderColor.Bottom); // Толщина обводки
+    if (rd.BorderColor.Left.LengthSquared > 0)
+      Shader.SetUniform("uBorderColor[3]", rd.BorderColor.Left); // Толщина обводки
 
-    //Shader.SetUniform("uBorderColors", new Vector4(1, 1, 1, 1)); // Цвет обводки для каждой стороны
+    // Shader.SetUniform("uBorderColors", new Vector4(1, 1, 1, 1)); // Цвет обводки для каждой стороны
 
     // Биндим индексы
     OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(_indices));

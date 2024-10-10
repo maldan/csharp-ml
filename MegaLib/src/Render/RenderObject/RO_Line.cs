@@ -53,4 +53,9 @@ public class RO_Line : RO_Base
     FromColor = fc;
     ToColor = tc;
   }
+
+  public override string ToString()
+  {
+    return $"Line({From},{To})";
+  }
 }

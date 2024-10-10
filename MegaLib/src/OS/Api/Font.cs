@@ -34,8 +34,13 @@ public static class Font
 
   public static FontData Generate(string fontName, int fontSize, float scaleFactor)
   {
+    var ch1 = " !\"#$%&'()*+,-./0123456789:;<=>?@[\\]^_`{|}~";
+    ch1 += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    ch1 += "абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
+    ch1 += @"►▼◄▲▀▄";
+
     return Generate(
-      " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя",
+      ch1,
       fontName, fontSize, scaleFactor);
   }
 

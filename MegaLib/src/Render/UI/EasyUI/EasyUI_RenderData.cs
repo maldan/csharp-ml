@@ -283,7 +283,7 @@ public struct EasyUI_RenderData
   public int StencilId;
   public Vector4 BorderRadius;
   public Vector4 BorderWidth;
-  public Vector4[] BorderColor;
+  public BorderColor BorderColor;
 
   public Rectangle BoundingBox
   {
@@ -387,6 +387,7 @@ public struct EasyUI_RenderData
 
   public Rectangle DrawText(
     string text,
+    Vector2 textOffset,
     TextAlignment textAlign,
     FontData fontData,
     Vector4 color,
@@ -484,6 +485,7 @@ public struct EasyUI_RenderData
 
     for (var i = 0; i < vectorList.Count; i++)
     {
+      vectorList[i] += textOffset;
       vectorList[i] = vectorList[i].Floor();
     }
 

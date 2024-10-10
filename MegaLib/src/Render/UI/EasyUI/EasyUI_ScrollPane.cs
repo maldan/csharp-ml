@@ -34,7 +34,7 @@ public class EasyUI_ScrollPane : EasyUI_Element
       isOver = false;
     };
 
-    Events.OnRender += (delta) =>
+    Events.OnBeforeRender += (delta) =>
     {
       _scroll.Style.X = Style.Width - 16;
       _scroll.Style.Y = 0;
@@ -59,7 +59,7 @@ public class EasyUI_ScrollPane : EasyUI_Element
       if (Mouse.WheelDirection != 0 && isOver && LayerEasyUi.ScrollElementStack.Count > 0 &&
           LayerEasyUi.ScrollElementStack.Peek() == this)
       {
-        _scroll.Scroll(Mouse.WheelDirection * delta * -220);
+        _scroll.Scroll(Mouse.WheelDirection * delta * -400);
       }
     };
   }

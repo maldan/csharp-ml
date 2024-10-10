@@ -87,18 +87,9 @@ public class EasyUI_VectorInput : EasyUI_Element
 
   public void OnRead(Func<Vector3> read)
   {
-    var vec = read();
-    _textInputs[0].OnRead(() => vec.X);
-    _textInputs[1].OnRead(() => vec.Y);
-    _textInputs[2].OnRead(() => vec.Z);
-  }
-
-  public void OnRead<T>(Func<T> read) where T : struct
-  {
-    var vec = (Vector3)(object)read();
-    _textInputs[0].OnRead(() => vec.X);
-    _textInputs[1].OnRead(() => vec.Y);
-    _textInputs[2].OnRead(() => vec.Z);
+    _textInputs[0].OnRead(() => read().X);
+    _textInputs[1].OnRead(() => read().Y);
+    _textInputs[2].OnRead(() => read().Z);
   }
 
   public void OnWrite<T>(Action<T> write) where T : struct

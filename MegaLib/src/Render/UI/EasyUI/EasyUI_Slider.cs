@@ -125,14 +125,14 @@ public class EasyUI_Slider : EasyUI_Element
       _bar.Style.SetBorderRadius(2);
 
       ValueRender();
-      Events.OnRender += delta =>
+      Events.OnBeforeRender += delta =>
       {
+        _bar.Style.X = 4;
+        _bar.Style.Width = Style.Width - 8;
+
         if (!isOver) return;
         if (isDrag || Mouse.WheelDirection != 0f)
         {
-          _bar.Style.X = 4;
-          _bar.Style.Width = Style.Width - 8;
-
           if (isDrag) _bar.Style.Y = _bar.Style.Position.Y + Mouse.ClientDelta.Y;
           else _bar.Style.Y = _bar.Style.Position.Y + Mouse.WheelDirection * delta * -220f;
 
@@ -156,6 +156,8 @@ public class EasyUI_Slider : EasyUI_Element
 
   public void Scroll(float v)
   {
+    if (v == 0) return;
+
     _bar.Style.Y = _bar.Style.Position.Y + v;
     if (_bar.Style.Position.Y < 4) _bar.Style.Y = 4;
     if (_bar.Style.Position.Y > Style.Height - 8 - 4) _bar.Style.Y = Style.Height - 8 - 4;

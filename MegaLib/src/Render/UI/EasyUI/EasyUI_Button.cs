@@ -16,6 +16,14 @@ public class EasyUI_Button : EasyUI_Element
     Style.BorderWidth = new Vector4(2, 2, 2, 2);
     Style.SetBorderColor(new Vector4(0.1f, 0.1f, 0.1f, 1f));
 
+    /*Style.BorderColor = new[]
+    {
+      new Vector4(1f, 0.1f, 0.1f, 1f),
+      new Vector4(0.1f, 1f, 0.1f, 1f),
+      new Vector4(0.1f, 0.1f, 1f, 1f),
+      new Vector4(0.5f, 0.4f, 0.5f, 1f)
+    };*/
+
     var isOver = false;
 
     Events.OnMouseOver += () =>

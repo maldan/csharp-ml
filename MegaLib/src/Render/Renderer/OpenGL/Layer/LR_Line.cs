@@ -146,8 +146,8 @@ public class LR_Line : LR_Base
       _colors.Clear();
 
       // Загружаем в список
-      _lines.AddRange(value.Lines.ToArray());
-      _colors.AddRange(value.Colors.ToArray());
+      _lines.AddRange(value.Lines);
+      _colors.AddRange(value.Colors);
 
       // Загружаем на гпу
       _lines.Sync();
