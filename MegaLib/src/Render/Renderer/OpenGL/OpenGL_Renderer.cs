@@ -6,13 +6,10 @@ using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Camera;
-using MegaLib.Render.Core;
-using MegaLib.Render.Core.Layer;
 using MegaLib.Render.Layer;
 using MegaLib.Render.Renderer.OpenGL.Layer;
 using MegaLib.Render.Scene;
 using MegaLib.VR;
-using Console = System.Console;
 
 namespace MegaLib.Render.Renderer.OpenGL;
 
@@ -152,11 +149,11 @@ public class OpenGL_Renderer : IRenderer
           Layer_StaticMesh => new LR_Mesh(_context, layer, _scene),
           Layer_Sprite => new LR_Sprite(_context, layer, _scene),
           // Layer_UI => new LR_UI(_context, layer, _scene),
-          Layer_IMGUI => new LR_IMGUI(_context, layer, _scene),
+          //Layer_IMGUI => new LR_IMGUI(_context, layer, _scene),
           Layer_EasyUI => new LR_EasyUI(_context, layer, _scene),
           Layer_SkinnedMesh => new LR_Skin(_context, layer, _scene),
           Layer_Skybox => new LR_Skybox(_context, layer, _scene),
-          Layer_BitmapText => new GL_Layer_BitmapText(_context, layer, _scene),
+          //Layer_BitmapText => new GL_Layer_BitmapText(_context, layer, _scene),
           Layer_Capture => new LR_Capture(_context, layer, _scene),
           Layer_PostProcess => new LR_PostProcess(_context, layer, _scene),
           _ => throw new Exception("Unsupported layer type")

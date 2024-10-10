@@ -1,8 +1,8 @@
-using System;
+/*using System;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Core;
-using MegaLib.Render.Core.Layer;
+using MegaLib.Render.Layer;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Scene;
 
@@ -28,18 +28,18 @@ public class GL_Layer_BitmapText : LR_Base
         layout (location = 0) in vec3 aPosition;
         layout (location = 1) in vec2 aUV;
         layout (location = 2) in vec4 aColor;
-        
+
         uniform mat4 uProjectionMatrix;
         uniform mat4 uViewMatrix;
         uniform mat4 uModelMatrix;
-        
+
         out vec3 vo_Position;
         out vec2 vo_UV;
         out vec4 vo_Color;
-        
+
         void main() {
             gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPosition.xyz, 1.0);
-            
+
             vo_Position = (uModelMatrix * vec4(aPosition.xyz, 1.0)).xyz;
             vo_UV = aUV;
             vo_Color = aColor;
@@ -59,11 +59,11 @@ public class GL_Layer_BitmapText : LR_Base
         in vec3 vo_Position;
         in vec2 vo_UV;
         in vec4 vo_Color;
-        
+
         out vec4 color;
-        
+
         uniform sampler2D uTexture;
-        
+
         void main()
         {
             vec4 texelColor = texture(uTexture, vo_UV) * vo_Color;
@@ -131,4 +131,5 @@ public class GL_Layer_BitmapText : LR_Base
       OpenGL32.glBindVertexArray(0);
     });
   }
-}
+}*/
+

@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Buffer;
-using MegaLib.Render.Core;
-using MegaLib.Render.Core.Layer;
 using MegaLib.Render.Layer;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Scene;
@@ -112,7 +110,7 @@ public class LR_Line : LR_Base
 
     var dict = new Dictionary<float, GG>();
 
-    layer.ForEach<RO_Line>((line) =>
+    layer.ForEach((line) =>
     {
       if (!dict.ContainsKey(line.Width)) dict[line.Width] = new GG();
 

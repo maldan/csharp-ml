@@ -369,7 +369,9 @@ public class EasyUI_TextInput : EasyUI_Element
     }
 
     // Увеличить значение
-    if (_keyState[(byte)KeyboardKey.ArrowUp] && !_keyPreviousState[(byte)KeyboardKey.ArrowUp])
+    var arrowUp = _keyState[(byte)KeyboardKey.ArrowUp] && !_keyPreviousState[(byte)KeyboardKey.ArrowUp];
+    arrowUp = arrowUp || Keyboard.KeyDownTimer(KeyboardKey.ArrowUp) > 0.5f;
+    if (arrowUp)
     {
       switch (InputType)
       {
@@ -392,7 +394,9 @@ public class EasyUI_TextInput : EasyUI_Element
       EmitChange();
     }
 
-    if (_keyState[(byte)KeyboardKey.ArrowDown] && !_keyPreviousState[(byte)KeyboardKey.ArrowDown])
+    var arrowDown = _keyState[(byte)KeyboardKey.ArrowDown] && !_keyPreviousState[(byte)KeyboardKey.ArrowDown];
+    arrowDown = arrowDown || Keyboard.KeyDownTimer(KeyboardKey.ArrowDown) > 0.5f;
+    if (arrowDown)
     {
       switch (InputType)
       {

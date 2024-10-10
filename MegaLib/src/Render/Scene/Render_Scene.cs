@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Threading;
 using MegaLib.Render.Camera;
 using MegaLib.Render.Color;
-using MegaLib.Render.Core.Layer;
+using MegaLib.Render.Layer;
 using MegaLib.Render.Light;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Texture;
@@ -62,7 +62,7 @@ public class Render_Scene
     return (T)Pipeline[layerIndex];
   }
 
-  public bool Add(string layerName, RO_Base obj)
+  /*public bool Add(string layerName, RO_Base obj)
   {
     var added = true;
     _mutex.WaitOne();
@@ -79,7 +79,7 @@ public class Render_Scene
     var layer = Pipeline.Find(x => x.Name == layerName);
     layer?.Remove(obj);
     _mutex.ReleaseMutex();
-  }
+  }*/
 
   public void DeleteAll(string layerName)
   {
@@ -112,7 +112,7 @@ public class Render_Scene
   public void Update(float delta)
   {
     OnBeforeUpdate(delta);
-    foreach (var layer in Pipeline) layer.Update(delta);
+    // foreach (var layer in Pipeline) layer.Update(delta);
     OnAfterUpdate(delta);
   }
 

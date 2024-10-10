@@ -1,14 +1,9 @@
 using System;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
-using MegaLib.Render.Buffer;
-using MegaLib.Render.Color;
-using MegaLib.Render.Core;
-using MegaLib.Render.Core.Layer;
+using MegaLib.Render.Layer;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Scene;
-using MegaLib.Render.Texture;
-using GLint = int;
 
 namespace MegaLib.Render.Renderer.OpenGL.Layer;
 

@@ -4,7 +4,6 @@ using System.Linq;
 using MegaLib.OS.Api;
 using MegaLib.Render.Camera;
 using MegaLib.Render.Color;
-using MegaLib.Render.Core.Layer;
 using MegaLib.Render.IMGUI;
 using MegaLib.Render.Texture;
 using MegaLib.Render.UI.EasyUI;
@@ -28,6 +27,8 @@ public class Layer_EasyUI : Layer_Base
   public EasyUI_Element CollisionOverElementList = null;
 
   private List<Action> _delayedCalls = [];
+
+  // private List<EasyUI_Element> _objectList = [];
 
   public Layer_EasyUI()
   {
@@ -136,7 +137,7 @@ public class Layer_EasyUI : Layer_Base
       IsParentChanged = false
     });
 
-    Console.WriteLine($"Changes: {changes.Count} | Elements: {_renderData.Count}");
+    // Console.WriteLine($"Changes: {changes.Count} | Elements: {_renderData.Count}");
     _delayedCalls.ForEach(x => { x.Invoke(); });
     _delayedCalls.Clear();
 
@@ -166,4 +167,14 @@ public class Layer_EasyUI : Layer_Base
     if (HoverElementList.Count == 0) return false;
     return HoverElementList.Last() == me;
   }
+
+  /*public void Add(EasyUI_Element element)
+  {
+    _objectList.Add(element);
+  }
+
+  public void Remove(EasyUI_Element element)
+  {
+    _objectList.Remove(element);
+  }*/
 }

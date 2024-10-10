@@ -113,5 +113,21 @@ public class Skeleton : IAnimatable
         boneMap[gBone.JointId].Children.Add(BoneList.Find(x => x.Name == child.Name));
       }
     }
+
+    Update();
+
+    /*for (var i = 0; i < BoneList.Count; i++)
+    {
+      BoneList[i].Length = 0.1f; // Min size
+    }*/
+
+    for (var i = 0; i < BoneList.Count; i++)
+    {
+      if (BoneList[i].ParentBone != null)
+      {
+        BoneList[i].ParentBone.Length =
+          Vector3.Distance(BoneList[i].Matrix.Position, BoneList[i].ParentBone.Matrix.Position);
+      }
+    }
   }
 }

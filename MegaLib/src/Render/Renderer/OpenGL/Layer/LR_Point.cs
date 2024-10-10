@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Buffer;
-using MegaLib.Render.Core;
-using MegaLib.Render.Core.Layer;
 using MegaLib.Render.Layer;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Scene;
@@ -90,7 +86,7 @@ public class LR_Point : LR_Base
     // Build actual line arrays data
     _points.Clear();
     _colors.Clear();
-    layer.ForEach<RO_Point>((point) =>
+    layer.ForEach((point) =>
     {
       _points.Add(new Vector4(point.Position.X, point.Position.Y, -point.Position.Z, point.Size));
       _colors.Add(new Vector4(point.Color.R, point.Color.G, point.Color.B, point.Color.A));

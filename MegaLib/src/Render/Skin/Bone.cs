@@ -13,6 +13,7 @@ public class Bone
   public Vector3 Position;
   public Quaternion Rotation = Quaternion.Identity;
   public Vector3 Scale = Vector3.One;
+  public float Length;
 
   public Matrix4x4 InverseBindMatrix = Matrix4x4.Identity;
   public List<Bone> Children = [];

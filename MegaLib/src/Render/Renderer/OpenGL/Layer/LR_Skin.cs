@@ -1,9 +1,7 @@
 using System;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
-using MegaLib.Render.Core;
-using MegaLib.Render.Core.Layer;
-using MegaLib.Render.RenderObject;
+using MegaLib.Render.Layer;
 using MegaLib.Render.Scene;
 
 namespace MegaLib.Render.Renderer.OpenGL.Layer;
@@ -486,7 +484,7 @@ public class LR_Skin : LR_Base
     if (Scene.Skybox != null) Shader.ActivateTexture(Scene.Skybox, "uSkybox", 10);
 
     // Draw each mesh
-    layer.ForEach<RO_Skin>(skin =>
+    layer.ForEach(skin =>
     {
       skin.Update();
 

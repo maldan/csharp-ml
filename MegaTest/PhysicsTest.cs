@@ -10,9 +10,6 @@ using MegaLib.Physics;
 using MegaLib.Physics.Collider;
 using MegaLib.Render.Camera;
 using MegaLib.Render.Color;
-using MegaLib.Render.Core;
-using MegaLib.Render.Core.Layer;
-using MegaLib.Render.IMGUI;
 using MegaLib.Render.Layer;
 using MegaLib.Render.Renderer.OpenGL;
 using MegaLib.Render.RenderObject;
@@ -288,7 +285,7 @@ internal class TestScene : Render_Scene
     {
       ray = new Ray(new Vector3(_x, 0, -1), point);
       line.Draw(ray, new RGBA<float>(1, 0, 0, 1));
-      Add("dynamicPoint", new RO_Point()
+      GetLayer<Layer_Point>("dynamicPoint").Add(new RO_Point()
       {
         Position = point,
         Size = 8,
@@ -318,7 +315,7 @@ internal class TestScene : Render_Scene
     {
       ray = new Ray(new Vector3(_x, 0, -1), point);
       line.Draw(ray, new RGBA<float>(1, 0, 0, 1));
-      Add("dynamicPoint", new RO_Point()
+      GetLayer<Layer_Point>("dynamicPoint").Add(new RO_Point()
       {
         Position = point,
         Size = 8,

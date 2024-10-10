@@ -1,8 +1,7 @@
 using System;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
-using MegaLib.Render.Core;
-using MegaLib.Render.Core.Layer;
+using MegaLib.Render.Layer;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Scene;
 
@@ -124,7 +123,7 @@ public class LR_Sprite : LR_Base
     Shader.SetUniform("uViewMatrix", Scene.Camera.ViewMatrix);
 
     // Draw each mesh
-    layer.ForEach<RO_Sprite>(sprite =>
+    layer.ForEach(sprite =>
     {
       Context.MapObject(sprite);
 

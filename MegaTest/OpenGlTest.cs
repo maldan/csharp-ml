@@ -2,8 +2,7 @@ using System;
 using MegaLib.OS;
 using MegaLib.OS.Api;
 using MegaLib.Render.Color;
-using MegaLib.Render.Core;
-using MegaLib.Render.Core.Layer;
+using MegaLib.Render.Layer;
 using MegaLib.Render.Renderer.OpenGL;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Scene;
@@ -59,7 +58,7 @@ public class OpenGlTest
       sprite.Texture = new Texture_2D<RGBA<byte>>(32, 32);
       sprite.Width = 32;
       sprite.Height = 32;
-      scene.Add("main", sprite);
+      scene.GetLayer<Layer_Sprite>().Add(sprite);
     }
 
     var renderer = new OpenGL_Renderer();

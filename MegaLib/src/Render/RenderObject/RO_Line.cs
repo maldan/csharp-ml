@@ -3,7 +3,7 @@ using MegaLib.Render.Color;
 
 namespace MegaLib.Render.RenderObject;
 
-public class RO_Line : RO_Base
+public struct RO_Line
 {
   public Vector3 From;
   public Vector3 To;

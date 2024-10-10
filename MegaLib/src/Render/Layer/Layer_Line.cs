@@ -7,17 +7,34 @@ using MegaLib.Physics;
 using MegaLib.Physics.Collider;
 using MegaLib.Render.Camera;
 using MegaLib.Render.Color;
-using MegaLib.Render.Core.Layer;
 using MegaLib.Render.RenderObject;
+using MegaLib.Render.Skin;
 
 namespace MegaLib.Render.Layer;
 
 public class Layer_Line : Layer_Base
 {
   public Camera_Orthographic Camera;
+  public override int Count => _lineList.Count;
+  private List<RO_Line> _lineList = [];
 
   public bool IsSmooth = true;
   public bool DisableDepthTest;
+
+  public void Add(RO_Line obj)
+  {
+    _lineList.Add(obj);
+  }
+
+  public void ForEach(Action<RO_Line> fn)
+  {
+    for (var i = 0; i < _lineList.Count; i++) fn(_lineList[i]);
+  }
+
+  public override void Clear()
+  {
+    _lineList.Clear();
+  }
 
   public void Draw(VerletLine line)
   {
@@ -75,10 +92,16 @@ public class Layer_Line : Layer_Base
     Add(new RO_Line(vertices[3], vertices[7], color));
   }
 
-  public void DrawSphere(Vector3 position, float radius, RGBA<float> color)
+  public void DrawSphere(
+    Vector3 position,
+    float radius,
+    RGBA<float> color,
+    float latitudeSegments = 16 / 2f,
+    float longitudeSegments = 16 / 2f
+  )
   {
-    var longitudeSegments = 16 / 2;
-    var latitudeSegments = 16 / 2;
+    //var longitudeSegments = 16 / 2;
+    //var latitudeSegments = 16 / 2;
     var transform = new Transform
     {
       Position = position
@@ -583,6 +606,59 @@ public class Layer_Line : Layer_Base
       // Обновляем предыдущую точку
       prevPoint = currentPoint;
     }
+  }
+
+  public void DrawBone(Vector3 position, Quaternion rotation, float length, RGBA<float> color)
+  {
+    // Создаем матрицу трансформации для преобразования из локальных координат в мировые
+    var transformMatrix = Matrix4x4.Identity;
+    transformMatrix = transformMatrix.Translate(position);
+    transformMatrix = transformMatrix.Rotate(rotation);
+
+    // Рассчитываем длину и базовый размер октаэдра
+    var direction = Vector3.Up * length; // Локальное направление кости теперь вверх по оси Y
+    var baseSize = MathF.Min(length * 0.1f, 0.025f); // Размер основания октаэдра
+
+    // Локальные координаты точек
+    var start = Vector3.Zero; // Начало кости (локально)
+    var end = direction; // Конец кости (локально)
+    var midPoint = (start + end) / 4; // Средняя точка для построения основания
+
+    // Рассчитываем локальные оси для октаэдра
+    var forward = Vector3.Forward * baseSize;
+    var right = Vector3.Right * baseSize;
+
+    // Вершины октаэдра в локальных координатах
+    var topBase = midPoint + forward;
+    var bottomBase = midPoint - forward;
+    var leftBase = midPoint - right;
+    var rightBase = midPoint + right;
+
+    // Преобразуем все точки в мировые координаты
+    start = Vector3.Transform(start, transformMatrix);
+    end = Vector3.Transform(end, transformMatrix);
+    topBase = Vector3.Transform(topBase, transformMatrix);
+    bottomBase = Vector3.Transform(bottomBase, transformMatrix);
+    leftBase = Vector3.Transform(leftBase, transformMatrix);
+    rightBase = Vector3.Transform(rightBase, transformMatrix);
+
+    // Рисуем линии от начала кости к вершинам основания
+    DrawLine(start, topBase, color); // Линия от начала к topBase
+    DrawLine(start, bottomBase, color); // Линия от начала к bottomBase
+    DrawLine(start, leftBase, color); // Линия от начала к leftBase
+    DrawLine(start, rightBase, color); // Линия от начала к rightBase
+
+    // Рисуем линии от конца кости к вершинам основания
+    DrawLine(end, topBase, color); // Линия от конца к topBase
+    DrawLine(end, bottomBase, color); // Линия от конца к bottomBase
+    DrawLine(end, leftBase, color); // Линия от конца к leftBase
+    DrawLine(end, rightBase, color); // Линия от конца к rightBase
+
+    // Соединяем вершины основания между собой
+    DrawLine(topBase, rightBase, color);
+    DrawLine(rightBase, bottomBase, color);
+    DrawLine(bottomBase, leftBase, color);
+    DrawLine(leftBase, topBase, color);
   }
 
   public void DrawGrid(int gridSize, float cellSize, RGBA<float> mainColor, int subdivisions, RGBA<float> subColor)

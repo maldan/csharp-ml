@@ -1,7 +1,4 @@
-using System;
-using MegaLib.Render.Core;
-using MegaLib.Render.Core.Layer;
-using MegaLib.Render.RenderObject;
+using MegaLib.Render.Layer;
 using MegaLib.Render.Scene;
 
 namespace MegaLib.Render.Renderer.OpenGL.Layer;

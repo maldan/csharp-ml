@@ -1,8 +1,6 @@
 using System;
-using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
-using MegaLib.Render.Core;
-using MegaLib.Render.Core.Layer;
+using MegaLib.Render.Layer;
 using MegaLib.Render.Mesh;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Scene;
@@ -11,6 +9,8 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer;
 
 public class LR_Skybox : LR_Base
 {
+  private RO_Mesh _skybox;
+
   public LR_Skybox(OpenGL_Context context, Layer_Base layer, Render_Scene scene) : base(context, layer, scene)
   {
   }
@@ -59,9 +59,8 @@ public class LR_Skybox : LR_Base
     Shader.Compile();
 
     // Base
-    var skybox = new RO_Mesh();
-    skybox.FromMesh(MeshGenerator.Cube(32));
-    Layer.Add(skybox);
+    _skybox = new RO_Mesh();
+    _skybox.FromMesh(MeshGenerator.Cube(32));
   }
 
   public override void Render()
@@ -83,32 +82,29 @@ public class LR_Skybox : LR_Base
     Shader.ActivateTexture(Scene.Skybox, "uSkybox", 10);
 
     // Draw each mesh
-    layer.ForEach<RO_Mesh>(mesh =>
-    {
-      // Move mesh
-      var p = Scene.Camera.Position;
-      //p.Z *= -1;
-      //mesh.Transform.Position = p;
-      //mesh.Transform.Scale = new Vector3(1.0f, 1.0f, -1.0f);
+    // Move mesh
+    var p = Scene.Camera.Position;
+    //p.Z *= -1;
+    //mesh.Transform.Position = p;
+    //mesh.Transform.Scale = new Vector3(1.0f, 1.0f, -1.0f);
 
-      Context.MapObject(mesh);
+    Context.MapObject(_skybox);
 
-      // Bind vao
-      OpenGL32.glBindVertexArray(Context.GetVaoId(mesh));
+    // Bind vao
+    OpenGL32.glBindVertexArray(Context.GetVaoId(_skybox));
 
-      // Buffer
-      Shader.EnableAttribute(mesh.VertexList, "aPosition");
-      //Shader.EnableAttribute(mesh.UV0List, "aUV");
-      // Shader.SetUniform("uModelMatrix", mesh.Transform.Matrix);
+    // Buffer
+    Shader.EnableAttribute(_skybox.VertexList, "aPosition");
+    //Shader.EnableAttribute(mesh.UV0List, "aUV");
+    // Shader.SetUniform("uModelMatrix", mesh.Transform.Matrix);
 
-      // Bind indices
-      OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(mesh.IndexList));
+    // Bind indices
+    OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(_skybox.IndexList));
 
-      // Draw
-      OpenGL32.glDrawElements(OpenGL32.GL_TRIANGLES, mesh.IndexList.Count, OpenGL32.GL_UNSIGNED_INT, IntPtr.Zero);
+    // Draw
+    OpenGL32.glDrawElements(OpenGL32.GL_TRIANGLES, _skybox.IndexList.Count, OpenGL32.GL_UNSIGNED_INT, IntPtr.Zero);
 
-      // Unbind vao
-      OpenGL32.glBindVertexArray(0);
-    });
+    // Unbind vao
+    OpenGL32.glBindVertexArray(0);
   }
 }

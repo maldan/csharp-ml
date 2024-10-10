@@ -2,16 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS;
 using MegaLib.OS.Api;
 using MegaLib.Render.Buffer;
-using MegaLib.Render.Core;
-using MegaLib.Render.Core.Layer;
-using MegaLib.Render.IMGUI;
 using MegaLib.Render.Layer;
-using MegaLib.Render.RenderObject;
 using MegaLib.Render.Scene;
 using MegaLib.Render.UI.EasyUI;
 

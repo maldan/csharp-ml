@@ -345,8 +345,10 @@ public class EasyUI_Element
       _lineRenderData.Lines = Lines.ToArray().ToList();
       for (var i = 0; i < _lineRenderData.Lines.Count; i++)
       {
-        _lineRenderData.Lines[i].From += elementBoundingBox.Min;
-        _lineRenderData.Lines[i].To += elementBoundingBox.Min;
+        var from = _lineRenderData.Lines[i];
+        from.From += elementBoundingBox.Min;
+        from.To += elementBoundingBox.Min;
+        _lineRenderData.Lines[i] = from;
       }
     }
 

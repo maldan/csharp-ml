@@ -3,7 +3,7 @@ using MegaLib.Render.Color;
 
 namespace MegaLib.Render.RenderObject;
 
-public class RO_Point : RO_Base
+public struct RO_Point
 {
   public Vector3 Position;
   public RGBA<float> Color = new(1, 1, 1, 1);

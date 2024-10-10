@@ -148,11 +148,18 @@ public static class Keyboard
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   ];
 
+  private static float[] _keydownTimers = new float[_state.Length];
+
   private static byte[] _previousState = new byte[_state.Length];
 
   public static bool IsKeyDown(KeyboardKey key)
   {
     return _state[(int)key] == 1;
+  }
+
+  public static float KeyDownTimer(KeyboardKey key)
+  {
+    return _keydownTimers[(int)key];
   }
 
   public static bool IsKeyUp(KeyboardKey key)
@@ -212,10 +219,15 @@ public static class Keyboard
     }
   }
 
-  public static void Update()
+  public static void Update(float delta = 0)
   {
     // Предыдущее состояние клавиш
-    for (var i = 0; i < _state.Length; i++) _previousState[i] = _state[i];
+    for (var i = 0; i < _state.Length; i++)
+    {
+      _previousState[i] = _state[i];
+      if (_state[i] == 1) _keydownTimers[i] += delta;
+      else _keydownTimers[i] = 0;
+    }
 
     // Обновляем состояние клавиш
     for (var i = 0; i < _state.Length; i++)

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using MegaLib.OS.Api;
 using MegaLib.Render.Camera;
 using MegaLib.Render.Color;
-using MegaLib.Render.Core.Layer;
 using MegaLib.Render.IMGUI;
 using MegaLib.Render.Texture;
 

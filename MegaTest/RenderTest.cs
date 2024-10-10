@@ -10,8 +10,6 @@ using MegaLib.OS.Api;
 using MegaLib.Physics;
 using MegaLib.Render.Camera;
 using MegaLib.Render.Color;
-using MegaLib.Render.Core;
-using MegaLib.Render.Core.Layer;
 using MegaLib.Render.IMGUI;
 using MegaLib.Render.Layer;
 using MegaLib.Render.Light;
@@ -74,7 +72,7 @@ internal class RenderTestScene : Render_Scene
     var cubeMesh = MeshGenerator.Cube(1);
     _cube = new RO_Mesh();
     _cube.FromMesh(cubeMesh);
-    Add("staticMesh", _cube);
+    GetLayer<Layer_StaticMesh>("staticMesh").Add(_cube);
     _cube.InitDefaultTextures();
     _cube.AlbedoTexture = new Texture_2D<RGBA<byte>>(1, 1);
     _cube.AlbedoTexture.RAW[0] = new RGBA<byte>(0, 0, 0, 255);
@@ -85,7 +83,7 @@ internal class RenderTestScene : Render_Scene
     var gridMesh = new RO_Mesh();
     gridMesh.FromMesh(MeshGenerator.Grid(2, 2, 4));
     gridMesh.InitDefaultTextures();
-    Add("staticMesh", gridMesh);
+    GetLayer<Layer_StaticMesh>("staticMesh").Add(gridMesh);
 
     _sphere = new RO_Mesh();
     _sphere.FromMesh(MeshGenerator.UVSphere(16, 16, 0.5f));
@@ -95,7 +93,7 @@ internal class RenderTestScene : Render_Scene
     _sphere.AlbedoTexture.RAW[0] = new RGBA<byte>(255, 255, 255, 255);
     _sphere.RoughnessTexture.RAW[0] = 128;
     _sphere.MetallicTexture.RAW[0] = 0;
-    Add("staticMesh", _sphere);
+    GetLayer<Layer_StaticMesh>("staticMesh").Add(_sphere);
 
     /*var ld = new LightPoint();
     ld.Position = new Vector3(-1, 1, -1);

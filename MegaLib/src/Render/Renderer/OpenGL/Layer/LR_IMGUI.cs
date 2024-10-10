@@ -3,8 +3,6 @@ using System.Linq;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Buffer;
-using MegaLib.Render.Core;
-using MegaLib.Render.Core.Layer;
 using MegaLib.Render.IMGUI;
 using MegaLib.Render.Layer;
 using MegaLib.Render.RenderObject;
