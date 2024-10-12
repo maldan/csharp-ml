@@ -67,6 +67,13 @@ public class Shader_Base
   }
 
   [ShaderBuiltinMethod]
+  protected float mix(float v1, float v2, float t)
+  {
+    throw new Exception("FUCK");
+    return 0;
+  }
+
+  [ShaderBuiltinMethod]
   protected Vector3 reflect(Vector3 a, Vector3 b)
   {
     return Vector3.Reflect(a, b);

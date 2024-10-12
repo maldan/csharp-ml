@@ -421,14 +421,14 @@ public class LR_Skin : LR_Base
         {
             Material mat = getMaterial();
 
-            Light light1 = createLight(vec3(0.0, 0.0, 1.0), vec3(1.0), 0.5, true);
-            Light light2 = createLight(vec3(-1.0, 1.0, 1.0), vec3(1.0), 0.5, true);
-            Light light3 = createLight(vec3(0.0, 1.0, 1.0), vec3(1.0), 1.5, true);
+            Light light1 = createLight(vec3(0.0, 0.0, -1.0), vec3(1.0), 0.5, true);
+            //Light light2 = createLight(vec3(-1.0, 1.0, 1.0), vec3(1.0), 0.5, true);
+            //Light light3 = createLight(vec3(0.0, 1.0, 1.0), vec3(1.0), 1.5, true);
             
             vec3 finalColor = vec3(0.0);
             finalColor += calcPbr(mat, light1);
-            finalColor += calcPbr(mat, light2);
-            finalColor += calcPbr(mat, light3);
+            //finalColor += calcPbr(mat, light2);
+            //finalColor += calcPbr(mat, light3);
             
              // Subsurface Scattering approximation
             //vec3 V = normalize(vo_CameraPosition - vo_Position);
@@ -453,6 +453,10 @@ public class LR_Skin : LR_Base
             color = vec4(finalColor, mat.alpha) * uTint;
             // color = vec4(texture(uBoneMatrix, vUV).r, 0.0, 0.0, 1.0);
         }";
+
+    /*Shader.ShaderCode["vertex"] = vertex;
+    Shader.ShaderCode["fragment"] = fragment;
+    Shader.Compile();*/
 
     var ss = ShaderProgram.Compile("Skin");
 

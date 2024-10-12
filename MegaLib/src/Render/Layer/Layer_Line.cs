@@ -695,15 +695,20 @@ public class Layer_Line : Layer_Base
     DrawLine(ftr, fbr, color, color);
   }
 
-  public void DrawRing(Vector3 center, Vector3 axis, float radius, RGBA<float> color, int segments = 64,
+  public void DrawRing(
+    Vector3 center, Vector3 axis,
+    Quaternion transformRotation,
+    float radius,
+    RGBA<float> color,
+    int segments = 64,
     float width = 1.0f)
   {
     // Нормализуем ось вращения
     axis = axis.Normalized;
 
-    // Выбираем вектор, перпендикулярный оси вращения, для начальной точки
+    // Выбираем вектор, перпендикулярный оси вращения
     Vector3 perpendicularVector;
-    if (Math.Abs(Vector3.Dot(axis, Vector3.UnitY)) > 0.99f) // Если ось почти параллельна оси Y, выбираем другой вектор
+    if (Math.Abs(Vector3.Dot(axis, Vector3.UnitY)) > 0.99f)
     {
       perpendicularVector = Vector3.Cross(axis, Vector3.UnitX).Normalized;
     }
@@ -715,8 +720,8 @@ public class Layer_Line : Layer_Base
     // Множитель для вращения каждой точки
     var angleStep = 2 * (float)Math.PI / segments;
 
-    // Предыдущая точка на окружности
-    var prevPoint = center + perpendicularVector * radius;
+    // Применяем начальную трансформацию к первой точке
+    var prevPoint = center + transformRotation * (perpendicularVector * radius);
 
     // Проходим по каждой точке окружности
     for (var i = 1; i <= segments; i++)
@@ -727,8 +732,8 @@ public class Layer_Line : Layer_Base
       // Вычисляем вращение вокруг оси
       var rotation = Quaternion.FromAxisAngle(axis, angle);
 
-      // Вращаем начальный вектор на текущий угол
-      var currentPoint = center + rotation * (perpendicularVector * radius);
+      // Вращаем начальный вектор на текущий угол с учетом трансформации
+      var currentPoint = center + transformRotation * (rotation * (perpendicularVector * radius));
 
       // Рисуем линию между предыдущей и текущей точками
       DrawLine(prevPoint, currentPoint, color, width);

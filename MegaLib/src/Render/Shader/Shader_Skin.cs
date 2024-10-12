@@ -102,6 +102,7 @@ public class SkinVertex : Shader_Base
     // Позиция камеры в мировых координатах
     var cameraPosition = new Vector4(0.0f, 0.0f, 0.0f, 1.0f);
     vo_CameraPosition = (inverse(uViewMatrix) * cameraPosition).XYZ;
+    vo_CameraPosition.Z *= -1f;
 
     // Преобразование позиции вершины в мировые координаты
     vo_Position = (uModelMatrix * new Vector4(aPosition, 1.0f)).XYZ;

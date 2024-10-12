@@ -73,9 +73,31 @@ public class RotationManipulator
     _currentRay = ray;
   }
 
+  /*// Метод для проверки коллизии с кольцом на плоскости
+  private bool CheckRingCollision(Ray ray, Vector3 axis)
+  {
+    // Плоскость вращения перпендикулярна оси
+    var rotationPlane = new Plane(axis, Transform.Position);
+
+    // Находим пересечение луча с плоскостью вращения
+    if (rotationPlane.RayIntersects(ray, out var intersectionPoint, out var isHit) && isHit)
+    {
+      // Вычисляем расстояние от точки пересечения до центра
+      var distanceToCenter = (intersectionPoint - Transform.Position).Length;
+
+      // Проверяем, находится ли точка на кольце
+      return Math.Abs(distanceToCenter - Radius) < Thickness; // Точка находится на кольце
+    }
+
+    return false;
+  }*/
+
   // Метод для проверки коллизии с кольцом на плоскости
   private bool CheckRingCollision(Ray ray, Vector3 axis)
   {
+    // Применяем поворот к оси кольца
+    axis = Transform.Rotation * axis;
+
     // Плоскость вращения перпендикулярна оси
     var rotationPlane = new Plane(axis, Transform.Position);
 
@@ -107,17 +129,17 @@ public class RotationManipulator
       if (_isXHover)
       {
         _isXGrab = true;
-        _startPointX = GetRingIntersectionPoint(Vector3.UnitX); // Сохраняем начальную точку для оси X
+        _startPointX = GetRingIntersectionPoint(Vector3.UnitX);
       }
       else if (_isYHover)
       {
         _isYGrab = true;
-        _startPointY = GetRingIntersectionPoint(Vector3.UnitY); // Сохраняем начальную точку для оси Y
+        _startPointY = GetRingIntersectionPoint(Vector3.UnitY);
       }
       else if (_isZHover)
       {
         _isZGrab = true;
-        _startPointZ = GetRingIntersectionPoint(Vector3.UnitZ); // Сохраняем начальную точку для оси Z
+        _startPointZ = GetRingIntersectionPoint(Vector3.UnitZ);
       }
 
       OnStart?.Invoke();
@@ -140,9 +162,14 @@ public class RotationManipulator
     IsUsing = _isXGrab || _isYGrab || _isZGrab;
   }
 
-  private void RotateAroundAxis(Vector3 axis, Vector3 startPoint)
+  /*private void RotateAroundAxis(Vector3 axis, Vector3 startPoint)
   {
     var currentPoint = GetRingIntersectionPoint(axis);
+
+    // startPoint -= Transform.Position;
+    // currentPoint -= Transform.Position;
+
+    Console.WriteLine($"{startPoint} - {currentPoint}");
 
     // Вычисляем угол между начальной точкой и текущей точкой
     var angle = Vector3.AngleBetween(startPoint, currentPoint);
@@ -173,9 +200,55 @@ public class RotationManipulator
     {
       OnChange?.Invoke(rotation * StartRotation);
     }
+  }*/
+
+  private void RotateAroundAxis(Vector3 axis, Vector3 startPoint)
+  {
+    // Применяем текущий поворот к оси для приведения её в мировые координаты
+    var worldAxis = Transform.Rotation * axis;
+
+    // Получаем текущую точку пересечения кольца и оси
+    var currentPoint = GetRingIntersectionPoint(worldAxis);
+
+    // Вычисляем угол между начальной точкой и текущей точкой
+    var angle = Vector3.AngleBetween(startPoint, currentPoint);
+
+    // Векторное произведение для определения направления вращения
+    var cross = Vector3.Cross(startPoint, currentPoint);
+
+    // Если векторное произведение направлено в ту же сторону, что и ось, то угол положительный,
+    // иначе — отрицательный
+    var direction = Vector3.Dot(cross, worldAxis) < 0 ? -1 : 1;
+
+    // Корректируем угол с учётом направления
+    angle *= direction;
+
+    // Создаём кватернион для поворота вокруг оси на вычисленный угол в мировых координатах
+    var worldRotation = Quaternion.FromAxisAngle(worldAxis, angle);
+
+    if (Space == ManipulatorSpace.Local)
+    {
+      // Преобразуем ось вращения в локальные координаты объекта
+      var localAxis = Transform.Rotation.Inverted * axis; // Применяем обратную ротацию объекта
+
+      // Создаём кватернион для локального поворота
+      var localRotation = Quaternion.FromAxisAngle(localAxis, angle);
+
+      // Применяем локальный поворот
+      OnChange?.Invoke(StartRotation * localRotation);
+
+      // Отладка углов
+      Console.WriteLine($"{(StartRotation * localRotation).Euler.ToDegrees}");
+    }
+
+    if (Space == ManipulatorSpace.World)
+    {
+      // В мировом пространстве применяем мировой поворот
+      OnChange?.Invoke(worldRotation * StartRotation);
+    }
   }
 
-  // Метод для получения точки пересечения луча с кольцом
+  /*// Метод для получения точки пересечения луча с кольцом
   private Vector3 GetRingIntersectionPoint(Vector3 axis)
   {
     var rotationPlane = new Plane(axis, Transform.Position);
@@ -185,10 +258,38 @@ public class RotationManipulator
     {
       // Нормализуем вектор до длины радиуса, чтобы линия всегда попадала на кольцо
       var direction = (intersectionPoint - Transform.Position).Normalized * Radius;
-      return Transform.Position + direction;
+      return direction;
     }
 
-    return Transform.Position; // Если пересечения нет, возвращаем центр
+    return Vector3.Zero; // Если пересечения нет, возвращаем центр
+  }*/
+
+  // Метод для получения точки пересечения луча с кольцом
+  private Vector3 GetRingIntersectionPoint(Vector3 axis)
+  {
+    // Применяем поворот к оси кольца с учётом текущей ротации объекта
+    axis = Transform.Rotation * axis;
+
+    // Создаем плоскость на основе трансформированной оси и позиции объекта
+    var rotationPlane = new Plane(axis, Transform.Position);
+
+    // Находим пересечение текущего луча с плоскостью вращения
+    if (rotationPlane.RayIntersects(_currentRay, out var intersectionPoint, out var isHit) && isHit)
+    {
+      // Вычисляем вектор от центра кольца до точки пересечения
+      var direction = (intersectionPoint - Transform.Position).Normalized;
+
+      // Применяем обратную ротацию к направлению, чтобы вернуть его в локальное пространство кольца
+      direction = Transform.Rotation.Inverted * direction;
+
+      // Нормализуем вектор до длины радиуса
+      direction *= Radius;
+
+      // Применяем обратно ротацию, чтобы получить итоговую позицию в мировом пространстве
+      return Transform.Rotation * direction;
+    }
+
+    return Vector3.Zero; // Если пересечения нет, возвращаем центр
   }
 
   // Метод для рисования манипулятора
@@ -204,48 +305,51 @@ public class RotationManipulator
 
     if (_isXGrab)
     {
-      line.DrawRing(Transform.Position, Vector3.UnitX, Radius, xColor, 128, 2f);
+      line.DrawRing(Transform.Position, Vector3.UnitX, Transform.Rotation, Radius, xColor, 32, 2f);
     }
     else if (_isYGrab)
     {
-      line.DrawRing(Transform.Position, Vector3.UnitY, Radius, yColor, 128, 2f);
+      line.DrawRing(Transform.Position, Vector3.UnitY, Transform.Rotation, Radius, yColor, 32, 2f);
     }
     else if (_isZGrab)
     {
-      line.DrawRing(Transform.Position, Vector3.UnitZ, Radius, zColor, 128, 2f);
+      line.DrawRing(Transform.Position, Vector3.UnitZ, Transform.Rotation, Radius, zColor, 32, 2f);
     }
     else
     {
-      line.DrawRing(Transform.Position, Vector3.UnitX, Radius, xColor, 16, 2f);
-      line.DrawRing(Transform.Position, Vector3.UnitY, Radius, yColor, 16, 2f);
-      line.DrawRing(Transform.Position, Vector3.UnitZ, Radius, zColor, 16, 2f);
+      line.DrawRing(Transform.Position, Vector3.UnitX, Transform.Rotation, Radius, xColor, 32, 2f);
+      line.DrawRing(Transform.Position, Vector3.UnitY, Transform.Rotation, Radius, yColor, 32, 2f);
+      line.DrawRing(Transform.Position, Vector3.UnitZ, Transform.Rotation, Radius, zColor, 32, 2f);
     }
 
     // Линии, показывающие начальный и текущий углы для оси X
     if (_isXGrab)
     {
       var currentPointX = GetRingIntersectionPoint(Vector3.UnitX);
-      line.DrawLine(Transform.Position, _startPointX.Normalized * Radius,
+      line.DrawLine(Transform.Position, Transform.Position + _startPointX.Normalized * Radius,
         new RGBA<float>(1, 0, 0, 1)); // Линия начального угла
-      line.DrawLine(Transform.Position, currentPointX, new RGBA<float>(1, 0.5f, 0.5f, 1)); // Линия текущего угла
+      line.DrawLine(Transform.Position, Transform.Position + currentPointX,
+        new RGBA<float>(1, 0.5f, 0.5f, 1)); // Линия текущего угла
     }
 
     // Линии, показывающие начальный и текущий углы для оси Y
     if (_isYGrab)
     {
       var currentPointY = GetRingIntersectionPoint(Vector3.UnitY);
-      line.DrawLine(Transform.Position, _startPointY.Normalized * Radius,
+      line.DrawLine(Transform.Position, Transform.Position + _startPointY.Normalized * Radius,
         new RGBA<float>(0, 1, 0, 1)); // Линия начального угла
-      line.DrawLine(Transform.Position, currentPointY, new RGBA<float>(0.5f, 1, 0.5f, 1)); // Линия текущего угла
+      line.DrawLine(Transform.Position, Transform.Position + currentPointY,
+        new RGBA<float>(0.5f, 1, 0.5f, 1)); // Линия текущего угла
     }
 
     // Линии, показывающие начальный и текущий углы для оси Z
     if (_isZGrab)
     {
       var currentPointZ = GetRingIntersectionPoint(Vector3.UnitZ);
-      line.DrawLine(Transform.Position, _startPointZ.Normalized * Radius,
+      line.DrawLine(Transform.Position, Transform.Position + _startPointZ.Normalized * Radius,
         new RGBA<float>(0, 0, 1, 1)); // Линия начального угла
-      line.DrawLine(Transform.Position, currentPointZ, new RGBA<float>(0.5f, 0.5f, 1, 1)); // Линия текущего угла
+      line.DrawLine(Transform.Position, Transform.Position + currentPointZ,
+        new RGBA<float>(0.5f, 0.5f, 1, 1)); // Линия текущего угла
     }
   }
 }

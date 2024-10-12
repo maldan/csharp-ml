@@ -87,6 +87,7 @@ public class Shader_PBR : Shader_Base
     var pp = texture(normalTexture, uv).XYZ;
     var normal = pp * 2.0f - 1.0f;
     mat.Normal = normalize(tbn * normal);
+    mat.Normal.Z *= -1f;
 
     // Roughness
     var roughness = texture(roughnessTexture, uv).R;
@@ -252,7 +253,13 @@ public class Shader_PBR : Shader_Base
     kD *= 1.0f - (mat.IsMetallic ? 1.0f : 0.0f); // У металлов нет диффузного отражения
 
     // Диффузное освещение
-    var NdotL = max(dot(N, L), 0.0f);
+    //var NdotL = max(dot(N, L), 0.0f);
+    var NdotL = dot(N, L);
+    if (NdotL < 0.1)
+    {
+      NdotL = mix(0.1f, 0.0f, (0.1f - NdotL) / (0.1f + 1.0f));
+    }
+
     var diffuse = kD * mat.Albedo / MathF.PI;
 
     // Основное освещение

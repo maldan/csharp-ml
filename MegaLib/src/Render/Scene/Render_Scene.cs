@@ -130,7 +130,7 @@ public class Render_Scene
         LightTexture.RAW[id++] = 1;
         LightTexture.RAW[id++] = -ld.Direction.X;
         LightTexture.RAW[id++] = -ld.Direction.Y;
-        LightTexture.RAW[id++] = -ld.Direction.Z;
+        LightTexture.RAW[id++] = ld.Direction.Z;
         LightTexture.RAW[id++] = 0;
       }
 
