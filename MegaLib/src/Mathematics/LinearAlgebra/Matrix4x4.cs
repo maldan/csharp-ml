@@ -159,6 +159,30 @@ public struct Matrix4x4
       M33 = 1
     };
 
+  public Matrix4x4(
+    float m00, float m01, float m02, float m03,
+    float m10, float m11, float m12, float m13,
+    float m20, float m21, float m22, float m23,
+    float m30, float m31, float m32, float m33)
+  {
+    M00 = m00;
+    M01 = m01;
+    M02 = m02;
+    M03 = m03;
+    M10 = m10;
+    M11 = m11;
+    M12 = m12;
+    M13 = m13;
+    M20 = m20;
+    M21 = m21;
+    M22 = m22;
+    M23 = m23;
+    M30 = m30;
+    M31 = m31;
+    M32 = m32;
+    M33 = m33;
+  }
+
   public Matrix4x4(float[] array)
   {
     if (array is not { Length: 16 })
@@ -235,6 +259,32 @@ public struct Matrix4x4
     return new Vector4(x, y, z, w);
   }
 
+  public static Matrix4x4 operator +(Matrix4x4 a, Matrix4x4 b)
+  {
+    return new Matrix4x4
+    {
+      M00 = a.M00 + b.M00,
+      M01 = a.M01 + b.M01,
+      M02 = a.M02 + b.M02,
+      M03 = a.M03 + b.M03,
+
+      M10 = a.M10 + b.M10,
+      M11 = a.M11 + b.M11,
+      M12 = a.M12 + b.M12,
+      M13 = a.M13 + b.M13,
+
+      M20 = a.M20 + b.M20,
+      M21 = a.M21 + b.M21,
+      M22 = a.M22 + b.M22,
+      M23 = a.M23 + b.M23,
+
+      M30 = a.M30 + b.M30,
+      M31 = a.M31 + b.M31,
+      M32 = a.M32 + b.M32,
+      M33 = a.M33 + b.M33
+    };
+  }
+
   public static Matrix4x4 operator *(Matrix4x4 a, Matrix4x4 b)
   {
     return new Matrix4x4
@@ -259,67 +309,20 @@ public struct Matrix4x4
       M32 = a.M30 * b.M02 + a.M31 * b.M12 + a.M32 * b.M22 + a.M33 * b.M32,
       M33 = a.M30 * b.M03 + a.M31 * b.M13 + a.M32 * b.M23 + a.M33 * b.M33
     };
-
-    /*var m = Matrix4x4.Identity;
-
-    var a00 = a.Raw[0];
-    var a01 = a.Raw[1];
-    var a02 = a.Raw[2];
-    var a03 = a.Raw[3];
-    var a10 = a.Raw[4];
-    var a11 = a.Raw[5];
-    var a12 = a.Raw[6];
-    var a13 = a.Raw[7];
-    var a20 = a.Raw[8];
-    var a21 = a.Raw[9];
-    var a22 = a.Raw[10];
-    var a23 = a.Raw[11];
-    var a30 = a.Raw[12];
-    var a31 = a.Raw[13];
-    var a32 = a.Raw[14];
-    var a33 = a.Raw[15];
-
-    // Cache only the current line of the second matrix
-    var b0 = b.Raw[0];
-    var b1 = b.Raw[1];
-    var b2 = b.Raw[2];
-    var b3 = b.Raw[3];
-    m.Raw[0] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
-    m.Raw[1] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
-    m.Raw[2] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
-    m.Raw[3] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
-
-    b0 = b.Raw[4];
-    b1 = b.Raw[5];
-    b2 = b.Raw[6];
-    b3 = b.Raw[7];
-    m.Raw[4] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
-    m.Raw[5] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
-    m.Raw[6] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
-    m.Raw[7] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
-
-    b0 = b.Raw[8];
-    b1 = b.Raw[9];
-    b2 = b.Raw[10];
-    b3 = b.Raw[11];
-    m.Raw[8] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
-    m.Raw[9] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
-    m.Raw[10] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
-    m.Raw[11] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
-
-    b0 = b.Raw[12];
-    b1 = b.Raw[13];
-    b2 = b.Raw[14];
-    b3 = b.Raw[15];
-    m.Raw[12] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
-    m.Raw[13] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
-    m.Raw[14] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
-    m.Raw[15] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
-
-    return m;*/
   }
 
   public static Matrix4x4 operator *(Matrix4x4 matrix, float scalar)
+  {
+    return new Matrix4x4
+    {
+      M00 = matrix.M00 * scalar, M01 = matrix.M01 * scalar, M02 = matrix.M02 * scalar, M03 = matrix.M03,
+      M10 = matrix.M10 * scalar, M11 = matrix.M11 * scalar, M12 = matrix.M12 * scalar, M13 = matrix.M13,
+      M20 = matrix.M20 * scalar, M21 = matrix.M21 * scalar, M22 = matrix.M22 * scalar, M23 = matrix.M23,
+      M30 = matrix.M30 * scalar, M31 = matrix.M31 * scalar, M32 = matrix.M32 * scalar, M33 = matrix.M33
+    };
+  }
+
+  public static Matrix4x4 operator *(float scalar, Matrix4x4 matrix)
   {
     return new Matrix4x4
     {

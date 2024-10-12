@@ -307,6 +307,19 @@ public class RO_Mesh : RO_Base
     IndexList = new ListGPU<uint>(gltfMeshPrimitive.Indices);
     NormalList = new ListGPU<Vector3>(gltfMeshPrimitive.Normals);
 
+    if (gltfMeshPrimitive.Gltf.IsZInverted)
+    {
+      for (var i = 0; i < VertexList.Count; i++)
+      {
+        VertexList[i] = VertexList[i] with { Z = VertexList[i].Z * -1 };
+      }
+
+      for (var i = 0; i < NormalList.Count; i++)
+      {
+        NormalList[i] = NormalList[i] with { Z = NormalList[i].Z * -1 };
+      }
+    }
+
     if (gltfMeshPrimitive.BoneWeight.Count > 0)
       BoneWeightList = new ListGPU<Vector4>(gltfMeshPrimitive.BoneWeight);
 

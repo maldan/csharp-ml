@@ -4,19 +4,27 @@ using System.Runtime.InteropServices;
 namespace MegaLib.Mathematics.LinearAlgebra;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct Vector4Int
+public struct IVector4
 {
   public int X;
   public int Y;
   public int Z;
   public int W;
 
-  public Vector4Int(int x, int y, int z, int w)
+  public IVector4(int x, int y, int z, int w)
   {
     X = x;
     Y = y;
     Z = z;
     W = w;
+  }
+
+  public IVector4(uint x, uint y, uint z, uint w)
+  {
+    X = (int)x;
+    Y = (int)y;
+    Z = (int)z;
+    W = (int)w;
   }
 
   public uint UInt32LE => (uint)(X | (Y << 8) | (Z << 16) | (W << 24));

@@ -3,6 +3,7 @@ using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Layer;
 using MegaLib.Render.Scene;
+using MegaLib.Render.Shader;
 
 namespace MegaLib.Render.Renderer.OpenGL.Layer;
 
@@ -453,8 +454,10 @@ public class LR_Skin : LR_Base
             // color = vec4(texture(uBoneMatrix, vUV).r, 0.0, 0.0, 1.0);
         }";
 
-    Shader.ShaderCode["vertex"] = vertex;
-    Shader.ShaderCode["fragment"] = fragment;
+    var ss = ShaderProgram.Compile("Skin");
+
+    Shader.ShaderCode["vertex"] = ss["vertex"];
+    Shader.ShaderCode["fragment"] = ss["fragment"];
     Shader.Compile();
   }
 
@@ -513,6 +516,10 @@ public class LR_Skin : LR_Base
         Shader.ActivateTexture(mesh.NormalTexture, "uNormalTexture", 1);
         Shader.ActivateTexture(mesh.RoughnessTexture, "uRoughnessTexture", 2);
         Shader.ActivateTexture(mesh.MetallicTexture, "uMetallicTexture", 3);
+
+        // Текстура с источниками света
+        Context.MapTexture(Scene.LightTexture);
+        Shader.ActivateTexture(Scene.LightTexture, "uLightTexture", 12);
 
         Shader.SetUniform("uTint", new Vector4(skin.Tint.R, skin.Tint.G, skin.Tint.B, skin.Tint.A));
 

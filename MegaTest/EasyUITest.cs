@@ -197,14 +197,14 @@ internal class TestScene3 : Render_Scene
 
           easyUi.Add<EasyUI_VectorInput>(vi => { vi.Style.Width = 128; });
 
-          easyUi.Label("Int");
+          /*easyUi.Label("Int");
           easyUi.TextInput(TextInputType.Integer, input => { });
 
           easyUi.Label("Float");
           easyUi.TextInput(TextInputType.Float, input => { });
 
           easyUi.Label("Text");
-          easyUi.TextInput(TextInputType.Text, input => { });
+          easyUi.TextInput(TextInputType.Text, input => { });*/
 
           easyUi.Label("Gaayyy");
           easyUi.Add<EasyUI_Check>(check => { });

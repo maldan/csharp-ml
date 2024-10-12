@@ -44,6 +44,17 @@ public class Window
     }
   }
 
+  public bool IsMinimized
+  {
+    get
+    {
+      var placement = new User32.WINDOWPLACEMENT();
+      placement.length = Marshal.SizeOf(placement);
+      User32.GetWindowPlacement(_handleWindow, ref placement);
+      return placement.showCmd == User32.SW_SHOWMINIMIZED;
+    }
+  }
+
   public string Title
   {
     get => _title;

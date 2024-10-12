@@ -738,16 +738,16 @@ public class Layer_Line : Layer_Base
     }
   }
 
-  public void DrawBone(Vector3 position, Quaternion rotation, float length, RGBA<float> color)
+  public void DrawBone(Matrix4x4 transformMatrix, float length, RGBA<float> color)
   {
     // Создаем матрицу трансформации для преобразования из локальных координат в мировые
-    var transformMatrix = Matrix4x4.Identity;
-    transformMatrix = transformMatrix.Translate(position);
-    transformMatrix = transformMatrix.Rotate(rotation);
+    //var transformMatrix = Matrix4x4.Identity;
+    //transformMatrix = transformMatrix.Translate(position);
+    //transformMatrix = transformMatrix.Rotate(rotation);
 
     // Рассчитываем длину и базовый размер октаэдра
     var direction = Vector3.Up * length; // Локальное направление кости теперь вверх по оси Y
-    var baseSize = MathF.Min(length * 0.1f, 0.025f); // Размер основания октаэдра
+    var baseSize = length * 0.1f; //MathF.Min(length * 0.1f, 0.025f); // Размер основания октаэдра
 
     // Локальные координаты точек
     var start = Vector3.Zero; // Начало кости (локально)

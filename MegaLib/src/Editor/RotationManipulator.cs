@@ -10,6 +10,12 @@ using MegaLib.Render.Layer;
 
 namespace MegaLib.Editor;
 
+public enum ManipulatorSpace
+{
+  Local,
+  World
+}
+
 public class RotationManipulator
 {
   public Transform Transform = new();
@@ -27,7 +33,7 @@ public class RotationManipulator
   private bool _isZGrab;
 
   private Ray _currentRay;
-  private Quaternion _startRotation = Quaternion.Identity;
+  public Quaternion StartRotation = Quaternion.Identity;
 
   private Vector3 _startPointX; // Точка начального угла по X
   private Vector3 _startPointY; // Точка начального угла по Y
@@ -35,23 +41,18 @@ public class RotationManipulator
 
   private Camera_Base _camera; // Камера
 
-  private List<Transform> _objects = new(); // Список объектов, к которым применяется манипуляция
+  public Action<Quaternion> OnChange;
+  public Action OnStart;
+
+  public bool IsUsing { get; private set; }
+
+  public ManipulatorSpace Space = ManipulatorSpace.Local;
 
   public RotationManipulator(Camera_Base camera)
   {
     _camera = camera;
   }
 
-  // Метод для установки объектов
-  public void SetElements(List<Transform> objects)
-  {
-    _objects = objects;
-  }
-
-  public void Clear()
-  {
-    _objects.Clear();
-  }
 
   // Метод для проверки коллизии с круговыми коллайдерами
   public void CheckCollision(Ray ray)
@@ -106,21 +107,20 @@ public class RotationManipulator
       if (_isXHover)
       {
         _isXGrab = true;
-        _startRotation = GetStartRotation(); // Сохраняем начальный угол вращения
         _startPointX = GetRingIntersectionPoint(Vector3.UnitX); // Сохраняем начальную точку для оси X
       }
       else if (_isYHover)
       {
         _isYGrab = true;
-        _startRotation = GetStartRotation(); // Сохраняем начальный угол вращения
         _startPointY = GetRingIntersectionPoint(Vector3.UnitY); // Сохраняем начальную точку для оси Y
       }
       else if (_isZHover)
       {
         _isZGrab = true;
-        _startRotation = GetStartRotation(); // Сохраняем начальный угол вращения
         _startPointZ = GetRingIntersectionPoint(Vector3.UnitZ); // Сохраняем начальную точку для оси Z
       }
+
+      OnStart?.Invoke();
     }
 
     // Логика вращения по осям X, Y и Z
@@ -136,17 +136,10 @@ public class RotationManipulator
     {
       RotateAroundAxis(Vector3.UnitZ, _startPointZ); // Логика вращения вокруг оси Z
     }
+
+    IsUsing = _isXGrab || _isYGrab || _isZGrab;
   }
 
-  private Quaternion GetStartRotation()
-  {
-    if (_objects.Count > 0) return _objects[0].Rotation;
-    return Quaternion.Identity;
-  }
-
-  // Логика вращения вокруг заданной оси
-  // Логика вращения вокруг заданной оси в мировых координатах
-  // Логика вращения вокруг заданной оси в мировых координатах
   private void RotateAroundAxis(Vector3 axis, Vector3 startPoint)
   {
     var currentPoint = GetRingIntersectionPoint(axis);
@@ -167,11 +160,18 @@ public class RotationManipulator
     // Создаём кватернион для поворота вокруг оси на вычисленный угол в мировых координатах
     var rotation = Quaternion.FromAxisAngle(axis, angle);
 
-    // Применяем вращение ко всем объектам, но в мировой системе координат
-    foreach (var obj in _objects)
+    if (Space == ManipulatorSpace.Local)
     {
-      // Вращение относительно мировой оси, не переводим её в локальные координаты
-      obj.Rotation = rotation * _startRotation; // Применяем поворот в мировой системе
+      // Преобразуем ось в локальные координаты объекта
+      var localAxis = Vector3.Transform(axis, StartRotation);
+      rotation = Quaternion.FromAxisAngle(localAxis, angle);
+
+      OnChange?.Invoke(rotation * StartRotation);
+    }
+
+    if (Space == ManipulatorSpace.World)
+    {
+      OnChange?.Invoke(rotation * StartRotation);
     }
   }
 

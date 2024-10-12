@@ -87,7 +87,7 @@ public struct Quaternion
   {
     get
     {
-      var t = 2.0 * (W * Y - Z * X);
+      /*var t = 2.0 * (W * Y - Z * X);
       var v = new Vector3(0, 0, 0);
 
       // Set X
@@ -111,7 +111,29 @@ public struct Quaternion
       a = 2.0 * (W * Z + X * Y);
       v.Z = (float)Math.Atan2(a, 1.0 - 2.0 * (Y * Y + Z * Z));
 
-      return v;
+      return v;*/
+
+      Vector3 euler;
+      var q = this;
+
+      // Roll (X)
+      var sinr_cosp = 2 * (q.W * q.X + q.Y * q.Z);
+      var cosr_cosp = 1 - 2 * (q.X * q.X + q.Y * q.Y);
+      euler.X = MathF.Atan2(sinr_cosp, cosr_cosp);
+
+      // Pitch (Y)
+      var sinp = 2 * (q.W * q.Y - q.Z * q.X);
+      if (MathF.Abs(sinp) >= 1)
+        euler.Y = MathF.CopySign(MathF.PI / 2, sinp); // Используем 90 градусов, если вне диапазона
+      else
+        euler.Y = MathF.Asin(sinp);
+
+      // Yaw (Z)
+      var siny_cosp = 2 * (q.W * q.Z + q.X * q.Y);
+      var cosy_cosp = 1 - 2 * (q.Y * q.Y + q.Z * q.Z);
+      euler.Z = MathF.Atan2(siny_cosp, cosy_cosp);
+
+      return euler;
     }
   }
 
@@ -170,6 +192,42 @@ public struct Quaternion
 
   public static Quaternion FromEuler(Vector3 v, string unit)
   {
+    /*var roll = v.X;
+    var pitch = v.Y;
+    var yaw = v.Z;
+
+    if (unit == "deg")
+    {
+      roll = roll.DegToRad();
+      pitch = pitch.DegToRad();
+      yaw = yaw.DegToRad();
+    }
+
+    //  Roll first, about axis the object is facing, then
+    //  pitch upward, then yaw to face into the new heading
+    float sr, cr, sp, cp, sy, cy;
+
+    var halfRoll = roll * 0.5f;
+    sr = MathF.Sin(halfRoll);
+    cr = MathF.Cos(halfRoll);
+
+    var halfPitch = pitch * 0.5f;
+    sp = MathF.Sin(halfPitch);
+    cp = MathF.Cos(halfPitch);
+
+    var halfYaw = yaw * 0.5f;
+    sy = MathF.Sin(halfYaw);
+    cy = MathF.Cos(halfYaw);
+
+    Quaternion result;
+
+    result.X = cy * sp * cr + sy * cp * sr;
+    result.Y = sy * cp * cr - cy * sp * sr;
+    result.Z = cy * cp * sr - sy * sp * cr;
+    result.W = cy * cp * cr + sy * sp * sr;
+
+    return result;*/
+
     var x = v.X;
     var y = v.Y;
     var z = v.Z;
@@ -269,7 +327,41 @@ public struct Quaternion
     return ans;
   }
 
-  public static Quaternion FromDirection(Vector3 direction)
+  /*public static Quaternion LookRotation(Vector3 forward, Vector3 up)
+  {
+    // Нормализуем входные векторы
+    forward = Vector3.Normalize(forward);
+    up = Vector3.Normalize(up);
+
+    // Проверяем если направление и "вверх" коллинеарны, чтобы избежать ошибки
+    if (Vector3.Dot(forward, up) > 0.9999f || Vector3.Dot(forward, up) < -0.9999f)
+    {
+      up = Vector3.UnitX; // Задаем новый вектор "вверх", если они коллинеарны
+    }
+
+    // Определяем вектор "право" (осевое произведение "вверх" и "вперед")
+    var right = Vector3.Cross(up, forward);
+    right = Vector3.Normalize(right);
+
+    // Пересчитываем новый "вверх" с учетом нормализации направления
+    var recalculatedUp = Vector3.Cross(forward, right);
+
+    // Создаем матрицу вращения на основе базисных векторов
+    float m00 = right.X, m01 = right.Y, m02 = right.Z;
+    float m10 = recalculatedUp.X, m11 = recalculatedUp.Y, m12 = recalculatedUp.Z;
+    float m20 = forward.X, m21 = forward.Y, m22 = forward.Z;
+
+    var w = (float)Math.Sqrt(1.0f + m00 + m11 + m22) * 0.5f;
+    var w4 = 4.0f * w;
+    var x = (m21 - m12) / w4;
+    var y = (m02 - m20) / w4;
+    var z = (m10 - m01) / w4;
+
+    return new Quaternion(x, y, z, w);
+  }*/
+
+
+  /*public static Quaternion FromDirection(Vector3 direction)
   {
     // Нормализуем направление
     direction = direction.Normalized;
@@ -284,7 +376,7 @@ public struct Quaternion
     var rotation = FromEuler(yaw, pitch, 0, "rad");
 
     return rotation;
-  }
+  }*/
 
   #endregion
 
@@ -433,6 +525,27 @@ public struct Quaternion
   public static Quaternion Normalize(Quaternion q)
   {
     return q.Normalized;
+  }
+
+  // Метод для конвертации кватерниона в ось и угол
+  public void ToAxisAngle(out Vector3 axis, out float angle)
+  {
+    var q = this;
+
+    if (q.W > 1.0f)
+      q = Normalize(q);
+
+    angle = 2.0f * (float)Math.Acos(q.W);
+    var sinHalfAngle = (float)Math.Sqrt(1.0f - q.W * q.W);
+
+    if (sinHalfAngle < 0.001f) // Защита от деления на очень маленькое значение
+    {
+      axis = new Vector3(1, 0, 0); // Любая ось (в данном случае X)
+    }
+    else
+    {
+      axis = new Vector3(q.X / sinHalfAngle, q.Y / sinHalfAngle, q.Z / sinHalfAngle);
+    }
   }
 
   // Метод создания кватерниона из оси и угла вращения

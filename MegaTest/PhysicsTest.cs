@@ -233,7 +233,7 @@ internal class TestScene : Render_Scene
 
     for (var i = 0; i < _vl.Points.Count; i++)
     {
-      _vl.Points[i].Color = new RGBA<float>(1, 0, 0, 1);
+      //_vl.Points[i].Color = new RGBA<float>(1, 0, 0, 1);
 
       //_boxCollider.ResolveCollision(_vl.Points[i]);
       //_boxCollider.ResolveCollision(_vl.Points[i]);
@@ -259,8 +259,8 @@ internal class TestScene : Render_Scene
       }*/
     }
 
-    layerLine.Draw(_sphereCollider, new RGBA<float>(0, 1, 0, 1));
-    layerLine.Draw(_vl);
+    //layerLine.Draw(_sphereCollider, new RGBA<float>(0, 1, 0, 1));
+    //layerLine.Draw(_vl);
 
     /*_vp.Position = new Vector3(_x, 1, 0);
     _vp2.ApplyForce(new Vector3(0, -9.8f, 0));
@@ -284,7 +284,7 @@ internal class TestScene : Render_Scene
     if (isHit)
     {
       ray = new Ray(new Vector3(_x, 0, -1), point);
-      line.Draw(ray, new RGBA<float>(1, 0, 0, 1));
+      //line.Draw(ray, new RGBA<float>(1, 0, 0, 1));
       GetLayer<Layer_Point>("dynamicPoint").Add(new RO_Point()
       {
         Position = point,
@@ -294,7 +294,7 @@ internal class TestScene : Render_Scene
     }
     else
     {
-      line.Draw(ray, new RGBA<float>(1, 0, 0, 1));
+      //line.Draw(ray, new RGBA<float>(1, 0, 0, 1));
     }
   }
 
@@ -314,7 +314,7 @@ internal class TestScene : Render_Scene
     if (isHit)
     {
       ray = new Ray(new Vector3(_x, 0, -1), point);
-      line.Draw(ray, new RGBA<float>(1, 0, 0, 1));
+      //line.Draw(ray, new RGBA<float>(1, 0, 0, 1));
       GetLayer<Layer_Point>("dynamicPoint").Add(new RO_Point()
       {
         Position = point,
@@ -324,7 +324,7 @@ internal class TestScene : Render_Scene
     }
     else
     {
-      line.Draw(ray, new RGBA<float>(1, 0, 0, 1));
+      //line.Draw(ray, new RGBA<float>(1, 0, 0, 1));
     }
   }
 

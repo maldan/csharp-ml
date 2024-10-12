@@ -167,6 +167,25 @@ public class User32
   [DllImport("user32.dll", SetLastError = true)]
   public static extern bool AdjustWindowRectEx(ref RECT lpRect, int dwStyle, bool bMenu, int dwExStyle);
 
+  // Структура для хранения информации о состоянии окна
+  [StructLayout(LayoutKind.Sequential)]
+  public struct WINDOWPLACEMENT
+  {
+    public int length;
+    public int flags;
+    public int showCmd;
+    public POINT ptMinPosition;
+    public POINT ptMaxPosition;
+    public RECT rcNormalPosition;
+  }
+
+  // Константа для проверки, что окно свернуто
+  public const int SW_SHOWMINIMIZED = 2;
+
+  // Импортируем функцию GetWindowPlacement
+  [DllImport("user32.dll")]
+  public static extern bool GetWindowPlacement(IntPtr hWnd, ref WINDOWPLACEMENT lpwndpl);
+
   public static int GetScreenWidth()
   {
     return GetSystemMetrics(0);

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Camera;
 using MegaLib.Render.Color;
@@ -91,10 +92,20 @@ public class Layer_EasyUI : Layer_Base
     return btn;
   }
 
-  public EasyUI_TextInput TextInput(TextInputType type, Action<EasyUI_TextInput> onInit = null)
+  public EasyUI_TextInput TextInput(Func<float> onRead = null, Action<float> onWrite = null)
   {
-    var textInput = Add(onInit);
-    textInput.InputType = type;
+    var textInput = Add<EasyUI_TextInput>();
+    textInput.InputType = TextInputType.Float;
+    textInput.OnRead(onRead);
+    textInput.OnWrite(onWrite);
+    return textInput;
+  }
+
+  public EasyUI_VectorInput VectorInput(Func<Vector3> onRead = null, Action<Vector3> onWrite = null)
+  {
+    var textInput = Add<EasyUI_VectorInput>();
+    textInput.OnRead(onRead);
+    textInput.OnWrite(onWrite);
     return textInput;
   }
 

@@ -188,6 +188,7 @@ public class ShaderProgram
       "Vector2" => "vec2",
       "Vector3" => "vec3",
       "Vector4" => "vec4",
+      "Texture_2D<float>" => "sampler2D",
       "Texture_2D<RGBA<float>>" => "sampler2D",
       "Texture_2D<RGBA<byte>>" => "sampler2D",
       "Texture_Cube" => "samplerCube",

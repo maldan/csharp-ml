@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using MegaLib.AssetLoader.GLTF;
+using MegaLib.Ext;
 using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Render.Skin;
@@ -22,6 +24,42 @@ public class Bone
   public Matrix4x4 Matrix = Matrix4x4.Identity;
   public Matrix4x4 ParentMatrix = Matrix4x4.Identity;
   public Bone ParentBone;
+
+  public bool IsConstrained;
+
+  public Quaternion WorldRotation
+  {
+    get
+    {
+      // Получаем полное мировое вращение всех родителей
+      var totalParentRotation = GetTotalParentRotation();
+
+      // Мировое вращение = полное вращение родителя * локальное вращение
+      return totalParentRotation * Rotation;
+    }
+    set
+    {
+      // Получаем полное мировое вращение всех родителей
+      var totalParentRotation = GetTotalParentRotation();
+
+      // Инвертируем вращение родителя
+      var totalParentRotationInverse = totalParentRotation.Inverted;
+
+      // Преобразуем мировое вращение в локальное
+      Rotation = totalParentRotationInverse * value;
+    }
+  }
+
+  public Vector3 WorldPosition
+  {
+    get => Matrix.Position;
+    set
+    {
+      var mx = ParentMatrix.Inverted;
+      Position = mx.Translate(value).Position;
+      Update(ParentMatrix);
+    }
+  }
 
   public Bone Clone()
   {
@@ -50,8 +88,20 @@ public class Bone
     }
   }
 
+  private void Constraint()
+  {
+    /*if (!IsConstrained) return;
+
+    var euler = Rotation.Euler.ToDegrees;
+    if (euler.X < -90) euler.X = -90;
+    if (euler.X > 0) euler.X = 0;
+    Rotation = Quaternion.FromEuler(euler, "deg");*/
+  }
+
   public void Update(Matrix4x4 parent)
   {
+    Constraint();
+
     Matrix = Matrix4x4.Identity;
     Matrix = Matrix.Translate(Position);
     Matrix = Matrix.Rotate(Rotation);
@@ -65,6 +115,21 @@ public class Bone
       bone.ParentBone = this;
       bone.Update(Matrix);
     }
+  }
+
+  private Quaternion GetTotalParentRotation()
+  {
+    var totalRotation = Quaternion.Identity;
+
+    // Перемещаемся вверх по иерархии родителей и комбинируем их вращения
+    var currentParent = ParentBone; // Начинаем с непосредственного родителя
+    while (currentParent != null)
+    {
+      totalRotation = currentParent.Rotation * totalRotation;
+      currentParent = currentParent.ParentBone; // Переходим к следующему родителю
+    }
+
+    return totalRotation;
   }
 
   public void FromGLTFBone(GLTF_Bone gltfBone)

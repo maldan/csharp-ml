@@ -116,10 +116,26 @@ public class Skeleton : IAnimatable
 
     Update();
 
-    /*for (var i = 0; i < BoneList.Count; i++)
+    if (gltfSkin.GLTF.IsZInverted)
     {
-      BoneList[i].Length = 0.1f; // Min size
-    }*/
+      for (var i = 0; i < BoneList.Count; i++)
+      {
+        BoneList[i].Position.Z *= -1;
+        BoneList[i].Rotation.X *= -1;
+        BoneList[i].Rotation.Y *= -1;
+
+
+        BoneList[i].InverseBindMatrix.M02 *= -1;
+        BoneList[i].InverseBindMatrix.M12 *= -1;
+        BoneList[i].InverseBindMatrix.M22 *= -1;
+        BoneList[i].InverseBindMatrix.M32 *= -1;
+
+        BoneList[i].InverseBindMatrix.M20 *= -1;
+        BoneList[i].InverseBindMatrix.M21 *= -1;
+        BoneList[i].InverseBindMatrix.M22 *= -1;
+        BoneList[i].InverseBindMatrix.M23 *= -1;
+      }
+    }
 
     for (var i = 0; i < BoneList.Count; i++)
     {

@@ -146,7 +146,7 @@ public class OpenGL_Shader
       ListGPU<Vector3> => "vec3",
       ListGPU<Vector4> => "vec4",
       ListGPU<RGBA<float>> => "vec4",
-      ListGPU<Vector4Int> => "ivec4",
+      ListGPU<IVector4> => "ivec4",
       _ => ""
     };
 

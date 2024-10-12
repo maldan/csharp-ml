@@ -173,6 +173,11 @@ public class EasyUI_TextInput : EasyUI_Element
     };
   }
 
+  public void OnWrite(Action<float> write)
+  {
+    Events.OnChange += o => { write(GetFloatValue()); };
+  }
+
   public void OnRead<T>(Func<T> read) where T : struct
   {
     Events.OnBeforeRender += (_) =>

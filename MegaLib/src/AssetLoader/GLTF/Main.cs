@@ -110,6 +110,8 @@ public class GLTF
   public const string MAT3 = "MAT3";
   public const string MAT4 = "MAT4";
 
+  public bool IsZInverted;
+
   public GLTF_Animation GetAnimationByName(string name)
   {
     return AnimationList.FirstOrDefault(t => t.Name == name);

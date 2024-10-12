@@ -20,7 +20,7 @@ public readonly struct RGBA<T> where T : struct
     A = a;
   }
 
-  //public Vector4 Vector4 => new(Convert.ToSingle(R), Convert.ToSingle(G), Convert.ToSingle(B), Convert.ToSingle(A));
+  // public Vector4 Vector42 => new(Convert.ToSingle(R), Convert.ToSingle(G), Convert.ToSingle(B), Convert.ToSingle(A));
 
   public Vector4 Vector4
   {
