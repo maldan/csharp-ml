@@ -30,6 +30,8 @@ public class Layer_EasyUI : Layer_Base
   private List<Action> _delayedCalls = [];
 
   public bool HasFocusedField => FocusedElement != null;
+  public bool HasFocusedScroll => ScrollElementStack.Count > 0;
+  public bool HasHoveredElement => HoverElementList.Count > 0;
 
   // private List<EasyUI_Element> _objectList = [];
 
@@ -144,6 +146,12 @@ public class Layer_EasyUI : Layer_Base
     _currentElement.Pop();
     return element;
   }
+
+  /*public T Create<T>() where T : EasyUI_Element, new()
+  {
+    var element = new T();
+    return element;
+  }*/
 
   public List<EasyUI_RenderData> Build(float delta)
   {

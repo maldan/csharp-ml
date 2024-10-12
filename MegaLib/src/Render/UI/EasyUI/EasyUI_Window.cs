@@ -25,6 +25,8 @@ public class EasyUI_Window : EasyUI_Element
     get => _body.Text;
   }
 
+  public bool IsClosable = true;
+
   public EasyUI_Window()
   {
     _header = new EasyUI_Element
@@ -143,10 +145,19 @@ public class EasyUI_Window : EasyUI_Element
     if (Style.Position.Y + Style.Height > Window.Current.ClientHeight)
       Style.Y = Window.Current.ClientHeight - Style.Height;
 
-    _close.Style.X = Style.Width - _close.Style.Width - 3;
-    _close.Style.Y = -18;
-    _close.Style.Width = 16;
-    _close.Style.Height = 16;
+    if (IsClosable)
+    {
+      _close.Style.X = Style.Width - _close.Style.Width - 3;
+      _close.Style.Y = -18;
+      _close.Style.Width = 16;
+      _close.Style.Height = 16;
+      _close.IsVisible = true;
+    }
+    else
+    {
+      _close.Style.Width = 0;
+      _close.IsVisible = false;
+    }
 
     _minimize.Style.X = Style.Width - _close.Style.Width - _minimize.Style.Width - 3;
     _minimize.Style.Y = -18;

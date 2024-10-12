@@ -13,6 +13,8 @@ public class EasyUI_Slider : EasyUI_Element
 
   private EasyUI_Element _bar;
 
+  public float BarSize = 8;
+
   public Direction Direction
   {
     get => _direction;
@@ -62,7 +64,7 @@ public class EasyUI_Slider : EasyUI_Element
       {
         Style =
         {
-          Width = 8,
+          Width = BarSize,
           Height = 16,
           X = 4f,
           Y = 4
@@ -89,9 +91,9 @@ public class EasyUI_Slider : EasyUI_Element
           else _bar.Style.X = _bar.Style.Position.X + Mouse.WheelDirection * delta * 220;
 
           if (_bar.Style.Position.X < 4) _bar.Style.X = 4;
-          if (_bar.Style.Position.X > Style.Width - 8 - 4) _bar.Style.X = Style.Width - 8 - 4;
+          if (_bar.Style.Position.X > Style.Width - BarSize - 4) _bar.Style.X = Style.Width - BarSize - 4;
 
-          var percentage = (_bar.Style.Position.X - 4) / (Style.Width - 8 - 4 - 4);
+          var percentage = (_bar.Style.Position.X - 4) / (Style.Width - BarSize - 4 - 4);
           Value = percentage.Remap(0, 1, Min, Max);
           Events.OnChange?.Invoke(Value);
 
@@ -109,7 +111,7 @@ public class EasyUI_Slider : EasyUI_Element
         Style =
         {
           Width = 16,
-          Height = 8,
+          Height = BarSize,
           X = 4f,
           Y = 4
         }
@@ -129,6 +131,7 @@ public class EasyUI_Slider : EasyUI_Element
       {
         _bar.Style.X = 4;
         _bar.Style.Width = Style.Width - 8;
+        _bar.Style.Height = BarSize;
 
         if (!isOver) return;
         if (isDrag || Mouse.WheelDirection != 0f)
@@ -137,9 +140,9 @@ public class EasyUI_Slider : EasyUI_Element
           else _bar.Style.Y = _bar.Style.Position.Y + Mouse.WheelDirection * delta * -220f;
 
           if (_bar.Style.Position.Y < 4) _bar.Style.Y = 4;
-          if (_bar.Style.Position.Y > Style.Height - 8 - 4) _bar.Style.Y = Style.Height - 8 - 4;
+          if (_bar.Style.Position.Y > Style.Height - BarSize - 4) _bar.Style.Y = Style.Height - BarSize - 4;
 
-          var percentage = (_bar.Style.Position.Y - 4) / (Style.Height - 8 - 4 - 4);
+          var percentage = (_bar.Style.Position.Y - 4) / (Style.Height - BarSize - 4 - 4);
           Value = percentage.Remap(0, 1, Min, Max);
           Events.OnChange?.Invoke(Value);
 
@@ -160,9 +163,9 @@ public class EasyUI_Slider : EasyUI_Element
 
     _bar.Style.Y = _bar.Style.Position.Y + v;
     if (_bar.Style.Position.Y < 4) _bar.Style.Y = 4;
-    if (_bar.Style.Position.Y > Style.Height - 8 - 4) _bar.Style.Y = Style.Height - 8 - 4;
+    if (_bar.Style.Position.Y > Style.Height - BarSize - 4) _bar.Style.Y = Style.Height - BarSize - 4;
 
-    var percentage = (_bar.Style.Position.Y - 4) / (Style.Height - 8 - 4 - 4);
+    var percentage = (_bar.Style.Position.Y - 4) / (Style.Height - BarSize - 4 - 4);
     Value = percentage.Remap(0, 1, Min, Max);
     Events.OnChange?.Invoke(Value);
 

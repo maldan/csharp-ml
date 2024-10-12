@@ -45,6 +45,7 @@ public class RotationManipulator
   public Action OnStart;
 
   public bool IsUsing { get; private set; }
+  public bool IsHover { get; private set; }
 
   public ManipulatorSpace Space = ManipulatorSpace.Local;
 
@@ -160,6 +161,7 @@ public class RotationManipulator
     }
 
     IsUsing = _isXGrab || _isYGrab || _isZGrab;
+    IsHover = _isXHover || _isYHover || _isZHover;
   }
 
   /*private void RotateAroundAxis(Vector3 axis, Vector3 startPoint)

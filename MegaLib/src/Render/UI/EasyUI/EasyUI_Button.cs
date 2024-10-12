@@ -5,12 +5,14 @@ namespace MegaLib.Render.UI.EasyUI;
 
 public class EasyUI_Button : EasyUI_Element
 {
+  public string BaseColor = "#545454";
+  public string HoverColor = "#646464";
+
   public EasyUI_Button()
   {
-    var baseColor = "#545454";
     Style.SetArea(0, 0, 64, 24);
     Style.TextAlignment = TextAlignment.Center;
-    Style.SetBackgroundColor(baseColor);
+    Style.SetBackgroundColor(BaseColor);
     Style.SetTextColor("#c0c0c0");
     Style.SetBorderRadius(8f);
     Style.BorderWidth = new Vector4(2, 2, 2, 2);
@@ -34,10 +36,10 @@ public class EasyUI_Button : EasyUI_Element
     Events.OnMouseOut += () =>
     {
       isOver = false;
-      Style.SetBackgroundColor(baseColor);
+      Style.SetBackgroundColor(HoverColor);
     };
     Events.OnMouseDown += () => { Style.SetBackgroundColor("#ae5c00"); };
-    Events.OnMouseUp += () => { Style.SetBackgroundColor(baseColor); };
+    Events.OnMouseUp += () => { Style.SetBackgroundColor(HoverColor); };
     Events.OnRender += (delta) =>
     {
       if (isOver) Mouse.Cursor = MouseCursor.Pointer;

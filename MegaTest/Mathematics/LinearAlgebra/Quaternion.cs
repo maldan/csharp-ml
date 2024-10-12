@@ -36,6 +36,13 @@ public class QuaternionTest
     //var dir = new Vector3(0, -1, 0);
     //var q = Quaternion.LookRotation(Vector3.Down, Vector3.Up);
     //Console.WriteLine(q.Euler.ToDegrees);
+    var v1 = new Vector4(1, 1, 1, 1);
+    var v2 = new Vector4(1, 1, 1, 0);
+    var mx = Matrix4x4.Identity;
+    mx = mx.Translate(2, 2, 2);
+    Console.WriteLine(mx);
+    Console.WriteLine(v1 * mx);
+    Console.WriteLine(v2 * mx);
   }
 
   // Тест для углов (0, 90, 0) - поворот на 90 градусов по оси Y

@@ -28,7 +28,7 @@ public class EasyUI_Layout : EasyUI_Element
           totalH += Children[i].Style.Height + Gap;
         }
 
-        Style.Height = totalH;
+        Style.Height = totalH + Gap;
       }
 
       if (Direction == Direction.Horizontal)
