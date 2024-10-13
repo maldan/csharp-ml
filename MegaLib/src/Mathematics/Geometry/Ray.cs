@@ -81,6 +81,6 @@ public struct Ray
     // Console.WriteLine($"Ray Start: {rayStart}, Ray End: {rayEnd}");
 
     // Возвращаем луч с длиной 10, например
-    return new Ray(rayStart, rayStart + direction * -40.0f);
+    return new Ray(rayStart, rayStart + direction * 40.0f);
   }
 }

@@ -178,6 +178,20 @@ public class EasyUI_TextInput : EasyUI_Element
     Events.OnChange += o => { write(GetFloatValue()); };
   }
 
+  public void OnRead(Func<string> read)
+  {
+    Events.OnBeforeRender += (_) =>
+    {
+      if (IsFocused) return;
+      Value = $"{read()}";
+    };
+  }
+
+  public void OnWrite(Action<string> write)
+  {
+    Events.OnChange += o => { write($"{Value}"); };
+  }
+
   public void OnRead<T>(Func<T> read) where T : struct
   {
     Events.OnBeforeRender += (_) =>

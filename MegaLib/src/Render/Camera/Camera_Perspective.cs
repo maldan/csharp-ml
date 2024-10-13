@@ -9,21 +9,21 @@ public class Camera_Perspective : Camera_Base
 {
   private float _fov = 45.0f;
   private float _aspectRatio = 1f;
-  private float _near = 0.01f;
-  private float _far = 100.0f;
 
   public Camera_Perspective(float fov, float aspectRatio, float near, float far)
   {
     _fov = fov;
     _aspectRatio = aspectRatio;
-    _near = near;
-    _far = far;
+    Near = near;
+    Far = far;
 
     CalculateProjection();
   }
 
   public Camera_Perspective()
   {
+    Near = 0.01f;
+    Far = 32f;
     CalculateProjection();
   }
 
@@ -53,8 +53,8 @@ public class Camera_Perspective : Camera_Base
       var b = 2.0f / tanHeight;
       var c = (tanRight + tanLeft) / tanWidth;
       var d = (tanUp + tanDown) / tanHeight;
-      var q = -(_far + _near) / (_far - _near);
-      var qn = -2.0f * (_far * _near) / (_far - _near);
+      var q = -(Far + Near) / (Far - Near);
+      var qn = -2.0f * (Far * Near) / (Far - Near);
 
       _projectionMatrix = new Matrix4x4
       {
@@ -91,70 +91,22 @@ public class Camera_Perspective : Camera_Base
     }
   }
 
-  public float Near
+  public override void CalculateProjection()
   {
-    get => _near;
-    set
-    {
-      _near = value;
-      CalculateProjection();
-    }
-  }
+    var yScale = 1f / (float)Math.Tan(FOV.DegToRad() / 2);
+    var xScale = yScale / AspectRatio;
 
-  public float Far
-  {
-    get => _far;
-    set
-    {
-      _far = value;
-      CalculateProjection();
-    }
-  }
-
-  private void CalculateProjectionReversedZ()
-  {
-    var f = 1.0f / (float)Math.Tan(FOV * 0.5f * Math.PI / 180.0f); // Вычисляем тангенс половины угла обзора
+    var nearPlane = Near;
+    var farPlane = Far;
 
     _projectionMatrix = new Matrix4x4
     {
-      M00 = f / AspectRatio,
-      M11 = f,
-      M22 = Near / (Far - Near), // Инвертируем Z для Reversed Z
-      M23 = 1.0f,
-      M32 = -(Far * Near) / (Far - Near),
-      M33 = 0.0f
-    };
-  }
-
-  private void CalculateProjection()
-  {
-    CalculateProjectionReversedZ();
-    return;
-    //var tanHalfFov = (float)Math.Tan(_fov.DegToRad() * 0.5f);
-    //var range = _near - _far;
-    var f = (float)(1.0 / Math.Tan(_fov.DegToRad() / 2.0));
-
-    _projectionMatrix = new Matrix4x4
-    {
-      M00 = f / _aspectRatio,
-      M01 = 0.0f,
-      M02 = 0.0f,
-      M03 = 0.0f,
-
-      M10 = 0.0f,
-      M11 = f,
-      M12 = 0.0f,
-      M13 = 0.0f,
-
-      M20 = 0.0f,
-      M21 = 0.0f,
-      M22 = (_far + _near) / (_near - _far),
-      M23 = -1.0f,
-
-      M30 = 0.0f,
-      M31 = 0.0f,
-      M32 = 2.0f * _far * _near / (_near - _far),
-      M33 = 0.0f
+      M00 = xScale,
+      M11 = yScale,
+      M22 = farPlane / (farPlane - nearPlane),
+      M23 = 1,
+      M32 = -(farPlane * nearPlane) / (farPlane - nearPlane),
+      M33 = 0
     };
   }
 }

@@ -31,15 +31,15 @@ public class EasyUI_Button : EasyUI_Element
     Events.OnMouseOver += () =>
     {
       isOver = true;
-      Style.SetBackgroundColor("#646464");
+      Style.SetBackgroundColor(HoverColor);
     };
     Events.OnMouseOut += () =>
     {
       isOver = false;
-      Style.SetBackgroundColor(HoverColor);
+      Style.SetBackgroundColor(BaseColor);
     };
     Events.OnMouseDown += () => { Style.SetBackgroundColor("#ae5c00"); };
-    Events.OnMouseUp += () => { Style.SetBackgroundColor(HoverColor); };
+    Events.OnMouseUp += () => { Style.SetBackgroundColor(BaseColor); };
     Events.OnRender += (delta) =>
     {
       if (isOver) Mouse.Cursor = MouseCursor.Pointer;

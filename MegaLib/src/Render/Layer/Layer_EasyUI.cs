@@ -103,6 +103,15 @@ public class Layer_EasyUI : Layer_Base
     return textInput;
   }
 
+  public EasyUI_TextInput TextInput(Func<string> onRead = null, Action<string> onWrite = null)
+  {
+    var textInput = Add<EasyUI_TextInput>();
+    textInput.InputType = TextInputType.Text;
+    textInput.OnRead(onRead);
+    textInput.OnWrite(onWrite);
+    return textInput;
+  }
+
   public EasyUI_VectorInput VectorInput(Func<Vector3> onRead = null, Action<Vector3> onWrite = null)
   {
     var textInput = Add<EasyUI_VectorInput>();

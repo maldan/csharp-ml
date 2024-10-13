@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using MegaLib.AssetLoader.GLTF;
 using MegaLib.Ext;
+using MegaLib.FS;
 using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Render.Skin;
 
-public class Bone
+public class Bone : IBinarySerializable
 {
   // public int Index;
   public string Name;
@@ -139,5 +141,59 @@ public class Bone
     Scale = gltfBone.Scale;
     Name = gltfBone.Name;
     InverseBindMatrix = gltfBone.InverseBindMatrix;
+  }
+
+  /*public byte[] ToBytes()
+  {
+    using var memoryStream = new MemoryStream();
+    using var writer = new BinaryWriter(memoryStream);
+
+    writer.Write((byte)1); // Версия
+    writer.Write(Name);
+    writer.Write(Position.ToBytes());
+    writer.Write(Rotation.ToBytes());
+    writer.Write(Scale.ToBytes());
+    writer.Write(Length);
+
+    return memoryStream.ToArray();
+  }
+
+  public void FromBytes(byte[] bytes)
+  {
+    using var memoryStream = new MemoryStream();
+    using var reader = new BinaryReader(memoryStream);
+
+    var version = reader.ReadByte();
+    if (version == 1)
+    {
+      Name = reader.ReadString();
+      Position.FromReader(reader);
+      Rotation.FromReader(reader);
+      Scale.FromReader(reader);
+      Length = reader.ReadSingle();
+    }
+  }*/
+
+  public void ToWriter(BinaryWriter writer)
+  {
+    writer.Write((byte)1); // Версия
+    writer.Write(Name);
+    Position.ToWriter(writer);
+    Rotation.ToWriter(writer);
+    Scale.ToWriter(writer);
+    writer.Write(Length);
+  }
+
+  public void FromReader(BinaryReader reader)
+  {
+    var version = reader.ReadByte();
+    if (version == 1)
+    {
+      Name = reader.ReadString();
+      Position.FromReader(reader);
+      Rotation.FromReader(reader);
+      Scale.FromReader(reader);
+      Length = reader.ReadSingle();
+    }
   }
 }

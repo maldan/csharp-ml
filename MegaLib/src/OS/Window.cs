@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text;
 using MegaLib.Crypto;
 using MegaLib.IO;
 using MegaLib.OS.Api;

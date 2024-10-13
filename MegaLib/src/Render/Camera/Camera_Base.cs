@@ -49,7 +49,34 @@ public class Camera_Base
     }
   }
 
-  private void CalculateView()
+  private float _near = 0;
+  private float _far = 32.0f;
+
+  public float Near
+  {
+    get => _near;
+    set
+    {
+      _near = value;
+      CalculateProjection();
+    }
+  }
+
+  public float Far
+  {
+    get => _far;
+    set
+    {
+      _far = value;
+      CalculateProjection();
+    }
+  }
+
+  public virtual void CalculateProjection()
+  {
+  }
+
+  public void CalculateView()
   {
     // Матрица вида начинается с единичной матрицы
     _viewMatrix = Matrix4x4.Identity;

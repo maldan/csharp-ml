@@ -1,11 +1,13 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Runtime.Intrinsics;
 using MegaLib.Ext;
+using MegaLib.FS;
 
 namespace MegaLib.Mathematics.LinearAlgebra;
 
-public struct Quaternion
+public struct Quaternion : IBinarySerializable
 {
   public float X;
   public float Y;
@@ -602,5 +604,42 @@ public struct Quaternion
   public override string ToString()
   {
     return $"Quaternion({X}, {Y}, {Z}, {W})";
+  }
+
+  /*public byte[] ToBytes()
+  {
+    using var memoryStream = new MemoryStream();
+    using var writer = new BinaryWriter(memoryStream);
+    writer.Write(X);
+    writer.Write(Y);
+    writer.Write(Z);
+    writer.Write(W);
+    return memoryStream.ToArray();
+  }
+
+  public void FromBytes(byte[] bytes)
+  {
+    using var memoryStream = new MemoryStream();
+    using var reader = new BinaryReader(memoryStream);
+    X = reader.ReadSingle();
+    Y = reader.ReadSingle();
+    Z = reader.ReadSingle();
+    W = reader.ReadSingle();
+  }*/
+
+  public void FromReader(BinaryReader reader)
+  {
+    X = reader.ReadSingle();
+    Y = reader.ReadSingle();
+    Z = reader.ReadSingle();
+    W = reader.ReadSingle();
+  }
+
+  public void ToWriter(BinaryWriter write)
+  {
+    write.Write(X);
+    write.Write(Y);
+    write.Write(Z);
+    write.Write(W);
   }
 }

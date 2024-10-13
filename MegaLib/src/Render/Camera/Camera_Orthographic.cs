@@ -1,6 +1,7 @@
 using System;
 using MegaLib.Mathematics;
 using MegaLib.Mathematics.LinearAlgebra;
+using MegaLib.Render.Renderer.OpenGL;
 
 namespace MegaLib.Render.Camera;
 
@@ -11,7 +12,7 @@ public class Camera_Orthographic : Camera_Base
   private float _right = 100;
   private float _bottom = 100;
 
-  public float Left
+  public float LeftBorder
   {
     get => _left;
     set
@@ -21,7 +22,7 @@ public class Camera_Orthographic : Camera_Base
     }
   }
 
-  public float Right
+  public float RightBorder
   {
     get => _right;
     set
@@ -31,7 +32,7 @@ public class Camera_Orthographic : Camera_Base
     }
   }
 
-  public float Top
+  public float TopBorder
   {
     get => _top;
     set
@@ -41,7 +42,7 @@ public class Camera_Orthographic : Camera_Base
     }
   }
 
-  public float Bottom
+  public float BottomBorder
   {
     get => _bottom;
     set
@@ -51,12 +52,14 @@ public class Camera_Orthographic : Camera_Base
     }
   }
 
-  public Camera_Orthographic(float left, float top, float right, float bottom)
+  public Camera_Orthographic(float left, float top, float right, float bottom, float near, float far)
   {
     _left = left;
     _top = top;
     _right = right;
     _bottom = bottom;
+    Near = near;
+    Far = far;
 
     CalculateProjection();
   }
@@ -66,52 +69,23 @@ public class Camera_Orthographic : Camera_Base
     CalculateProjection();
   }
 
-  private void CalculateProjection()
+  public override void CalculateProjection()
   {
-    /*_projectionMatrix = new Matrix4x4
-    {
-      M00 = 2.0f / (_right - _left),
-      M01 = 0.0f,
-      M02 = 0.0f,
-      M03 = 0.0f,
-
-      M10 = 0.0f,
-      M11 = 2.0f / (_top - _bottom),
-      M12 = 0.0f,
-      M13 = 0.0f,
-
-      M20 = 0.0f,
-      M21 = 0.0f,
-      M22 = -1.0f,
-      M23 = 0.0f,
-
-      M30 = -(_right + _left) / (_right - _left),
-      M31 = -(_top + _bottom) / (_top - _bottom),
-      M32 = 0.0f,
-      M33 = 1.0f
-    };*/
+    var farPlane = Far;
+    var nearPlane = Near;
+    var width = _right - _left;
+    var height = _top - _bottom;
+    var depth = farPlane - nearPlane;
 
     _projectionMatrix = new Matrix4x4
     {
-      M00 = 2.0f / (_right - _left),
-      M01 = 0.0f,
-      M02 = 0.0f,
-      M03 = 0.0f,
-
-      M10 = 0.0f,
-      M11 = 2.0f / (_top - _bottom),
-      M12 = 0.0f,
-      M13 = 0.0f,
-
-      M20 = 0.0f,
-      M21 = 0.0f,
-      M22 = 1.0f, // Используем обратное Z (положительное значение)
-      M23 = 0.0f,
-
+      M00 = 2 / (_right - _left),
+      M11 = 2 / (_top - _bottom),
+      M22 = 1 / (farPlane - nearPlane),
+      M33 = 1,
       M30 = -(_right + _left) / (_right - _left),
       M31 = -(_top + _bottom) / (_top - _bottom),
-      M32 = -1.0f, // В этой системе Z=1 будет у ближней плоскости, Z=0 — у дальней
-      M33 = 1.0f
+      M32 = -nearPlane / (farPlane - nearPlane)
     };
   }
 }

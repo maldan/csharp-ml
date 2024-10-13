@@ -1,11 +1,13 @@
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using MegaLib.Ext;
+using MegaLib.FS;
 
 namespace MegaLib.Mathematics.LinearAlgebra;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct Vector3
+public struct Vector3 : IBinarySerializable
 {
   public float X;
   public float Y;
@@ -434,5 +436,38 @@ public struct Vector3
   public override string ToString()
   {
     return $"Vector3({X}, {Y}, {Z})";
+  }
+
+  /*public byte[] ToBytes()
+  {
+    using var memoryStream = new MemoryStream();
+    using var writer = new BinaryWriter(memoryStream);
+    writer.Write(X);
+    writer.Write(Y);
+    writer.Write(Z);
+    return memoryStream.ToArray();
+  }
+
+  public void FromBytes(byte[] bytes)
+  {
+    using var memoryStream = new MemoryStream();
+    using var reader = new BinaryReader(memoryStream);
+    X = reader.ReadSingle();
+    Y = reader.ReadSingle();
+    Z = reader.ReadSingle();
+  }*/
+
+  public void FromReader(BinaryReader reader)
+  {
+    X = reader.ReadSingle();
+    Y = reader.ReadSingle();
+    Z = reader.ReadSingle();
+  }
+
+  public void ToWriter(BinaryWriter writer)
+  {
+    writer.Write(X);
+    writer.Write(Y);
+    writer.Write(Z);
   }
 }
