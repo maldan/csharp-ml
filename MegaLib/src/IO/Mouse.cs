@@ -18,7 +18,9 @@ public enum MouseCursor
   Arrow,
   Pointer,
   TextInput,
-  Move
+  Move,
+  ResizeHorizontal,
+  ResizeVertical
 }
 
 public static class Mouse

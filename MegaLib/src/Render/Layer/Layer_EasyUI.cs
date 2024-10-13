@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MegaLib.IO;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Camera;
@@ -24,6 +25,7 @@ public class Layer_EasyUI : Layer_Base
   public EasyUI_Element FocusedElement;
   public Stack<EasyUI_Element> ScrollElementStack = new();
   public List<EasyUI_Element> HoverElementList = new();
+  public bool IsResizingElement;
 
   public EasyUI_Element CollisionOverElementList = null;
 
@@ -32,6 +34,10 @@ public class Layer_EasyUI : Layer_Base
   public bool HasFocusedField => FocusedElement != null;
   public bool HasFocusedScroll => ScrollElementStack.Count > 0;
   public bool HasHoveredElement => HoverElementList.Count > 0;
+
+  public Vector3 PointerPosition;
+  public Vector3 PointerPositionDelta;
+  public bool IsPointerPrimaryDown;
 
   // private List<EasyUI_Element> _objectList = [];
 
@@ -164,6 +170,10 @@ public class Layer_EasyUI : Layer_Base
 
   public List<EasyUI_RenderData> Build(float delta)
   {
+    PointerPosition = new Vector3(Mouse.ClientClamped.X, Mouse.ClientClamped.Y, 0);
+    PointerPositionDelta = new Vector3(Mouse.ClientDelta.X, Mouse.ClientDelta.Y, 0);
+    IsPointerPrimaryDown = Mouse.IsKeyDown(MouseKey.Left);
+
     _renderData.Clear();
     CollisionOverElementList = null;
     var root = _currentElement.Peek();

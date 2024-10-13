@@ -1,4 +1,5 @@
 using System;
+using MegaLib.Ext;
 using MegaLib.IO;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS;
@@ -104,13 +105,66 @@ public class EasyUI_Window : EasyUI_Element
     _close.Style.SetBorderRadius(0);
     Children.Add(_close);
 
+    var isResizeX = false;
+    var isResizeY = false;
     Events.OnBeforeRender += delta =>
     {
-      if (isDrag)
+      if (isResizeY)
+      {
+        if (!LayerEasyUi.IsPointerPrimaryDown)
+        {
+          isResizeY = false;
+          LayerEasyUi.IsResizingElement = false;
+        }
+
+        Style.Height += LayerEasyUi.PointerPositionDelta.Y;
+        if (Style.Height <= 20) Style.Height = 20;
+      }
+      else if (isResizeX)
+      {
+        if (!LayerEasyUi.IsPointerPrimaryDown)
+        {
+          isResizeX = false;
+          LayerEasyUi.IsResizingElement = false;
+        }
+
+        Style.Width += LayerEasyUi.PointerPositionDelta.X;
+        if (Style.Width <= 20) Style.Width = 20;
+      }
+      else if (isDrag)
       {
         Mouse.Cursor = MouseCursor.Move;
-        Style.X = Style.Position.X + Mouse.ClientDelta.X;
-        Style.Y = Style.Position.Y + Mouse.ClientDelta.Y;
+        Style.X = Style.Position.X + LayerEasyUi.PointerPositionDelta.X;
+        Style.Y = Style.Position.Y + LayerEasyUi.PointerPositionDelta.Y;
+      }
+      else
+      {
+        var bb = Style.BoundingBox;
+        if (bb.IsPointInside(LayerEasyUi.PointerPosition.XY) && !LayerEasyUi.IsResizingElement &&
+            !LayerEasyUi.HasHoveredElement)
+        {
+          if (LayerEasyUi.PointerPosition.X.Between(Style.X + Style.Width - 4, Style.X + Style.Width))
+          {
+            Mouse.Cursor = MouseCursor.ResizeHorizontal;
+
+            if (LayerEasyUi.IsPointerPrimaryDown)
+            {
+              isResizeX = true;
+              LayerEasyUi.IsResizingElement = true;
+            }
+          }
+
+          if (LayerEasyUi.PointerPosition.Y.Between(Style.Y + Style.Height - 4, Style.Y + Style.Height))
+          {
+            Mouse.Cursor = MouseCursor.ResizeVertical;
+
+            if (LayerEasyUi.IsPointerPrimaryDown)
+            {
+              isResizeY = true;
+              LayerEasyUi.IsResizingElement = true;
+            }
+          }
+        }
       }
 
       Refresh();

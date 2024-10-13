@@ -255,9 +255,9 @@ public class Shader_PBR : Shader_Base
     // Диффузное освещение
     //var NdotL = max(dot(N, L), 0.0f);
     var NdotL = dot(N, L);
-    if (NdotL < 0.1)
+    if (NdotL < 0.03)
     {
-      NdotL = mix(0.1f, 0.0f, (0.1f - NdotL) / (0.1f + 1.0f));
+      NdotL = mix(0.03f, 0.0f, -(NdotL - 0.1f));
     }
 
     var diffuse = kD * mat.Albedo / MathF.PI;

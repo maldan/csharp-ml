@@ -33,4 +33,9 @@ public static class FloatExtensions
   {
     return from2 + (value - from1) * (to2 - from2) / (to1 - from1);
   }
+
+  public static bool Between(this float value, float min, float max)
+  {
+    return value >= min && value <= max;
+  }
 }
