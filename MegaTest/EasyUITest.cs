@@ -349,10 +349,10 @@ public class EasyUITest
         var c1 = scene.GetLayer<Layer_EasyUI>();
         if (c1 != null)
         {
-          c1.Camera.Left = 0;
-          c1.Camera.Top = 0;
-          c1.Camera.Right = w;
-          c1.Camera.Bottom = h;
+          c1.Camera.LeftBorder = 0;
+          c1.Camera.TopBorder = 0;
+          c1.Camera.RightBorder = w;
+          c1.Camera.BottomBorder = h;
         }
 
         OpenGL32.glViewport(0, 0, w, h);

@@ -134,6 +134,24 @@ public class Bone : IBinarySerializable
     return totalRotation;
   }
 
+  public Vector3 GetForwardPoint(float distance)
+  {
+    // Извлекаем позицию кости из матрицы (четвертый столбец)
+    var bonePosition = new Vector3(Matrix.M30, Matrix.M31, Matrix.M32);
+
+    // Извлекаем направление "вверх" из матрицы (второй столбец)
+    var upwardDirection = new Vector3(Matrix.M10, Matrix.M11, Matrix.M12); // Второй столбец
+
+    // Вычисляем конечную точку, переместившись на расстояние "distance" в направлении "вверх"
+    return bonePosition + upwardDirection.Normalized * distance;
+  }
+
+
+  public void CalculateInverseMatrix()
+  {
+    InverseBindMatrix = Matrix.Inverted;
+  }
+
   public void FromGLTFBone(GLTF_Bone gltfBone)
   {
     Position = gltfBone.Position;
@@ -142,37 +160,6 @@ public class Bone : IBinarySerializable
     Name = gltfBone.Name;
     InverseBindMatrix = gltfBone.InverseBindMatrix;
   }
-
-  /*public byte[] ToBytes()
-  {
-    using var memoryStream = new MemoryStream();
-    using var writer = new BinaryWriter(memoryStream);
-
-    writer.Write((byte)1); // Версия
-    writer.Write(Name);
-    writer.Write(Position.ToBytes());
-    writer.Write(Rotation.ToBytes());
-    writer.Write(Scale.ToBytes());
-    writer.Write(Length);
-
-    return memoryStream.ToArray();
-  }
-
-  public void FromBytes(byte[] bytes)
-  {
-    using var memoryStream = new MemoryStream();
-    using var reader = new BinaryReader(memoryStream);
-
-    var version = reader.ReadByte();
-    if (version == 1)
-    {
-      Name = reader.ReadString();
-      Position.FromReader(reader);
-      Rotation.FromReader(reader);
-      Scale.FromReader(reader);
-      Length = reader.ReadSingle();
-    }
-  }*/
 
   public void ToWriter(BinaryWriter writer)
   {

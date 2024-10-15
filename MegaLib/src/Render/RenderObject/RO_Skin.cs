@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using MegaLib.AssetLoader.GLTF;
+using MegaLib.Ext;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.Render.Animation;
 using MegaLib.Render.Color;
@@ -27,7 +28,7 @@ public class RO_Skin : RO_Base, IAnimatable
     BoneTexture.Options.UseMipMaps = false;
   }
 
-  public RO_Skin Instantinate()
+  public RO_Skin Instantiate()
   {
     var s = new RO_Skin();
 
@@ -72,6 +73,7 @@ public class RO_Skin : RO_Base, IAnimatable
 
     foreach (var bone in Skeleton.BoneList)
     {
+      // Надо бы будет вынести на GPU умножение
       var mx = bone.InverseBindMatrix * bone.Matrix;
       var raw = mx.Raw;
 
@@ -84,6 +86,67 @@ public class RO_Skin : RO_Base, IAnimatable
 
     //BoneTexture.SetPixels(pixel);
     //BoneTexture.IsChanged = true;
+  }
+
+  public void CalculateWeights()
+  {
+    // Очищаем старое
+    foreach (var mesh in MeshList)
+    {
+      for (var j = 0; j < mesh.BoneIndexList.Count; j++) mesh.BoneIndexList[j] = 0;
+      for (var j = 0; j < mesh.BoneWeightList.Count; j++) mesh.BoneWeightList[j] = new Vector4();
+    }
+
+    foreach (var mesh in MeshList)
+    {
+      for (var j = 0; j < Skeleton.BoneList.Count; j++)
+      {
+        var bone = Skeleton.BoneList[j];
+
+        for (var k = 0; k < mesh.VertexList.Count; k++)
+        {
+          var distance = Vector3.Distance(mesh.VertexList[k], bone.GetForwardPoint(bone.Length / 2));
+          var weight = distance / bone.Length;
+          if (weight > 1.0f)
+          {
+            continue;
+          }
+
+          var (r, g, b, a) = mesh.BoneIndexList[k].ToBytesBE();
+          var w = mesh.BoneWeightList[k];
+
+          if (r == 0)
+          {
+            r = (byte)j;
+            w.X = 1 - weight;
+          }
+          else if (g == 0)
+          {
+            g = (byte)j;
+            w.Y = 1 - weight;
+          }
+          else if (b == 0)
+          {
+            b = (byte)j;
+            w.Z = 1 - weight;
+          }
+          else if (a == 0)
+          {
+            a = (byte)j;
+            w.W = 1 - weight;
+          }
+
+          mesh.BoneIndexList[k] = (r, g, b, a).ToUIntBE();
+          mesh.BoneWeightList[k] = w;
+        }
+      }
+
+      // Нормализация весов
+      for (var k = 0; k < mesh.VertexList.Count; k++)
+      {
+        mesh.BoneWeightList[k] = mesh.BoneWeightList[k].Normalized;
+      }
+    }
   }
 
   public void Animate(Animation.Animation animation)

@@ -1,3 +1,4 @@
+using System;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Buffer;
@@ -88,7 +89,7 @@ public class LR_Point : LR_Base
     _colors.Clear();
     layer.ForEach((point) =>
     {
-      _points.Add(new Vector4(point.Position.X, point.Position.Y, -point.Position.Z, point.Size));
+      _points.Add(new Vector4(point.Position.X, point.Position.Y, point.Position.Z, point.Size));
       _colors.Add(new Vector4(point.Color.R, point.Color.G, point.Color.B, point.Color.A));
     });
 

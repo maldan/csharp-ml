@@ -39,7 +39,7 @@ public readonly struct RGBA<T> where T : struct
   );
 
   // Add
-  public static RGBA<T> operator +(RGBA<T> a, RGBA<float> b)
+  /*public static RGBA<T> operator +(RGBA<T> a, RGBA<float> b)
   {
     return new RGBA<T>(
       (T)Convert.ChangeType(Convert.ToSingle(a.R) + b.R, typeof(T)),
@@ -69,7 +69,18 @@ public readonly struct RGBA<T> where T : struct
     );
   }
 
-  public static RGBA<T> operator *(RGBA<T> a, float b)
+  // Он говорит что atleast one operator must be <T>
+  public static RGBA<float> operator *(RGBA<float> a, float b)
+  {
+    return new RGBA<float>(
+      a.R * b,
+      a.G * b,
+      a.B * b,
+      a.A * b
+    );
+  }*/
+
+  /*public static RGBA<T> operator *(RGBA<T> a, float b)
   {
     return new RGBA<T>(
       (T)Convert.ChangeType(Convert.ToSingle(a.R) * b, typeof(T)),
@@ -77,17 +88,32 @@ public readonly struct RGBA<T> where T : struct
       (T)Convert.ChangeType(Convert.ToSingle(a.B) * b, typeof(T)),
       (T)Convert.ChangeType(Convert.ToSingle(a.A) * b, typeof(T))
     );
-  }
+  }*/
 
   // Lerp function
-  public static RGBA<T> Lerp(RGBA<T> a, RGBA<T> b, float t)
+  public static RGBA<float> Lerp(RGBA<float> a, RGBA<float> b, float t)
   {
-    return new RGBA<T>(
-      (T)Convert.ChangeType((1 - t) * Convert.ToSingle(a.R) + t * Convert.ToSingle(b.R), typeof(T)),
-      (T)Convert.ChangeType((1 - t) * Convert.ToSingle(a.G) + t * Convert.ToSingle(b.G), typeof(T)),
-      (T)Convert.ChangeType((1 - t) * Convert.ToSingle(a.B) + t * Convert.ToSingle(b.B), typeof(T)),
-      (T)Convert.ChangeType((1 - t) * Convert.ToSingle(a.A) + t * Convert.ToSingle(b.A), typeof(T))
+    return new RGBA<float>(
+      a.R + (b.R - a.R) * t,
+      a.G + (b.G - a.G) * t,
+      a.B + (b.B - a.B) * t,
+      a.A + (b.A - a.A) * t
     );
+  }
+
+  public RGBA<float> Mul(float b)
+  {
+    if (this is RGBA<float> a)
+    {
+      return new RGBA<float>(
+        a.R * b,
+        a.G * b,
+        a.B * b,
+        a.A * b
+      );
+    }
+
+    return new RGBA<float>();
   }
 
   public static RGBA<float> FromHex(string color)

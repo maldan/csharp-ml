@@ -679,15 +679,15 @@ public class Layer_Line : Layer_Base
     var nbr = frustum.NearBottomRight;
     var fbr = frustum.FarBottomRight;
 
-    DrawLine(ntl, ftl, color * 0.5f, color);
-    DrawLine(ntr, ftr, color * 0.5f, color);
-    DrawLine(nbl, fbl, color * 0.5f, color);
-    DrawLine(nbr, fbr, color * 0.5f, color);
+    DrawLine(ntl, ftl, color.Mul(0.5f), color);
+    DrawLine(ntr, ftr, color.Mul(0.5f), color);
+    DrawLine(nbl, fbl, color.Mul(0.5f), color);
+    DrawLine(nbr, fbr, color.Mul(0.5f), color);
 
-    DrawLine(ntl, ntr, color * 0.5f, color * 0.5f);
-    DrawLine(nbl, nbr, color * 0.5f, color * 0.5f);
-    DrawLine(ntl, nbl, color * 0.5f, color * 0.5f);
-    DrawLine(ntr, nbr, color * 0.5f, color * 0.5f);
+    DrawLine(ntl, ntr, color.Mul(0.5f), color.Mul(0.5f));
+    DrawLine(nbl, nbr, color.Mul(0.5f), color.Mul(0.5f));
+    DrawLine(ntl, nbl, color.Mul(0.5f), color.Mul(0.5f));
+    DrawLine(ntr, nbr, color.Mul(0.5f), color.Mul(0.5f));
 
     DrawLine(ftl, ftr, color, color);
     DrawLine(fbl, fbr, color, color);

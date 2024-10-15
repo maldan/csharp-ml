@@ -71,6 +71,15 @@ public struct Vector4
   public float LengthSquared => X * X + Y * Y + Z * Z + W * W;
   public float Length => MathF.Sqrt(X * X + Y * Y + Z * Z + W * W);
 
+  public Vector4 Normalized
+  {
+    get
+    {
+      var l = Length;
+      return l == 0 ? new Vector4() : new Vector4(X / l, Y / l, Z / l, W / l);
+    }
+  }
+
   public Vector4(Vector3 v, float w)
   {
     X = v.X;

@@ -220,10 +220,10 @@ public class RenderTest
         var c1 = scene.GetLayer<Layer_IMGUI>();
         if (c1 != null)
         {
-          c1.Camera.Left = 0;
-          c1.Camera.Top = 0;
-          c1.Camera.Right = w;
-          c1.Camera.Bottom = h;
+          c1.Camera.LeftBorder = 0;
+          c1.Camera.TopBorder = 0;
+          c1.Camera.RightBorder = w;
+          c1.Camera.BottomBorder = h;
         }
 
         OpenGL32.glViewport(0, 0, w, h);
@@ -236,10 +236,10 @@ public class RenderTest
     Task.Run(() => { scene.OnLoad(); });
     if (scene.Camera is Camera_Orthographic c)
     {
-      c.Left = 0;
-      c.Top = 0;
-      c.Right = 1280 / 4;
-      c.Bottom = 720 / 4;
+      c.LeftBorder = 0;
+      c.TopBorder = 0;
+      c.RightBorder = 1280 / 4;
+      c.BottomBorder = 720 / 4;
     }
 
     renderer.Scene = scene;

@@ -38,4 +38,21 @@ public static class FloatExtensions
   {
     return value >= min && value <= max;
   }
+
+  public static (byte R, byte G, byte B, byte A) ToBytesBE(this uint index)
+  {
+    var byte0 = (byte)(index & 0xFF); // 0-й байт
+    var byte1 = (byte)((index >> 8) & 0xFF); // 1-й байт
+    var byte2 = (byte)((index >> 16) & 0xFF); // 2-й байт
+    var byte3 = (byte)((index >> 24) & 0xFF); // 3-й байт
+    return (byte3, byte2, byte1, byte0);
+  }
+
+  public static uint ToUIntBE(this (byte R, byte G, byte B, byte A) index)
+  {
+    return (uint)index.A |
+           ((uint)index.B << 8) |
+           ((uint)index.G << 16) |
+           ((uint)index.R << 24);
+  }
 }

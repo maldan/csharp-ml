@@ -297,13 +297,13 @@ public class RotationManipulator
   // Метод для рисования манипулятора
   public void Draw(Layer_Line line)
   {
-    var xColor = new RGBA<float>(1, 0, 0, 1) * 0.8f;
-    var yColor = new RGBA<float>(0, 1, 0, 1) * 0.8f;
-    var zColor = new RGBA<float>(0, 0, 1, 1) * 0.8f;
+    var xColor = new RGBA<float>(1, 0, 0, 1).Mul(0.8f);
+    var yColor = new RGBA<float>(0, 1, 0, 1).Mul(0.8f);
+    var zColor = new RGBA<float>(0, 0, 1, 1).Mul(0.8f);
 
-    if (_isXHover || _isXGrab) xColor *= 1.25f;
-    else if (_isYHover || _isYGrab) yColor *= 1.25f;
-    else if (_isZHover || _isZGrab) zColor *= 1.25f;
+    if (_isXHover || _isXGrab) xColor.Mul(1.25f);
+    else if (_isYHover || _isYGrab) yColor.Mul(1.25f);
+    else if (_isZHover || _isZGrab) zColor.Mul(1.25f);
 
     if (_isXGrab)
     {

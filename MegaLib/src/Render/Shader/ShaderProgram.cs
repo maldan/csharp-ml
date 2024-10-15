@@ -154,6 +154,9 @@ public class ShaderProgram
       methodText = methodText.Replace("toInt(", "int(");
       methodText = methodText.Replace("toUInt(", "uint(");
 
+      // Для размера точек
+      methodText = methodText.Replace("float gl_PointSize", "gl_PointSize");
+
       // Прочие фичи
       methodText = methodText.Replace("for (var", "for (int");
       methodText = Regex.Replace(methodText, $@"for \(\; ([a-zA-Z0_9]+)\b",
