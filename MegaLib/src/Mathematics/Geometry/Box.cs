@@ -2,7 +2,7 @@ using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Mathematics.Geometry;
 
-public struct Box : IRayIntersectable
+public struct Box : IRayIntersectable, IPointIntersectable
 {
   public Matrix4x4 Matrix;
   public Vector3 Size;
@@ -77,6 +77,33 @@ public struct Box : IRayIntersectable
   public bool RayIntersection(Ray ray, out Vector3 point)
   {
     RayIntersection(ray, out point, out var isHit);
+    return isHit;
+  }
+
+  public void PointIntersection(Vector3 point, out bool isHit)
+  {
+    // Получаем инвертированную матрицу трансформации
+    var inverseTransform = Matrix.Inverted;
+
+    // Преобразуем точку в локальные координаты бокса
+    var localPoint = Vector3.Transform(point, inverseTransform);
+
+    // Получаем половину размеров бокса
+    var halfSize = Size / 2.0f;
+
+    // Мин и макс координаты бокса в локальных координатах
+    var boxMin = -halfSize;
+    var boxMax = halfSize;
+
+    // Проверяем, находится ли локальная точка внутри границ бокса
+    isHit = localPoint.X >= boxMin.X && localPoint.X <= boxMax.X &&
+            localPoint.Y >= boxMin.Y && localPoint.Y <= boxMax.Y &&
+            localPoint.Z >= boxMin.Z && localPoint.Z <= boxMax.Z;
+  }
+
+  public bool PointIntersection(Vector3 point)
+  {
+    PointIntersection(point, out var isHit);
     return isHit;
   }
 }

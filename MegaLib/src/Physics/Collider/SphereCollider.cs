@@ -2,7 +2,7 @@ using System;
 using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 
-namespace MegaLib.Physics;
+namespace MegaLib.Physics.Collider;
 
 public class SphereCollider : BaseCollider
 {
@@ -65,7 +65,7 @@ public class SphereCollider : BaseCollider
     isHit = true;
   }
 
-  public void PointIntersection(Vector3 point, out bool isHit)
+  public override void PointIntersection(Vector3 point, out bool isHit)
   {
     isHit = false;
 

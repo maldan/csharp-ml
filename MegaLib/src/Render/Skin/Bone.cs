@@ -5,7 +5,10 @@ using System.Linq;
 using MegaLib.AssetLoader.GLTF;
 using MegaLib.Ext;
 using MegaLib.FS;
+using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
+using MegaLib.Physics;
+using MegaLib.Physics.Collider;
 
 namespace MegaLib.Render.Skin;
 
@@ -26,6 +29,8 @@ public class Bone : IBinarySerializable
   public Matrix4x4 Matrix = Matrix4x4.Identity;
   public Matrix4x4 ParentMatrix = Matrix4x4.Identity;
   public Bone ParentBone;
+
+  public List<BaseCollider> Colliders = [];
 
   public bool IsConstrained;
 

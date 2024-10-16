@@ -75,6 +75,27 @@ public class BoxCollider : BaseCollider
     isHit = true;
   }
 
+  public override void PointIntersection(Vector3 point, out bool isHit)
+  {
+    // Получаем инвертированную матрицу трансформации
+    var inverseTransform = Transform.Matrix.Inverted;
+
+    // Преобразуем точку в локальные координаты бокса
+    var localPoint = Vector3.Transform(point, inverseTransform);
+
+    // Получаем половину размеров бокса
+    var halfSize = Size / 2.0f;
+
+    // Мин и макс координаты бокса в локальных координатах
+    var boxMin = -halfSize;
+    var boxMax = halfSize;
+
+    // Проверяем, находится ли локальная точка внутри границ бокса
+    isHit = localPoint.X >= boxMin.X && localPoint.X <= boxMax.X &&
+            localPoint.Y >= boxMin.Y && localPoint.Y <= boxMax.Y &&
+            localPoint.Z >= boxMin.Z && localPoint.Z <= boxMax.Z;
+  }
+
   // Метод для разрешения коллизии между верле-точкой и боксом
   public void ResolveCollision(VerletPoint point)
   {

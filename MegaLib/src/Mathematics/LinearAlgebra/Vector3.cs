@@ -115,6 +115,14 @@ public struct Vector3 : IBinarySerializable
     return (float)Math.Sqrt(a * a + b * b + c * c);
   }
 
+  public static float DistanceSquared(Vector3 a, Vector3 b)
+  {
+    var dx = a.X - b.X;
+    var dy = a.Y - b.Y;
+    var dz = a.Z - b.Z;
+    return dx * dx + dy * dy + dz * dz;
+  }
+
   public static Vector3 Direction(Vector3 from, Vector3 to)
   {
     var dir = to - from;

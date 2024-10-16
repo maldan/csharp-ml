@@ -3,7 +3,7 @@ using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Mathematics.Geometry;
 
-public struct Sphere : IRayIntersectable
+public struct Sphere : IRayIntersectable, IPointIntersectable
 {
   public Vector3 Position;
   public float Radius;
@@ -57,6 +57,18 @@ public struct Sphere : IRayIntersectable
   public bool RayIntersection(Ray ray, out Vector3 point)
   {
     RayIntersection(ray, out point, out var isHit);
+    return isHit;
+  }
+
+  public void PointIntersection(Vector3 point, out bool isHit)
+  {
+    var distanceSquared = Vector3.DistanceSquared(Position, point);
+    isHit = distanceSquared < Radius * Radius;
+  }
+
+  public bool PointIntersection(Vector3 point)
+  {
+    PointIntersection(point, out var isHit);
     return isHit;
   }
 }

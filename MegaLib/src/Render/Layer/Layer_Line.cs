@@ -50,6 +50,17 @@ public class Layer_Line : Layer_Base
     Add(new RO_Line(ray.Start, ray.End, color));
   }*/
 
+  public void DrawCollider(BaseCollider collider, RGBA<float> color)
+  {
+    if (collider is BoxCollider boxCollider) DrawBoxCollider(boxCollider, color);
+    if (collider is SphereCollider sphereCollider) DrawSphereCollider(sphereCollider, color);
+  }
+
+  public void DrawSphereCollider(SphereCollider sphere, RGBA<float> color)
+  {
+    DrawSphere(sphere.Transform, sphere.Radius, color);
+  }
+
   public void DrawBoxCollider(BoxCollider box, RGBA<float> color)
   {
     // Получаем размеры бокса
@@ -743,13 +754,14 @@ public class Layer_Line : Layer_Base
     }
   }
 
+  public void DrawBone(Bone bone, RGBA<float> color)
+  {
+    DrawBone(bone.Matrix, bone.Length, color);
+    foreach (var collider in bone.Colliders) DrawCollider(collider, color);
+  }
+
   public void DrawBone(Matrix4x4 transformMatrix, float length, RGBA<float> color)
   {
-    // Создаем матрицу трансформации для преобразования из локальных координат в мировые
-    //var transformMatrix = Matrix4x4.Identity;
-    //transformMatrix = transformMatrix.Translate(position);
-    //transformMatrix = transformMatrix.Rotate(rotation);
-
     // Рассчитываем длину и базовый размер октаэдра
     var direction = Vector3.Up * length; // Локальное направление кости теперь вверх по оси Y
     var baseSize = length * 0.1f; //MathF.Min(length * 0.1f, 0.025f); // Размер основания октаэдра

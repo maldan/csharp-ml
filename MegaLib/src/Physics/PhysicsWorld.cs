@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using MegaLib.Mathematics.LinearAlgebra;
+using MegaLib.Physics.Collider;
 
 namespace MegaLib.Physics;
 
