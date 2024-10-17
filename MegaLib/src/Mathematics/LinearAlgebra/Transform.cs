@@ -47,7 +47,7 @@ public class Transform
       if (_isChanged) Calculate();
       return _matrix;
     }
-    set
+    private set
     {
       _isChanged = true;
       _matrix = value;
@@ -99,5 +99,10 @@ public class Transform
   public static Transform operator *(Transform a, Transform b)
   {
     return new Transform { Matrix = a.Matrix * b.Matrix };
+  }
+
+  public static Transform operator *(Transform a, Matrix4x4 b)
+  {
+    return new Transform { Matrix = a.Matrix * b };
   }
 }

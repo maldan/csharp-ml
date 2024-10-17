@@ -31,6 +31,8 @@ public class EasyUI_TextInput : EasyUI_Element
   public int MaxCharacters;
   public TextInputType InputType = TextInputType.Text;
 
+  public float ValueStep = 0.1f;
+
   public bool IsFocused
   {
     get
@@ -388,7 +390,7 @@ public class EasyUI_TextInput : EasyUI_Element
     }
 
     // Увеличить значение
-    var offsetValue = 0.1f;
+    var offsetValue = ValueStep;
     if (Keyboard.IsKeyDown(KeyboardKey.Shift)) offsetValue *= 10f;
 
     var arrowUp = _keyState[(byte)KeyboardKey.ArrowUp] && !_keyPreviousState[(byte)KeyboardKey.ArrowUp];

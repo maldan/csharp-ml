@@ -165,8 +165,14 @@ internal class TestScene : Render_Scene
     _sphereCollider = new SphereCollider();
     _sphereCollider.Radius = 0.5f;
 
-    _boxCollider = new BoxCollider();
-    _boxCollider.Size = new Vector3(1, 1, 1);
+    _boxCollider = new BoxCollider()
+    {
+      Transform = new Transform()
+      {
+        Position = new Vector3(0, 0.1f, 0)
+      },
+      Size = new Vector3(0.12f, 0.28f, 0.12f)
+    };
 
     _vl = new VerletLine(new Vector3(0, 1, 0), new Vector3(0, -1, 0), 32, 1, true, false);
 
@@ -429,17 +435,31 @@ internal class TestScene : Render_Scene
     //var mx = Matrix4x4.Identity;
     //mx = mx.Translate(1, 0, 0);
     //mx = mx.Rotate(Quaternion.FromEuler(45, 20, 12, "deg"));
-    c2.Transform.Matrix = _boxCollider.Transform.Matrix * _fuckBone1.Matrix;
+    // c2.Transform.Matrix = _boxCollider.Transform.Matrix * _fuckBone1.Matrix;
+    var bb = new BoxCollider()
+    {
+      Transform = new Transform()
+      {
+        Position = new Vector3(0, 0.1f, 0)
+      },
+      Size = new Vector3(0.12f, 0.28f, 0.12f)
+    };
+    c2.Transform *= new Matrix4x4(
+      1.00, -0.00, 0.00, 0.00,
+      0.00, 0.85, 0.53, 0.00,
+      -0.00, -0.53, 0.85, 0.00,
+      -0.00, 1.15, -0.07, 1.00
+    );
 
     _fuckBone.Update(Matrix4x4.Identity);
 
-    for (var i = 0; i < 10; i++)
+    for (var i = -16; i < 16; i++)
     {
-      for (var j = 0; j < 10; j++)
+      for (var j = -16; j < 16; j++)
       {
-        for (var k = 0; k < 10; k++)
+        for (var k = -16; k < 16; k++)
         {
-          var p = new Vector3(i - 5, j - 5, k - 5) * 0.25f;
+          var p = c2.Transform.Position + new Vector3(i, j, k) * 0.01f;
           var c = new RGBA<float>(1, 1, 1, 1);
           var size = 1f;
           if (c2.PointIntersection(p))
@@ -453,7 +473,24 @@ internal class TestScene : Render_Scene
       }
     }
 
+    linerLayer.DrawBox(
+      new Matrix4x4(1.00, 0.00, 0.00, 0.00,
+        0.00, 1.00, 0.00, 0.00,
+        0.00, 0.00, 1.00, 0.00,
+        0.00, 0.10, 0.00, 1.00
+      ) * new Matrix4x4(
+        1.00, -0.00, 0.00, 0.00,
+        0.00, 0.85, 0.53, 0.00,
+        -0.00, -0.53, 0.85, 0.00,
+        -0.00, 1.15, -0.07, 1.00
+      ),
+      new Vector3(0.12f, 0.28f, 0.12f)
+      ,
+      new RGBA<float>(0, 1, 0, 1));
+
     linerLayer.DrawBoxCollider(c2, new RGBA<float>(0, 1, 0, 1));
+
+    pointLayer.Draw(new Vector3(0, 0, 5), new RGBA<float>(1, 0, 0, 1), 10);
   }
 }
 

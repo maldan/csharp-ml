@@ -146,6 +146,45 @@ public struct Vector4
     );
   }
 
+  // Нормализуем веса для костей. [1, 1, 0, 0] -> [0.5, 0.5, 0, 0]. Тут не подойдет обычная нормализация
+  public static Vector4 NormalizeWeights(Vector4 weights)
+  {
+    // Находим сумму ненулевых значений
+    float totalWeight = 0;
+
+    if (weights.X != 0)
+    {
+      totalWeight += weights.X;
+    }
+
+    if (weights.Y != 0)
+    {
+      totalWeight += weights.Y;
+    }
+
+    if (weights.Z != 0)
+    {
+      totalWeight += weights.Z;
+    }
+
+    if (weights.W != 0)
+    {
+      totalWeight += weights.W;
+    }
+
+    // Если сумма больше нуля, нормализуем веса, игнорируя нулевые значения
+    if (totalWeight > 0)
+    {
+      if (weights.X != 0) weights.X /= totalWeight;
+      if (weights.Y != 0) weights.Y /= totalWeight;
+      if (weights.Z != 0) weights.Z /= totalWeight;
+      if (weights.W != 0) weights.W /= totalWeight;
+    }
+
+    // Возвращаем нормализованный вектор
+    return weights;
+  }
+
   public Quaternion ToQuaternion()
   {
     return new Quaternion(X, Y, Z, W);

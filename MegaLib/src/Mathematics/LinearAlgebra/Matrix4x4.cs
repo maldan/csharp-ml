@@ -86,7 +86,7 @@ public struct Matrix4x4
         qz = 0.25f * s;
       }
 
-      return new Quaternion(qx, qy, qz, qw);
+      return new Quaternion(qx, qy, qz, qw).Inverted;
     }
   }
 
@@ -94,6 +94,7 @@ public struct Matrix4x4
   {
     get
     {
+      // Вычисляем миноры матрицы
       var b00 = M00 * M11 - M01 * M10;
       var b01 = M00 * M12 - M02 * M10;
       var b02 = M00 * M13 - M03 * M10;
@@ -107,12 +108,13 @@ public struct Matrix4x4
       var b10 = M21 * M33 - M23 * M31;
       var b11 = M22 * M33 - M23 * M32;
 
-      // Calculate the determinant
+      // Вычисляем детерминант
       var det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
-      if (det == 0) return new Matrix4x4(); // Возвращаем нулевую матрицу в случае вырожденности
+      if (det == 0) return Identity; // Возвращаем единичную матрицу в случае вырожденности
 
       det = 1.0f / det;
 
+      // Возвращаем обратную матрицу
       return new Matrix4x4
       {
         M00 = (M11 * b11 - M12 * b10 + M13 * b09) * det,
@@ -181,6 +183,30 @@ public struct Matrix4x4
     M31 = m31;
     M32 = m32;
     M33 = m33;
+  }
+
+  public Matrix4x4(
+    double m00, double m01, double m02, double m03,
+    double m10, double m11, double m12, double m13,
+    double m20, double m21, double m22, double m23,
+    double m30, double m31, double m32, double m33)
+  {
+    M00 = (float)m00;
+    M01 = (float)m01;
+    M02 = (float)m02;
+    M03 = (float)m03;
+    M10 = (float)m10;
+    M11 = (float)m11;
+    M12 = (float)m12;
+    M13 = (float)m13;
+    M20 = (float)m20;
+    M21 = (float)m21;
+    M22 = (float)m22;
+    M23 = (float)m23;
+    M30 = (float)m30;
+    M31 = (float)m31;
+    M32 = (float)m32;
+    M33 = (float)m33;
   }
 
   public Matrix4x4(float[] array)
@@ -336,10 +362,10 @@ public struct Matrix4x4
   public override string ToString()
   {
     return $@"Matrix4x4(
-        {M00}, {M01}, {M02}, {M03},
-        {M10}, {M11}, {M12}, {M13},
-        {M20}, {M21}, {M22}, {M23},
-        {M30}, {M31}, {M32}, {M33},
+        {M00:F}, {M01:F}, {M02:F}, {M03:F},
+        {M10:F}, {M11:F}, {M12:F}, {M13:F},
+        {M20:F}, {M21:F}, {M22:F}, {M23:F},
+        {M30:F}, {M31:F}, {M32:F}, {M33:F},
       )";
   }
 }

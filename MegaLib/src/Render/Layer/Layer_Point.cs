@@ -118,11 +118,18 @@ public class Layer_Point : Layer_Base
                          weight.B * mx3 +
                          weight.A * mx4;
 
-        if (size < 0.5f) size = 0.5f;
-        Draw((mesh.VertexList[i] + mesh.NormalList[i] * 0.001f).AddW(1.0f) * skinMatrix, color,
-          MathF.Ceiling(size * 5f));
+        // Console.WriteLine($"{bIndex} {weight}");
 
-        Draw(bone.GetForwardPoint(bone.Length / 2), r, 10);
+        // skinMatrix = Matrix4x4.Identity;
+
+        if (size < 0.5f) size = 0.5f;
+        Draw(
+          (mesh.VertexList[i] + mesh.NormalList[i] * 0.001f).AddW(1.0f) * skinMatrix,
+          color,
+          MathF.Ceiling(size * 5f)
+        );
+
+        // Draw(bone.GetForwardPoint(bone.Length / 2), r, 10);
       }
     }
   }

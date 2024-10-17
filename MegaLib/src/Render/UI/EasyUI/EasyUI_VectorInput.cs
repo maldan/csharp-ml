@@ -10,6 +10,15 @@ public class EasyUI_VectorInput : EasyUI_Element
   private List<EasyUI_TextInput> _textInputs = [];
   public bool IsFocused => _textInputs.Any(t => t.IsFocused);
 
+  public float ValueStep
+  {
+    get => _textInputs[0].ValueStep;
+    set
+    {
+      foreach (var input in _textInputs) input.ValueStep = value;
+    }
+  }
+
   public EasyUI_VectorInput()
   {
     Style.Height = 48 + 8;

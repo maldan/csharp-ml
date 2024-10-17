@@ -21,6 +21,8 @@ public class Layer_Line : Layer_Base
   public bool IsSmooth = true;
   public bool DisableDepthTest;
 
+  private int _timer;
+
   public void Add(RO_Line obj)
   {
     _lineList.Add(obj);
@@ -70,7 +72,9 @@ public class Layer_Line : Layer_Base
 
   public void DrawBoxCollider(BoxCollider box, RGBA<float> color)
   {
-    // Получаем размеры бокса
+    DrawBox(box.Transform.Matrix, box.Size, color);
+
+    /*// Получаем размеры бокса
     var halfSize = box.Size / 2.0f;
     var transform = box.Transform;
 
@@ -107,7 +111,7 @@ public class Layer_Line : Layer_Base
     Add(new RO_Line(vertices[0], vertices[4], color)); // Вертикальные линии
     Add(new RO_Line(vertices[1], vertices[5], color));
     Add(new RO_Line(vertices[2], vertices[6], color));
-    Add(new RO_Line(vertices[3], vertices[7], color));
+    Add(new RO_Line(vertices[3], vertices[7], color));*/
   }
 
   public void DrawSphere(
@@ -287,6 +291,10 @@ public class Layer_Line : Layer_Base
 
   public void DrawBox(Matrix4x4 matrix, Vector3 size, RGBA<float> color)
   {
+    /*Console.WriteLine(matrix.Position);
+    Console.WriteLine(matrix.Rotation);
+    Console.WriteLine(matrix.Scaling);
+    Console.WriteLine("");*/
     // Половина размеров коробки (это будут смещения для вершин)
     var halfSize = size * 0.5f;
 
@@ -766,14 +774,19 @@ public class Layer_Line : Layer_Base
     }
   }
 
-  public void DrawBone(Bone bone, RGBA<float> color)
+  public void DrawBone(Bone bone, RGBA<float> color, bool drawColliders = false)
   {
     DrawBone(bone.Matrix, bone.Length, color);
-    foreach (var collider in bone.Colliders)
+
+    if (drawColliders)
     {
-      if (collider is BoxCollider boxCollider)
+      foreach (var collider in bone.Colliders)
       {
-        DrawBox(collider.Transform.Matrix * bone.Matrix, boxCollider.Size, color);
+        if (collider is BoxCollider boxCollider)
+        {
+          var mx = collider.Transform.Matrix * bone.Matrix;
+          DrawBox(mx, boxCollider.Size, color);
+        }
       }
     }
   }
