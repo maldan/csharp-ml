@@ -52,8 +52,15 @@ public class Layer_Line : Layer_Base
 
   public void DrawCollider(BaseCollider collider, RGBA<float> color)
   {
-    if (collider is BoxCollider boxCollider) DrawBoxCollider(boxCollider, color);
-    if (collider is SphereCollider sphereCollider) DrawSphereCollider(sphereCollider, color);
+    switch (collider)
+    {
+      case BoxCollider boxCollider:
+        DrawBoxCollider(boxCollider, color);
+        break;
+      case SphereCollider sphereCollider:
+        DrawSphereCollider(sphereCollider, color);
+        break;
+    }
   }
 
   public void DrawSphereCollider(SphereCollider sphere, RGBA<float> color)
@@ -275,8 +282,13 @@ public class Layer_Line : Layer_Base
 
   public void DrawBox(Box box, RGBA<float> color)
   {
+    DrawBox(box.Matrix, box.Size, color);
+  }
+
+  public void DrawBox(Matrix4x4 matrix, Vector3 size, RGBA<float> color)
+  {
     // Половина размеров коробки (это будут смещения для вершин)
-    var halfSize = box.Size * 0.5f;
+    var halfSize = size * 0.5f;
 
     // Вершины коробки в локальной системе координат
     var vertices = new Vector3[8]
@@ -295,7 +307,7 @@ public class Layer_Line : Layer_Base
     // Преобразуем вершины в мировые координаты через матрицу трансформации
     for (var i = 0; i < vertices.Length; i++)
     {
-      vertices[i] = Vector3.Transform(vertices[i], box.Matrix);
+      vertices[i] = Vector3.Transform(vertices[i], matrix);
     }
 
     // Рисуем линии между соответствующими вершинами (12 ребер)
@@ -757,14 +769,65 @@ public class Layer_Line : Layer_Base
   public void DrawBone(Bone bone, RGBA<float> color)
   {
     DrawBone(bone.Matrix, bone.Length, color);
-    foreach (var collider in bone.Colliders) DrawCollider(collider, color);
+    foreach (var collider in bone.Colliders)
+    {
+      if (collider is BoxCollider boxCollider)
+      {
+        DrawBox(collider.Transform.Matrix * bone.Matrix, boxCollider.Size, color);
+      }
+    }
   }
 
   public void DrawBone(Matrix4x4 transformMatrix, float length, RGBA<float> color)
   {
+    /*// Рассчитываем длину и базовый размер октаэдра
+    var direction = Vector3.Forward * length; // Локальное направление кости теперь вперед по оси Z
+    var baseSize = length * 0.1f; // Размер основания октаэдра
+
+    // Локальные координаты точек
+    var start = Vector3.Zero; // Начало кости (локально)
+    var end = direction; // Конец кости (локально)
+    var midPoint = (start + end) / 4; // Средняя точка для построения основания
+
+    // Рассчитываем локальные оси для октаэдра
+    var up = Vector3.Up * baseSize; // Вверх по оси Y (для определения верхней и нижней границы)
+    var right = Vector3.Right * baseSize; // Вправо по оси X
+
+    // Вершины октаэдра в локальных координатах
+    var topBase = midPoint + up;
+    var bottomBase = midPoint - up;
+    var leftBase = midPoint - right;
+    var rightBase = midPoint + right;
+
+    // Преобразуем все точки в мировые координаты
+    start = Vector3.Transform(start, transformMatrix);
+    end = Vector3.Transform(end, transformMatrix);
+    topBase = Vector3.Transform(topBase, transformMatrix);
+    bottomBase = Vector3.Transform(bottomBase, transformMatrix);
+    leftBase = Vector3.Transform(leftBase, transformMatrix);
+    rightBase = Vector3.Transform(rightBase, transformMatrix);
+
+    // Рисуем линии от начала кости к вершинам основания
+    DrawLine(start, topBase, color); // Линия от начала к topBase
+    DrawLine(start, bottomBase, color); // Линия от начала к bottomBase
+    DrawLine(start, leftBase, color); // Линия от начала к leftBase
+    DrawLine(start, rightBase, color); // Линия от начала к rightBase
+
+    // Рисуем линии от конца кости к вершинам основания
+    DrawLine(end, topBase, color); // Линия от конца к topBase
+    DrawLine(end, bottomBase, color); // Линия от конца к bottomBase
+    DrawLine(end, leftBase, color); // Линия от конца к leftBase
+    DrawLine(end, rightBase, color); // Линия от конца к rightBase
+
+    // Соединяем вершины основания между собой
+    DrawLine(topBase, rightBase, color);
+    DrawLine(rightBase, bottomBase, color);
+    DrawLine(bottomBase, leftBase, color);
+    DrawLine(leftBase, topBase, color);*/
+
     // Рассчитываем длину и базовый размер октаэдра
     var direction = Vector3.Up * length; // Локальное направление кости теперь вверх по оси Y
-    var baseSize = length * 0.1f; //MathF.Min(length * 0.1f, 0.025f); // Размер основания октаэдра
+    var baseSize = length * 0.1f; // Размер основания октаэдра
 
     // Локальные координаты точек
     var start = Vector3.Zero; // Начало кости (локально)

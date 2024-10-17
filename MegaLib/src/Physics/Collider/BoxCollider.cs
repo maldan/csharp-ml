@@ -84,7 +84,7 @@ public class BoxCollider : BaseCollider
     var localPoint = Vector3.Transform(point, inverseTransform);
 
     // Получаем половину размеров бокса
-    var halfSize = Size / 2.0f;
+    var halfSize = Size / 2f;
 
     // Мин и макс координаты бокса в локальных координатах
     var boxMin = -halfSize;
@@ -144,5 +144,10 @@ public class BoxCollider : BaseCollider
       // Чтобы избежать "прыжков", синхронизируем с предыдущей позицией
       point.PreviousPosition = point.Position;
     }
+  }
+
+  public override BoxCollider Clone()
+  {
+    return new BoxCollider { Size = Size, Transform = Transform.Clone() };
   }
 }

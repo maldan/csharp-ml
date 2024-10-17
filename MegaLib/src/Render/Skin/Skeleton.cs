@@ -116,10 +116,10 @@ public class Skeleton : IAnimatable
 
     Update();
 
-    /*for (var i = 0; i < BoneList.Count; i++)
+    for (var i = 0; i < BoneList.Count; i++)
     {
       BoneList[i].InverseBindMatrix = BoneList[i].Matrix.Inverted;
-    }*/
+    }
 
     if (gltfSkin.GLTF.IsZInverted)
     {

@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using MegaLib.AssetLoader.GLTF;
 using MegaLib.Ext;
 using MegaLib.Mathematics.LinearAlgebra;
+using MegaLib.Physics.Collider;
 using MegaLib.Render.Animation;
 using MegaLib.Render.Color;
 using MegaLib.Render.Skin;
@@ -97,55 +99,62 @@ public class RO_Skin : RO_Base, IAnimatable
       for (var j = 0; j < mesh.BoneWeightList.Count; j++) mesh.BoneWeightList[j] = new Vector4();
     }
 
+    Update();
+
     foreach (var mesh in MeshList)
     {
       for (var j = 0; j < Skeleton.BoneList.Count; j++)
       {
         var bone = Skeleton.BoneList[j];
 
-        for (var k = 0; k < mesh.VertexList.Count; k++)
+        foreach (var collider in bone.Colliders)
         {
-          var distance = Vector3.Distance(mesh.VertexList[k], bone.GetForwardPoint(bone.Length / 2));
-          var weight = distance / bone.Length;
-          if (weight > 1.0f)
+          var c2 = collider.Clone();
+          c2.Transform = new Transform
           {
-            continue;
-          }
+            Matrix = collider.Transform.Matrix * bone.Matrix
+          };
 
-          var (r, g, b, a) = mesh.BoneIndexList[k].ToBytesBE();
-          var w = mesh.BoneWeightList[k];
+          for (var k = 0; k < mesh.VertexList.Count; k++)
+          {
+            var isInside = c2.PointIntersection(mesh.VertexList[k]);
+            if (!isInside) continue;
 
-          if (r == 0)
-          {
-            r = (byte)j;
-            w.X = 1 - weight;
-          }
-          else if (g == 0)
-          {
-            g = (byte)j;
-            w.Y = 1 - weight;
-          }
-          else if (b == 0)
-          {
-            b = (byte)j;
-            w.Z = 1 - weight;
-          }
-          else if (a == 0)
-          {
-            a = (byte)j;
-            w.W = 1 - weight;
-          }
+            var (r, g, b, a) = mesh.BoneIndexList[k].ToBytesBE();
+            var w = mesh.BoneWeightList[k];
 
-          mesh.BoneIndexList[k] = (r, g, b, a).ToUIntBE();
-          mesh.BoneWeightList[k] = w;
+            if (r == 0)
+            {
+              r = (byte)j;
+              w.X = 1;
+            }
+            else if (g == 0)
+            {
+              g = (byte)j;
+              w.Y = 1;
+            }
+            else if (b == 0)
+            {
+              b = (byte)j;
+              w.Z = 1;
+            }
+            else if (a == 0)
+            {
+              a = (byte)j;
+              w.W = 1;
+            }
+
+            mesh.BoneIndexList[k] = (r, g, b, a).ToUIntBE();
+            mesh.BoneWeightList[k] = w;
+          }
         }
       }
 
       // Нормализация весов
-      for (var k = 0; k < mesh.VertexList.Count; k++)
+      /*for (var k = 0; k < mesh.VertexList.Count; k++)
       {
         mesh.BoneWeightList[k] = mesh.BoneWeightList[k].Normalized;
-      }
+      }*/
     }
   }
 

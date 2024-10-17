@@ -42,6 +42,26 @@ public class RO_Mesh : RO_Base
     Transform = new Transform();
   }
 
+  public RO_Mesh Clone()
+  {
+    return new RO_Mesh()
+    {
+      VertexList = VertexList,
+      UV0List = UV0List,
+      NormalList = NormalList,
+      IndexList = IndexList,
+      TangentList = TangentList,
+      BiTangentList = BiTangentList,
+      BoneWeightList = BoneWeightList,
+      BoneIndexList = BoneIndexList,
+
+      AlbedoTexture = AlbedoTexture,
+      NormalTexture = NormalTexture,
+      RoughnessTexture = RoughnessTexture,
+      MetallicTexture = MetallicTexture
+    };
+  }
+
   public override void CalculateBoundingBox()
   {
     // var matrix = Transform.Matrix;

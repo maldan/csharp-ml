@@ -47,6 +47,14 @@ public class Transform
       if (_isChanged) Calculate();
       return _matrix;
     }
+    set
+    {
+      _isChanged = true;
+      _matrix = value;
+      _position = _matrix.Position;
+      _rotation = _matrix.Rotation;
+      _scale = _matrix.Scaling;
+    }
   }
 
   public Vector3 Position
@@ -90,15 +98,6 @@ public class Transform
 
   public static Transform operator *(Transform a, Transform b)
   {
-    // Умножаем матрицы трансформации двух объектов
-    var resultMatrix = a.Matrix * b.Matrix;
-
-    // Извлекаем позицию, вращение и масштаб из результирующей матрицы
-    var resultPosition = resultMatrix.Position;
-    var resultRotation = resultMatrix.Rotation;
-    var resultScale = resultMatrix.Scaling;
-
-    // Возвращаем новый Transform с полученными параметрами
-    return new Transform(resultPosition, resultRotation, resultScale);
+    return new Transform { Matrix = a.Matrix * b.Matrix };
   }
 }

@@ -12,6 +12,12 @@ public class BaseCollider : IRayIntersectable, IPointIntersectable
   {
     throw new Exception("unimplemented");
   }*/
+
+  public virtual BaseCollider Clone()
+  {
+    return new BaseCollider { Transform = Transform.Clone() };
+  }
+
   public virtual void RayIntersection(Ray ray, out Vector3 point, out bool isHit)
   {
     throw new System.NotImplementedException();
@@ -19,7 +25,8 @@ public class BaseCollider : IRayIntersectable, IPointIntersectable
 
   public virtual bool RayIntersection(Ray ray, out Vector3 point)
   {
-    throw new System.NotImplementedException();
+    RayIntersection(ray, out point, out var isHit);
+    return isHit;
   }
 
   public virtual void PointIntersection(Vector3 point, out bool isHit)
@@ -29,6 +36,7 @@ public class BaseCollider : IRayIntersectable, IPointIntersectable
 
   public virtual bool PointIntersection(Vector3 point)
   {
-    throw new System.NotImplementedException();
+    PointIntersection(point, out var isHit);
+    return isHit;
   }
 }

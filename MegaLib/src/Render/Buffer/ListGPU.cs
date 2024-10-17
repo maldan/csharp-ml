@@ -71,6 +71,11 @@ public class ListGPU<T> : IEnumerable<T>
     OnDestroy?.Invoke(this, Id);
   }
 
+  public ListGPU<T> Clone()
+  {
+    return [.._array];
+  }
+
   public void Add(T item)
   {
     if (_count == _capacity)

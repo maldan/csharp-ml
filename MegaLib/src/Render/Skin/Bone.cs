@@ -107,8 +107,6 @@ public class Bone : IBinarySerializable
 
   public void Update(Matrix4x4 parent)
   {
-    Constraint();
-
     Matrix = Matrix4x4.Identity;
     Matrix = Matrix.Translate(Position);
     Matrix = Matrix.Rotate(Rotation);

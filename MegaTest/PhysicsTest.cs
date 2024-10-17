@@ -14,6 +14,7 @@ using MegaLib.Render.Layer;
 using MegaLib.Render.Renderer.OpenGL;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Scene;
+using MegaLib.Render.Skin;
 using MegaLib.Render.UI.EasyUI;
 using MegaTest.Render;
 using NUnit.Framework;
@@ -33,6 +34,9 @@ internal class TestScene : Render_Scene
   private BoxCollider _boxCollider = new();
 
   private PhysicsWorld _physicsWorld = new();
+
+  private Bone _fuckBone = new() { Length = 1 };
+  private Bone _fuckBone1 = new() { Length = 1 };
   // private RigidBody _rigidBody;
 
   private float _cameraOrbitRadius = 10f;
@@ -49,6 +53,10 @@ internal class TestScene : Render_Scene
     _camera.Rotation = Quaternion.FromEuler(45, 0, 0, "deg");
     Camera = _camera;
 
+    _fuckBone.Children.Add(_fuckBone1);
+
+    _fuckBone1.Rotation = Quaternion.FromEuler(10, 10, 10, "deg");
+
     // Добавляем слои
 
     AddLayer("dynamicPoint", new Layer_Point() { });
@@ -59,6 +67,27 @@ internal class TestScene : Render_Scene
     });
 
     var easyUi = GetLayer<Layer_EasyUI>();
+
+    easyUi.WindowWithScroll("Cuboid", (window, layout) =>
+    {
+      window.Style.SetArea(100, 200, 200, 200);
+
+      easyUi.Label("Size");
+      easyUi.VectorInput(() => { return _boxCollider.Size; }, (v) => { _boxCollider.Size = v; });
+
+      easyUi.Label("Position");
+      easyUi.VectorInput(() => { return _fuckBone1.Position; },
+        (v) => { _fuckBone1.Position = v; });
+
+      easyUi.Label("Scale");
+      easyUi.VectorInput(() => { return _boxCollider.Transform.Scale; },
+        (v) => { _boxCollider.Transform.Scale = v; });
+
+      easyUi.Label("Rotation");
+      easyUi.VectorInput(() => { return _fuckBone1.Rotation.Euler.ToDegrees; },
+        (v) => { _fuckBone1.Rotation = Quaternion.FromEuler(v, "deg"); });
+    });
+
     easyUi.Add<EasyUI_Element>(t =>
     {
       t.Style.BackgroundColor = new Vector4(0.25f, 0.25f, 0.25f, 1);
@@ -175,12 +204,16 @@ internal class TestScene : Render_Scene
     // _x = (float)Math.Sin(_time / 2f) * 1;
     // _scaleX = Math.Abs((float)Math.Sin(_time) * 2).Clamp(0.2f, 1);
 
-    Camera.OrbitalCameraMovement(delta, ref _cameraOrbitRadius, ref _cameraFocalPoint);
+    var easyUi = GetLayer<Layer_EasyUI>();
+    if (easyUi.ScrollElementStack.Count == 0)
+    {
+      Camera.OrbitalCameraMovement(delta, ref _cameraOrbitRadius, ref _cameraFocalPoint);
+    }
 
     if (Keyboard.IsKeyDown(KeyboardKey.I)) _x -= delta;
     if (Keyboard.IsKeyDown(KeyboardKey.O)) _x += delta;
 
-    Sphere2(delta);
+    Points(delta);
   }
 
   public override void OnBeforeRender()
@@ -386,6 +419,42 @@ internal class TestScene : Render_Scene
       line.Draw(ray, new RGBA<float>(1, 0, 0, 1));
     }*/
   }
+
+  private void Points(float delta)
+  {
+    var pointLayer = GetLayer<Layer_Point>("dynamicPoint");
+    var linerLayer = GetLayer<Layer_Line>("dynamicLine");
+
+    var c2 = _boxCollider.Clone();
+    //var mx = Matrix4x4.Identity;
+    //mx = mx.Translate(1, 0, 0);
+    //mx = mx.Rotate(Quaternion.FromEuler(45, 20, 12, "deg"));
+    c2.Transform.Matrix = _boxCollider.Transform.Matrix * _fuckBone1.Matrix;
+
+    _fuckBone.Update(Matrix4x4.Identity);
+
+    for (var i = 0; i < 10; i++)
+    {
+      for (var j = 0; j < 10; j++)
+      {
+        for (var k = 0; k < 10; k++)
+        {
+          var p = new Vector3(i - 5, j - 5, k - 5) * 0.25f;
+          var c = new RGBA<float>(1, 1, 1, 1);
+          var size = 1f;
+          if (c2.PointIntersection(p))
+          {
+            c = new RGBA<float>(1, 0, 0, 1);
+            size = 4f;
+          }
+
+          pointLayer.Draw(p, c, size);
+        }
+      }
+    }
+
+    linerLayer.DrawBoxCollider(c2, new RGBA<float>(0, 1, 0, 1));
+  }
 }
 
 public class PhysicsTest
@@ -405,9 +474,17 @@ public class PhysicsTest
       Height = 720,
       OnPaint = (win, delta) =>
       {
-        if (win.IsFocused) Keyboard.Update();
-        else Keyboard.ResetAll();
-        Mouse.Update();
+        if (win.IsFocused)
+        {
+          Mouse.Update();
+          Keyboard.Update(delta);
+        }
+        else
+        {
+          Keyboard.ResetAll();
+        }
+
+        ;
         renderer.Tick(delta, 1);
       },
       OnResize = (win) =>
