@@ -11,7 +11,7 @@ namespace MegaLib.OS.Api;
 
 public class FontData
 {
-  public Texture_2D<RGBA<byte>> Texture;
+  public Texture_2D<RGBA8> Texture;
   public Dictionary<char, Font.GlyphInfo> GlyphInfo;
 
   public Font.GlyphInfo GetGlyph(char chr)
@@ -106,7 +106,7 @@ public static class Font
 
     // Сохранение в BMP
     // SaveToBMP(bits, width, height, "sas.bmp");
-    var texture = new Texture_2D<RGBA<byte>>(width, height);
+    var texture = new Texture_2D<RGBA8>(width, height);
     texture.RAW.SetRaw(bits, pixelData.Length);
     // texture.SaveToBMP("gas.bmp");
 
@@ -115,9 +115,9 @@ public static class Font
     {
       var p = texture.RAW[x, y];
       if (p is { R: 0, B: 0, G: 0 })
-        texture.RAW[x, y] = new RGBA<byte>(0, 0, 0, 0);
+        texture.RAW[x, y] = new RGBA8(0, 0, 0, 0);
       else
-        texture.RAW[x, y] = new RGBA<byte>(p.R, p.G, p.B, p.R);
+        texture.RAW[x, y] = new RGBA8(p.R, p.G, p.B, p.R);
     }
 
     // Освобождаем ресурсы

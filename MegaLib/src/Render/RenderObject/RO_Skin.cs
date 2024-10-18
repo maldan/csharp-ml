@@ -23,7 +23,7 @@ public class RO_Skin : RO_Base, IAnimatable
   public Skeleton Skeleton;
   public List<RO_Mesh> MeshList = [];
   public Texture_2D<float> BoneTexture;
-  public RGBA<float> Tint = new(1, 1, 1, 1);
+  public RGBA32F Tint = new(1, 1, 1, 1);
 
   public RO_Skin()
   {

@@ -38,7 +38,7 @@ public class Shader_Base
   }
 
   [ShaderBuiltinMethod]
-  protected Vector4 texture(Texture_2D<RGBA<float>> texture2D, Vector2 uv)
+  protected Vector4 texture(Texture_2D<RGBA32F> texture2D, Vector2 uv)
   {
     return new Vector4();
   }

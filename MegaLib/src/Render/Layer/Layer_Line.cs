@@ -47,7 +47,7 @@ public class Layer_Line : Layer_Base
     }
   }
 
-  public void Draw(Ray ray, RGBA<float> color)
+  public void Draw(Ray ray, RGBA32F color)
   {
     Add(new RO_Line(ray.Start, ray.End, color));
   }*/
@@ -59,7 +59,7 @@ public class Layer_Line : Layer_Base
     float endAngle,
     float radius,
     int segments,
-    RGBA<float> color)
+    RGBA32F color)
   {
     // Выбираем начальный вектор для каждой оси
     Vector3 startVector;
@@ -115,7 +115,7 @@ public class Layer_Line : Layer_Base
     }
   }
 
-  public void DrawCollider(BaseCollider collider, RGBA<float> color)
+  public void DrawCollider(BaseCollider collider, RGBA32F color)
   {
     switch (collider)
     {
@@ -128,12 +128,12 @@ public class Layer_Line : Layer_Base
     }
   }
 
-  public void DrawSphere(SphereCollider sphere, RGBA<float> color)
+  public void DrawSphere(SphereCollider sphere, RGBA32F color)
   {
     DrawSphere(sphere.Transform.Matrix, sphere.Radius, color);
   }
 
-  public void DrawBox(BoxCollider box, RGBA<float> color)
+  public void DrawBox(BoxCollider box, RGBA32F color)
   {
     DrawBox(box.Transform.Matrix, box.Size, color);
 
@@ -180,7 +180,7 @@ public class Layer_Line : Layer_Base
   public void DrawSphere(
     Vector3 position,
     float radius,
-    RGBA<float> color,
+    RGBA32F color,
     float latitudeSegments = 16 / 2f,
     float longitudeSegments = 16 / 2f
   )
@@ -265,7 +265,7 @@ public class Layer_Line : Layer_Base
 
   public void DrawSimpleSphere(
     Sphere sphere,
-    RGBA<float> color,
+    RGBA32F color,
     float latitudeSegments = 16 / 2f,
     float longitudeSegments = 16 / 2f
   )
@@ -347,17 +347,17 @@ public class Layer_Line : Layer_Base
     }
   }
 
-  public void DrawBox(Box box, RGBA<float> color)
+  public void DrawBox(Box box, RGBA32F color)
   {
     DrawBox(box.Matrix, box.Size, color);
   }
 
-  public void DrawCapsule(CapsuleCollider collider, RGBA<float> color)
+  public void DrawCapsule(CapsuleCollider collider, RGBA32F color)
   {
     DrawCapsule(collider.Transform.Matrix, collider.Radius, collider.Height, color);
   }
 
-  public void DrawCapsule(Matrix4x4 matrix, float radius, float height, RGBA<float> color)
+  public void DrawCapsule(Matrix4x4 matrix, float radius, float height, RGBA32F color)
   {
     // Высота цилиндра (без учета сфер)
     var cylinderHeight = height - 2 * radius;
@@ -393,7 +393,7 @@ public class Layer_Line : Layer_Base
     DrawLine(lowerEndY, upperEndY, color); // Линия по оси Y (снизу)
   }
 
-  public void DrawBox(Matrix4x4 matrix, Vector3 size, RGBA<float> color)
+  public void DrawBox(Matrix4x4 matrix, Vector3 size, RGBA32F color)
   {
     // Половина размеров коробки (это будут смещения для вершин)
     var halfSize = size * 0.5f;
@@ -439,7 +439,7 @@ public class Layer_Line : Layer_Base
     DrawLine(vertices[3], vertices[7], color); // Верхняя левая
   }
 
-  public void DrawSphere(Matrix4x4 matrix, float radius, RGBA<float> color)
+  public void DrawSphere(Matrix4x4 matrix, float radius, RGBA32F color)
   {
     var longitudeSegments = 16 / 2;
     var latitudeSegments = 16 / 2;
@@ -513,7 +513,7 @@ public class Layer_Line : Layer_Base
     }
   }
 
-  public void DrawRigidBody(RigidBody body, RGBA<float> color)
+  public void DrawRigidBody(RigidBody body, RGBA32F color)
   {
     var tr = new Transform();
     tr.Position = body.Position;
@@ -525,23 +525,23 @@ public class Layer_Line : Layer_Base
       if (collider is SphereCollider sphereCollider)
       {
         var tr2 = new Transform(tr.Matrix * collider.Transform.Matrix);
-        DrawSphere(tr2.Matrix, sphereCollider.Radius, new RGBA<float>(0, 1, 0, 1));
+        DrawSphere(tr2.Matrix, sphereCollider.Radius, new RGBA32F(0, 1, 0, 1));
       }
 
       if (collider is PlaneCollider planeCollider)
       {
         var tr2 = new Transform(tr.Matrix * collider.Transform.Matrix);
-        DrawPlane(tr2, 4, new RGBA<float>(0, 1, 0, 1));
+        DrawPlane(tr2, 4, new RGBA32F(0, 1, 0, 1));
 
         var p = planeCollider.Transform.Position;
         var n = planeCollider.Transform.Position + planeCollider.Normal;
 
-        Add(new RO_Line(p * tr2.Matrix, n * tr2.Matrix, new RGBA<float>(0, 1, 0, 1)));
+        Add(new RO_Line(p * tr2.Matrix, n * tr2.Matrix, new RGBA32F(0, 1, 0, 1)));
       }
     }
   }
 
-  public void DrawCone(Vector3 apex, Vector3 normal, float height, float radius, int segments, RGBA<float> color)
+  public void DrawCone(Vector3 apex, Vector3 normal, float height, float radius, int segments, RGBA32F color)
   {
     // Вычисление основания конуса
     var baseCenter = apex - normal.Normalized * height; // Центр основания
@@ -574,7 +574,7 @@ public class Layer_Line : Layer_Base
     }
   }
 
-  public void DrawPlane(Plane plane, float size, RGBA<float> color)
+  public void DrawPlane(Plane plane, float size, RGBA32F color)
   {
     var normal = plane.Normal.Normalized;
 
@@ -613,7 +613,7 @@ public class Layer_Line : Layer_Base
     DrawCone(normalEnd, normal, 0.1f, 0.05f, 12, color);
   }
 
-  public void DrawPlane(Transform t, float size, RGBA<float> color)
+  public void DrawPlane(Transform t, float size, RGBA32F color)
   {
     // Центр плоскости
     var center = t.Position;
@@ -635,7 +635,7 @@ public class Layer_Line : Layer_Base
     Add(new RO_Line(p4.X, p4.Y, p4.Z, p1.X, p1.Y, p1.Z, color, color)); // Правый нижний - левый нижний
   }
 
-  /*public void Draw(SphereCollider sphere, RGBA<float> color)
+  /*public void Draw(SphereCollider sphere, RGBA32F color)
   {
     var longitudeSegments = 16 / 2;
     var latitudeSegments = 16 / 2;
@@ -712,12 +712,12 @@ public class Layer_Line : Layer_Base
   }
   */
 
-  public void DrawRectangle(Rectangle r, RGBA<float> color)
+  public void DrawRectangle(Rectangle r, RGBA32F color)
   {
     DrawRectangle(new Vector3(r.FromX, r.FromY, 0), new Vector3(r.ToX, r.ToX, 0), color);
   }
 
-  public void DrawRectangle(Vector3 lt, Vector3 rb, RGBA<float> color)
+  public void DrawRectangle(Vector3 lt, Vector3 rb, RGBA32F color)
   {
     Add(new RO_Line(lt.X, rb.Y, lt.Z, lt.X, lt.Y, lt.Z, color, color));
     Add(new RO_Line(lt.X, lt.Y, lt.Z, rb.X, lt.Y, lt.Z, color, color));
@@ -725,7 +725,7 @@ public class Layer_Line : Layer_Base
     Add(new RO_Line(rb.X, rb.Y, lt.Z, lt.X, rb.Y, lt.Z, color, color));
   }
 
-  public void DrawAABB(Vector3 center, Vector3 size, RGBA<float> color)
+  public void DrawAABB(Vector3 center, Vector3 size, RGBA32F color)
   {
     //var xOffset = new float[] { -size.X / 2, size.X / 2 };
     var yOffset = new float[] { -size.Y / 2, size.Y / 2 };
@@ -768,22 +768,22 @@ public class Layer_Line : Layer_Base
       color, color));
   }
 
-  public void DrawAABB(AABB aabb, RGBA<float> color)
+  public void DrawAABB(AABB aabb, RGBA32F color)
   {
     DrawAABB(aabb.Center, aabb.Size, color);
   }
 
-  public void DrawLine(Vector3 from, Vector3 to, RGBA<float> color)
+  public void DrawLine(Vector3 from, Vector3 to, RGBA32F color)
   {
     Add(new RO_Line(from, to, color));
   }
 
-  public void DrawLine(Vector3 from, Vector3 to, RGBA<float> fromColor, RGBA<float> toColor)
+  public void DrawLine(Vector3 from, Vector3 to, RGBA32F fromColor, RGBA32F toColor)
   {
     Add(new RO_Line(from, to, fromColor, toColor));
   }
 
-  public void DrawLine(Vector3 from, Vector3 to, RGBA<float> color, float width)
+  public void DrawLine(Vector3 from, Vector3 to, RGBA32F color, float width)
   {
     var l = new RO_Line(from, to, color)
     {
@@ -792,15 +792,15 @@ public class Layer_Line : Layer_Base
     Add(l);
   }
 
-  public void DrawFrustum(Frustum frustum, RGBA<float> color)
+  public void DrawFrustum(Frustum frustum, RGBA32F color)
   {
     // Отрисовывал плейны чтобы разобраться правильно ли работает
-    /*DrawPlane(frustum.TopPlane, 3f, new RGBA<float>(0, 1, 0, 1));
-    DrawPlane(frustum.BottomPlane, 3f, new RGBA<float>(0, 1, 0, 1));
-    DrawPlane(frustum.NearPlane, 3f, new RGBA<float>(0, 0, 1, 1));
-    DrawPlane(frustum.FarPlane, 3f, new RGBA<float>(0, 0, 1, 1));
-    DrawPlane(frustum.RightPlane, 3f, new RGBA<float>(1, 0, 0, 1));
-    DrawPlane(frustum.LeftPlane, 3f, new RGBA<float>(1, 0, 0, 1));*/
+    /*DrawPlane(frustum.TopPlane, 3f, new RGBA32F(0, 1, 0, 1));
+    DrawPlane(frustum.BottomPlane, 3f, new RGBA32F(0, 1, 0, 1));
+    DrawPlane(frustum.NearPlane, 3f, new RGBA32F(0, 0, 1, 1));
+    DrawPlane(frustum.FarPlane, 3f, new RGBA32F(0, 0, 1, 1));
+    DrawPlane(frustum.RightPlane, 3f, new RGBA32F(1, 0, 0, 1));
+    DrawPlane(frustum.LeftPlane, 3f, new RGBA32F(1, 0, 0, 1));*/
 
     var ntl = frustum.NearTopLeft;
     var ftl = frustum.FarTopLeft;
@@ -811,15 +811,15 @@ public class Layer_Line : Layer_Base
     var nbr = frustum.NearBottomRight;
     var fbr = frustum.FarBottomRight;
 
-    DrawLine(ntl, ftl, color.Mul(0.5f), color);
-    DrawLine(ntr, ftr, color.Mul(0.5f), color);
-    DrawLine(nbl, fbl, color.Mul(0.5f), color);
-    DrawLine(nbr, fbr, color.Mul(0.5f), color);
+    DrawLine(ntl, ftl, color * 0.5f, color);
+    DrawLine(ntr, ftr, color * 0.5f, color);
+    DrawLine(nbl, fbl, color * 0.5f, color);
+    DrawLine(nbr, fbr, color * 0.5f, color);
 
-    DrawLine(ntl, ntr, color.Mul(0.5f), color.Mul(0.5f));
-    DrawLine(nbl, nbr, color.Mul(0.5f), color.Mul(0.5f));
-    DrawLine(ntl, nbl, color.Mul(0.5f), color.Mul(0.5f));
-    DrawLine(ntr, nbr, color.Mul(0.5f), color.Mul(0.5f));
+    DrawLine(ntl, ntr, color * 0.5f, color * 0.5f);
+    DrawLine(nbl, nbr, color * 0.5f, color * 0.5f);
+    DrawLine(ntl, nbl, color * 0.5f, color * 0.5f);
+    DrawLine(ntr, nbr, color * 0.5f, color * 0.5f);
 
     DrawLine(ftl, ftr, color, color);
     DrawLine(fbl, fbr, color, color);
@@ -831,7 +831,7 @@ public class Layer_Line : Layer_Base
     Vector3 center, Vector3 axis,
     Quaternion transformRotation,
     float radius,
-    RGBA<float> color,
+    RGBA32F color,
     int segments = 64,
     float width = 1.0f)
   {
@@ -875,7 +875,7 @@ public class Layer_Line : Layer_Base
     }
   }
 
-  public void DrawBone(Bone bone, RGBA<float> color, bool drawColliders = false)
+  public void DrawBone(Bone bone, RGBA32F color, bool drawColliders = false)
   {
     DrawBone(bone.Matrix, bone.Length, color);
 
@@ -904,7 +904,7 @@ public class Layer_Line : Layer_Base
     }
   }
 
-  public void DrawBone(Matrix4x4 transformMatrix, float length, RGBA<float> color)
+  public void DrawBone(Matrix4x4 transformMatrix, float length, RGBA32F color)
   {
     /*// Рассчитываем длину и базовый размер октаэдра
     var direction = Vector3.Forward * length; // Локальное направление кости теперь вперед по оси Z
@@ -997,7 +997,7 @@ public class Layer_Line : Layer_Base
     DrawLine(leftBase, topBase, color);
   }
 
-  public void DrawGrid(int gridSize, float cellSize, RGBA<float> mainColor, int subdivisions, RGBA<float> subColor)
+  public void DrawGrid(int gridSize, float cellSize, RGBA32F mainColor, int subdivisions, RGBA32F subColor)
   {
     // Грид рисуется в плоскости XZ (ось Y вертикальная)
     for (float i = -gridSize; i < gridSize; i += cellSize)
@@ -1054,15 +1054,15 @@ public class Layer_Line : Layer_Base
 
   public void DrawAxis(Vector3 center)
   {
-    DrawLine(center + Vector3.Down * 4, center + Vector3.Up * 4, new RGBA<float>(0, 1, 0, 1));
-    DrawLine(center + Vector3.Left * 4, center + Vector3.Right * 4, new RGBA<float>(1, 0, 0, 1));
-    DrawLine(center + Vector3.Backward * 4, center + Vector3.Forward * 4, new RGBA<float>(0.2f, 0.5f, 1, 1));
+    DrawLine(center + Vector3.Down * 4, center + Vector3.Up * 4, new RGBA32F(0, 1, 0, 1));
+    DrawLine(center + Vector3.Left * 4, center + Vector3.Right * 4, new RGBA32F(1, 0, 0, 1));
+    DrawLine(center + Vector3.Backward * 4, center + Vector3.Forward * 4, new RGBA32F(0.2f, 0.5f, 1, 1));
   }
 
   public void DrawTranslateManipulator(Vector3 center)
   {
-    Add(new RO_Line(center, center + Vector3.Up * 0.5f, new RGBA<float>(0, 1, 0, 1), 3.0f));
-    Add(new RO_Line(center, center + Vector3.Right * 0.5f, new RGBA<float>(1, 0, 0, 1), 3.0f));
-    Add(new RO_Line(center, center + Vector3.Forward * 0.5f, new RGBA<float>(0.2f, 0.5f, 1, 1), 3.0f));
+    Add(new RO_Line(center, center + Vector3.Up * 0.5f, new RGBA32F(0, 1, 0, 1), 3.0f));
+    Add(new RO_Line(center, center + Vector3.Right * 0.5f, new RGBA32F(1, 0, 0, 1), 3.0f));
+    Add(new RO_Line(center, center + Vector3.Forward * 0.5f, new RGBA32F(0.2f, 0.5f, 1, 1), 3.0f));
   }
 }

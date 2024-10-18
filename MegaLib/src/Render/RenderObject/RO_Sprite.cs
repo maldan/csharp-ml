@@ -17,9 +17,9 @@ public class RO_Sprite : RO_Base
   public ListGPU<Vector2> UV0List;
   public ListGPU<uint> IndexList;
 
-  public Texture_2D<RGBA<byte>> Texture;
+  public Texture_2D<RGBA8> Texture;
 
-  public RGBA<float> Tint = new(1, 1, 1, 1);
+  public RGBA32F Tint = new(1, 1, 1, 1);
 
   public Vector3 Pivot = new();
 
@@ -44,11 +44,11 @@ public class RO_Sprite : RO_Base
       new Vector2(1, 0)
     ];
     IndexList = [0, 1, 2, 0, 2, 3];
-    Texture = new Texture_2D<RGBA<byte>>(1, 1)
+    Texture = new Texture_2D<RGBA8>(1, 1)
     {
       RAW =
       {
-        [0] = new RGBA<byte>(255, 255, 255, 255)
+        [0] = new RGBA8(255, 255, 255, 255)
       }
     };
   }

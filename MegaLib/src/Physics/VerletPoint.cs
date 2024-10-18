@@ -12,7 +12,7 @@ public class VerletPoint
   public float Mass { get; set; } // Масса точки
   public float Damping { get; set; } = 0.99f; // Коэффициент демпфирования для затухания
   public bool IsStatic;
-  public RGBA<float> Color;
+  public RGBA32F Color;
 
   public VerletPoint(Vector3 position, float mass)
   {

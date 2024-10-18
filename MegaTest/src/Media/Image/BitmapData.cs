@@ -41,7 +41,7 @@ public class BitmapDataTest
     Console.WriteLine($"From RGB to RGB (1024x1024) {tt.ElapsedMilliseconds}");
 
     tt.Start();
-    var b2 = BitmapData.FromFile<RGBA<byte>>("D:/csharp/VR Waifu/asset/model/Material_BaseColor.png");
+    var b2 = BitmapData.FromFile<RGBA8>("D:/csharp/VR Waifu/asset/model/Material_BaseColor.png");
     tt.Stop();
     BitmapData.ToFile(b2, "D:/csharp_lib/MegaLib/backup/b2.png");
     Console.WriteLine($"From RGB to RGBA (1024x1024) {tt.ElapsedMilliseconds}");

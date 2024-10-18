@@ -123,25 +123,25 @@ public class RenderData
       new RO_Line(
         new Vector3(area.FromX, area.FromY, 0),
         new Vector3(area.ToX, area.FromY, 0),
-        new RGBA<float>(color.X, color.Y, color.Z, color.W)));
+        new RGBA32F(color.X, color.Y, color.Z, color.W)));
 
     Lines.Add(
       new RO_Line(
         new Vector3(area.FromX, area.ToY, 0),
         new Vector3(area.ToX, area.ToY, 0),
-        new RGBA<float>(color.X, color.Y, color.Z, color.W)));
+        new RGBA32F(color.X, color.Y, color.Z, color.W)));
 
     Lines.Add(
       new RO_Line(
         new Vector3(area.ToX, area.FromY, 0),
         new Vector3(area.ToX, area.ToY, 0),
-        new RGBA<float>(color.X, color.Y, color.Z, color.W)));
+        new RGBA32F(color.X, color.Y, color.Z, color.W)));
 
     Lines.Add(
       new RO_Line(
         new Vector3(area.FromX, area.FromY, 0),
         new Vector3(area.FromX, area.ToY, 0),
-        new RGBA<float>(color.X, color.Y, color.Z, color.W)));
+        new RGBA32F(color.X, color.Y, color.Z, color.W)));
   }
 
   public Rectangle DrawText(

@@ -6,14 +6,14 @@ namespace MegaLib.Render.RenderObject;
 public struct RO_Point
 {
   public Vector3 Position;
-  public RGBA<float> Color = new(1, 1, 1, 1);
+  public RGBA32F Color = new(1, 1, 1, 1);
   public float Size = 1;
 
   public RO_Point()
   {
   }
 
-  public RO_Point(Vector3 position, RGBA<float> color, float size = 1f)
+  public RO_Point(Vector3 position, RGBA32F color, float size = 1f)
   {
     Position = position;
     Color = color;

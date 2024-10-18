@@ -39,7 +39,7 @@ public class BitmapData<T> where T : struct
     {
       byte[] => 1,
       RGB<byte>[] => 3,
-      RGBA<byte>[] => 4,
+      RGBA8[] => 4,
       _ => 0
     };
   }
@@ -111,7 +111,7 @@ public static class BitmapData
       targetBitmap.SetRaw(ptr, pixels.Length);
     }
 
-    if (typeof(T) == typeof(RGBA<byte>))
+    if (typeof(T) == typeof(RGBA8))
     {
       pixels = image.GetPixels().ToByteArray(PixelMapping.RGBA);
       var ptr = Marshal.UnsafeAddrOfPinnedArrayElement(pixels, 0);
@@ -215,10 +215,10 @@ public static class BitmapData
           var color = new RGB<byte>(b, g, r);
           targetBitmap.SetPixel(x, y, (T)(object)color);
         }
-        else if (typeof(T) == typeof(RGBA<byte>))
+        else if (typeof(T) == typeof(RGBA8))
         {
           // Если целевой формат RGBA, добавляем альфа-канал
-          var color = new RGBA<byte>(b, g, r, a);
+          var color = new RGBA8(b, g, r, a);
           targetBitmap.SetPixel(x, y, (T)(object)color);
         }
         else
@@ -348,9 +348,9 @@ public static class BitmapData
           pixelBuffer[targetOffset + 1] = pixel.G;
           pixelBuffer[targetOffset + 2] = pixel.B;
         }
-        else if (targetChannels == 4 && typeof(T) == typeof(RGBA<byte>)) // 4-канальный (RGBA)
+        else if (targetChannels == 4 && typeof(T) == typeof(RGBA8)) // 4-канальный (RGBA)
         {
-          var pixel = (RGBA<byte>)(object)bitmapData[x, y];
+          var pixel = (RGBA8)(object)bitmapData[x, y];
           pixelBuffer[targetOffset] = pixel.R;
           pixelBuffer[targetOffset + 1] = pixel.G;
           pixelBuffer[targetOffset + 2] = pixel.B;

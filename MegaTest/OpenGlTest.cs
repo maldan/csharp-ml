@@ -55,7 +55,7 @@ public class OpenGlTest
     for (var i = 0; i < 10; i++)
     {
       var sprite = new RO_Sprite();
-      sprite.Texture = new Texture_2D<RGBA<byte>>(32, 32);
+      sprite.Texture = new Texture_2D<RGBA8>(32, 32);
       sprite.Width = 32;
       sprite.Height = 32;
       scene.GetLayer<Layer_Sprite>().Add(sprite);

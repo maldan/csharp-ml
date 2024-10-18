@@ -297,13 +297,13 @@ public class RotationManipulator
   // Метод для рисования манипулятора
   public void Draw(Layer_Line line)
   {
-    var xColor = new RGBA<float>(1, 0, 0, 1).Mul(0.8f);
-    var yColor = new RGBA<float>(0, 1, 0, 1).Mul(0.8f);
-    var zColor = new RGBA<float>(0, 0, 1, 1).Mul(0.8f);
+    var xColor = new RGBA32F(1, 0, 0, 1) * 0.8f;
+    var yColor = new RGBA32F(0, 1, 0, 1) * 0.8f;
+    var zColor = new RGBA32F(0, 0, 1, 1) * 0.8f;
 
-    if (_isXHover || _isXGrab) xColor.Mul(1.25f);
-    else if (_isYHover || _isYGrab) yColor.Mul(1.25f);
-    else if (_isZHover || _isZGrab) zColor.Mul(1.25f);
+    if (_isXHover || _isXGrab) xColor *= 1.25f;
+    else if (_isYHover || _isYGrab) yColor *= 1.25f;
+    else if (_isZHover || _isZGrab) zColor *= 1.25f;
 
     if (_isXGrab)
     {
@@ -329,9 +329,9 @@ public class RotationManipulator
     {
       var currentPointX = GetRingIntersectionPoint(Vector3.UnitX);
       line.DrawLine(Transform.Position, Transform.Position + _startPointX.Normalized * Radius,
-        new RGBA<float>(1, 0, 0, 1)); // Линия начального угла
+        new RGBA32F(1, 0, 0, 1)); // Линия начального угла
       line.DrawLine(Transform.Position, Transform.Position + currentPointX,
-        new RGBA<float>(1, 0.5f, 0.5f, 1)); // Линия текущего угла
+        new RGBA32F(1, 0.5f, 0.5f, 1)); // Линия текущего угла
     }
 
     // Линии, показывающие начальный и текущий углы для оси Y
@@ -339,9 +339,9 @@ public class RotationManipulator
     {
       var currentPointY = GetRingIntersectionPoint(Vector3.UnitY);
       line.DrawLine(Transform.Position, Transform.Position + _startPointY.Normalized * Radius,
-        new RGBA<float>(0, 1, 0, 1)); // Линия начального угла
+        new RGBA32F(0, 1, 0, 1)); // Линия начального угла
       line.DrawLine(Transform.Position, Transform.Position + currentPointY,
-        new RGBA<float>(0.5f, 1, 0.5f, 1)); // Линия текущего угла
+        new RGBA32F(0.5f, 1, 0.5f, 1)); // Линия текущего угла
     }
 
     // Линии, показывающие начальный и текущий углы для оси Z
@@ -349,9 +349,9 @@ public class RotationManipulator
     {
       var currentPointZ = GetRingIntersectionPoint(Vector3.UnitZ);
       line.DrawLine(Transform.Position, Transform.Position + _startPointZ.Normalized * Radius,
-        new RGBA<float>(0, 0, 1, 1)); // Линия начального угла
+        new RGBA32F(0, 0, 1, 1)); // Линия начального угла
       line.DrawLine(Transform.Position, Transform.Position + currentPointZ,
-        new RGBA<float>(0.5f, 0.5f, 1, 1)); // Линия текущего угла
+        new RGBA32F(0.5f, 0.5f, 1, 1)); // Линия текущего угла
     }
   }
 }

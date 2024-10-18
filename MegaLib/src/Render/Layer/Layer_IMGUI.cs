@@ -11,7 +11,7 @@ namespace MegaLib.Render.Layer;
 public class Layer_IMGUI : Layer_Base
 {
   public Camera_Orthographic Camera;
-  public Texture_2D<RGBA<byte>> FontTexture;
+  public Texture_2D<RGBA8> FontTexture;
 
   private FontData _fontData;
   private Stack<IMGUI_Element> _currentElement = new();

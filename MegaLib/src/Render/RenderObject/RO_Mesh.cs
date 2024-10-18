@@ -26,12 +26,12 @@ public class RO_Mesh : RO_Base
   public ListGPU<Vector4> BoneWeightList;
   public ListGPU<uint> BoneIndexList;
 
-  public Texture_2D<RGBA<byte>> AlbedoTexture;
+  public Texture_2D<RGBA8> AlbedoTexture;
   public Texture_2D<RGB<byte>> NormalTexture;
   public Texture_2D<byte> RoughnessTexture;
   public Texture_2D<byte> MetallicTexture;
 
-  public RGBA<float> Tint = new(1, 1, 1, 1);
+  public RGBA32F Tint = new(1, 1, 1, 1);
 
   protected AABB _boundingBox;
   public AABB BoundingBox => _boundingBox * Transform.Matrix;
@@ -131,14 +131,14 @@ public class RO_Mesh : RO_Base
 
   public void InitDefaultTextures()
   {
-    var albedo = new Texture_2D<RGBA<byte>>(2, 2)
+    var albedo = new Texture_2D<RGBA8>(2, 2)
     {
       RAW =
       {
-        [0] = new RGBA<byte>(255, 255, 255, 255),
-        [1] = new RGBA<byte>(128, 128, 128, 255),
-        [2] = new RGBA<byte>(128, 128, 128, 255),
-        [3] = new RGBA<byte>(255, 255, 255, 255)
+        [0] = new RGBA8(255, 255, 255, 255),
+        [1] = new RGBA8(128, 128, 128, 255),
+        [2] = new RGBA8(128, 128, 128, 255),
+        [3] = new RGBA8(255, 255, 255, 255)
       }
     };
     albedo.Options.FiltrationMode = TextureFiltrationMode.Nearest;
@@ -364,11 +364,11 @@ public class RO_Mesh : RO_Base
       // Console.WriteLine(texturePath);
       if (TextureManager.Has(texturePath))
       {
-        AlbedoTexture = TextureManager.Get<RGBA<byte>>(texturePath);
+        AlbedoTexture = TextureManager.Get<RGBA8>(texturePath);
       }
       else
       {
-        var texture = mat.BaseColorTexture.Image.ToTexture2D<RGBA<byte>>();
+        var texture = mat.BaseColorTexture.Image.ToTexture2D<RGBA8>();
         if (texture != null)
         {
           AlbedoTexture = texture;
@@ -381,7 +381,7 @@ public class RO_Mesh : RO_Base
     {
       AlbedoTexture.RAW.Resize(1, 1);
       AlbedoTexture.RAW.SetPixels([
-        new RGBA<byte>((byte)(mat.BaseColor.R * 255),
+        new RGBA8((byte)(mat.BaseColor.R * 255),
           (byte)(mat.BaseColor.G * 255), (byte)(mat.BaseColor.B * 255),
           (byte)(mat.BaseColor.A * 255))
       ]);

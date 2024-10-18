@@ -34,7 +34,7 @@ public class Layer_Point : Layer_Base
     _objectList.Clear();
   }
 
-  public void Draw(VerletPoint point, RGBA<float> color, float size = 1.0f)
+  public void Draw(VerletPoint point, RGBA32F color, float size = 1.0f)
   {
     Add(new RO_Point()
     {
@@ -44,7 +44,7 @@ public class Layer_Point : Layer_Base
     });
   }
 
-  public void Draw(Vector3 point, RGBA<float> color, float size = 1.0f)
+  public void Draw(Vector3 point, RGBA32F color, float size = 1.0f)
   {
     Add(new RO_Point()
     {
@@ -54,7 +54,7 @@ public class Layer_Point : Layer_Base
     });
   }
 
-  public void Draw(Vector4 point, RGBA<float> color, float size = 1.0f)
+  public void Draw(Vector4 point, RGBA32F color, float size = 1.0f)
   {
     Add(new RO_Point()
     {
@@ -73,32 +73,32 @@ public class Layer_Point : Layer_Base
     {
       for (var i = 0; i < mesh.VertexList.Count; i++)
       {
-        RGBA<float> color;
+        RGBA32F color;
         var weight = mesh.BoneWeightList[i];
         var bIndex = mesh.BoneIndexList[i].ToBytesBE();
 
-        var r = new RGBA<float>(1, 0, 0, 1);
-        var g = new RGBA<float>(0, 1, 0, 1);
+        var r = new RGBA32F(1, 0, 0, 1);
+        var g = new RGBA32F(0, 1, 0, 1);
         float size;
 
         if (boneIndex == bIndex.R)
         {
-          color = RGBA<float>.Lerp(r, g, weight.R);
+          color = RGBA32F.Lerp(r, g, weight.R);
           size = weight.R;
         }
         else if (boneIndex == bIndex.G)
         {
-          color = RGBA<float>.Lerp(r, g, weight.G);
+          color = RGBA32F.Lerp(r, g, weight.G);
           size = weight.G;
         }
         else if (boneIndex == bIndex.B)
         {
-          color = RGBA<float>.Lerp(r, g, weight.B);
+          color = RGBA32F.Lerp(r, g, weight.B);
           size = weight.B;
         }
         else if (boneIndex == bIndex.A)
         {
-          color = RGBA<float>.Lerp(r, g, weight.A);
+          color = RGBA32F.Lerp(r, g, weight.A);
           size = weight.A;
         }
         else

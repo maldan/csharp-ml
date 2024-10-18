@@ -62,11 +62,11 @@ public class MeshFragmentShader : Shader_PBR
 
   [ShaderFieldOut] public Vector4 color;
 
-  [ShaderFieldUniform] public Texture_2D<RGBA<float>> uAlbedoTexture;
-  [ShaderFieldUniform] public Texture_2D<RGBA<float>> uNormalTexture;
-  [ShaderFieldUniform] public Texture_2D<RGBA<float>> uRoughnessTexture;
-  [ShaderFieldUniform] public Texture_2D<RGBA<float>> uMetallicTexture;
-  [ShaderFieldUniform] public Texture_2D<RGBA<float>> uLightTexture;
+  [ShaderFieldUniform] public Texture_2D<RGBA32F> uAlbedoTexture;
+  [ShaderFieldUniform] public Texture_2D<RGBA32F> uNormalTexture;
+  [ShaderFieldUniform] public Texture_2D<RGBA32F> uRoughnessTexture;
+  [ShaderFieldUniform] public Texture_2D<RGBA32F> uMetallicTexture;
+  [ShaderFieldUniform] public Texture_2D<RGBA32F> uLightTexture;
   [ShaderFieldUniform] public Texture_Cube uSkybox;
   [ShaderFieldUniform] public Vector4 uTint;
 

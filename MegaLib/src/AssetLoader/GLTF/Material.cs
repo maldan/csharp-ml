@@ -95,7 +95,7 @@ public class GLTF_Material
   public int BaseColorTextureId = -1;
   public int NormalTextureId = -1;
   public int RoughnessTextureId = -1;
-  public RGBA<float> BaseColor = new(1, 1, 1, 1);
+  public RGBA32F BaseColor = new(1, 1, 1, 1);
   public float Roughness = 0.5f;
 
   public bool HasBaseColorTexture => BaseColorTextureId != -1;
@@ -119,7 +119,7 @@ public class GLTF_Material
       if (pbr.TryGetProperty("baseColorTexture", out var bc)) BaseColorTextureId = bc.GetProperty("index").GetInt32();
 
       if (pbr.TryGetProperty("baseColorFactor", out var bcf))
-        BaseColor = new RGBA<float>(bcf[0].GetSingle(), bcf[1].GetSingle(), bcf[2].GetSingle(), bcf[3].GetSingle());
+        BaseColor = new RGBA32F(bcf[0].GetSingle(), bcf[1].GetSingle(), bcf[2].GetSingle(), bcf[3].GetSingle());
 
       // BaseColor = bc.GetProperty("index").GetInt32();
       if (pbr.TryGetProperty("metallicRoughnessTexture", out var rt))

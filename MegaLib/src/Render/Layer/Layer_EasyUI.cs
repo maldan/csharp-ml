@@ -15,7 +15,7 @@ namespace MegaLib.Render.Layer;
 public class Layer_EasyUI : Layer_Base
 {
   public Camera_Orthographic Camera;
-  public Texture_2D<RGBA<byte>> FontTexture;
+  public Texture_2D<RGBA8> FontTexture;
 
   private FontData _fontData;
   private Stack<EasyUI_Element> _currentElement = new();

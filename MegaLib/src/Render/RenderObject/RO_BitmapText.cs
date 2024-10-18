@@ -19,7 +19,7 @@ public class RO_BitmapText : RO_Base
   public ListGPU<Vector3> VertexList;
   public ListGPU<Vector2> UV0List;
   public ListGPU<uint> IndexList;
-  public ListGPU<RGBA<float>> ColorList;
+  public ListGPU<RGBA32F> ColorList;
 
   public RO_BitmapText()
   {
@@ -50,7 +50,7 @@ public class RO_BitmapText : RO_Base
     var offset = new Vector3(0, 0, 0);
     var indexOffset = 0u;
     var maxLineHeight = 0f;
-    var color = new RGBA<float>(1, 1, 1, 1);
+    var color = new RGBA32F(1, 1, 1, 1);
 
     for (var i = 0; i < _text.Length; i++)
     {
@@ -60,7 +60,7 @@ public class RO_BitmapText : RO_Base
         if (_text[i + 2] == '0' && _text[i + 3] == 'm')
         {
           i += 3;
-          color = new RGBA<float>(1, 1, 1, 1);
+          color = new RGBA32F(1, 1, 1, 1);
           Font.FontSize = Font.DefaultStyle.Size;
           Font.FontStyle = BitmapFontStyleType.Normal;
           continue;
@@ -81,7 +81,7 @@ public class RO_BitmapText : RO_Base
           i += str.Length;
 
           var rgb = str.Split(";");
-          color = new RGBA<float>(
+          color = new RGBA32F(
             float.Parse(rgb[0]) / 255f,
             float.Parse(rgb[1]) / 255f,
             float.Parse(rgb[2]) / 255f, 1);

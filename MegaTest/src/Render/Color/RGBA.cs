@@ -8,7 +8,7 @@ namespace MegaTest.Render.Color;
 
 public class RGBA
 {
-  [Test]
+  /*[Test]
   public void TestBasicA()
   {
     var t = Stopwatch.StartNew();
@@ -20,7 +20,7 @@ public class RGBA
 
     Console.WriteLine(x);
     Console.WriteLine($"Gay {t.ElapsedTicks}");
-  }
+  }*/
 
   /*[Test]
   public void TestBasicB()
@@ -36,7 +36,7 @@ public class RGBA
     Console.WriteLine($"42 {t.ElapsedTicks}");
   }*/
 
-  [Test]
+  /*[Test]
   public void TestLerp()
   {
     var a = new RGBA<float>(1, 1, 1, 1);
@@ -46,7 +46,7 @@ public class RGBA
     Console.WriteLine(RGBA<float>.Lerp(a, b, 0));
     Console.WriteLine(RGBA<float>.Lerp(a, b, 0.5f));
     Console.WriteLine(RGBA<float>.Lerp(a, b, 1));
-  }
+  }*/
 
   [Test]
   public void Test2()
@@ -57,7 +57,7 @@ public class RGBA
     Console.WriteLine($"{r} {g} {b} {a}");
   }
 
-  public void TestBasicС()
+  /*public void TestBasicС()
   {
     var t = Stopwatch.StartNew();
     var x = new Vector4();
@@ -69,5 +69,5 @@ public class RGBA
 
     Console.WriteLine(x);
     Console.WriteLine($"Native {t.ElapsedTicks}");
-  }
+  }*/
 }

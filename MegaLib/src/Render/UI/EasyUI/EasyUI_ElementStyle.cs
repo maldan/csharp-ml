@@ -308,7 +308,7 @@ public struct ElementStyle
       return hex.Length switch
       {
         7 => RGB<float>.FromHex(hex).Vector3.AddW(1.0f),
-        9 => RGBA<float>.FromHex(hex).Vector4,
+        9 => (Vector4)RGBA32F.FromHex(hex),
         _ => default
       };
     }

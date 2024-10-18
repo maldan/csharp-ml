@@ -48,7 +48,7 @@ public enum BitmapFontStyleType
 
 public class BitmapFont
 {
-  public Texture_2D<RGBA<byte>> Texture = new(1, 1);
+  public Texture_2D<RGBA8> Texture = new(1, 1);
 
   public int Width => Texture.RAW.Width;
   public int Height => Texture.RAW.Height;
@@ -130,7 +130,7 @@ public class BitmapFont
     {
       var pixel = r.ReadByte();
       // if (pixel < 10) pixel = 10;
-      Texture.RAW[p] = new RGBA<byte>(255, 255, 255, pixel);
+      Texture.RAW[p] = new RGBA8(255, 255, 255, pixel);
       p += 1;
     }
 

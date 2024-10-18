@@ -62,10 +62,10 @@ public class Shader_PBR : Shader_Base
   }
 
   public Material getMaterial(
-    Texture_2D<RGBA<float>> albedoTexture,
-    Texture_2D<RGBA<float>> normalTexture,
-    Texture_2D<RGBA<float>> roughnessTexture,
-    Texture_2D<RGBA<float>> metallicTexture,
+    Texture_2D<RGBA32F> albedoTexture,
+    Texture_2D<RGBA32F> normalTexture,
+    Texture_2D<RGBA32F> roughnessTexture,
+    Texture_2D<RGBA32F> metallicTexture,
     Vector2 uv,
     Matrix3x3 tbn
   )
@@ -119,13 +119,13 @@ public class Shader_PBR : Shader_Base
     return new IVector2(pixel % 64, pixel / 64);
   }
 
-  public int getLightAmount(Texture_2D<RGBA<float>> lightTexture)
+  public int getLightAmount(Texture_2D<RGBA32F> lightTexture)
   {
     var m1 = texelFetch(lightTexture, new IVector2(0, 0), 0);
     return toInt(m1.R);
   }
 
-  public Light getLight(Texture_2D<RGBA<float>> lightTexture, uint id)
+  public Light getLight(Texture_2D<RGBA32F> lightTexture, uint id)
   {
     var type = texelFetch(lightTexture, getLightTexelById(id, 0), 0).R;
 

@@ -22,7 +22,7 @@ public class Render_Scene
   public bool UsePostprocess;
   public bool IsVrMode { get; set; }
   public float DeltaTime;
-  public RGBA<float> BackgroundColor = new();
+  public RGBA32F BackgroundColor = new();
 
   public Layer_PostProcess PostProcessLayer = new();
 

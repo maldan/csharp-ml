@@ -63,7 +63,7 @@ internal class TestScene3 : Render_Scene
     var rnd = new Random();
     var sex = 0f;
 
-    BackgroundColor = new RGBA<float>(0.3f, 0.3f, 0.3f, 1);
+    BackgroundColor = new RGBA32F(0.3f, 0.3f, 0.3f, 1);
 
     /*easyUi.Add<EasyUI_Element>(t =>
     {

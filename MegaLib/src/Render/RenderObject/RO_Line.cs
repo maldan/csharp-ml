@@ -7,8 +7,8 @@ public struct RO_Line
 {
   public Vector3 From;
   public Vector3 To;
-  public RGBA<float> FromColor = new(1, 1, 1, 1);
-  public RGBA<float> ToColor = new(1, 1, 1, 1);
+  public RGBA32F FromColor = new(1, 1, 1, 1);
+  public RGBA32F ToColor = new(1, 1, 1, 1);
   public float Width = 1;
 
   public RO_Line()
@@ -21,7 +21,7 @@ public struct RO_Line
     To = to;
   }
 
-  public RO_Line(Vector3 from, Vector3 to, RGBA<float> color)
+  public RO_Line(Vector3 from, Vector3 to, RGBA32F color)
   {
     From = from;
     To = to;
@@ -29,7 +29,7 @@ public struct RO_Line
     ToColor = color;
   }
 
-  public RO_Line(Vector3 from, Vector3 to, RGBA<float> color, float width)
+  public RO_Line(Vector3 from, Vector3 to, RGBA32F color, float width)
   {
     From = from;
     To = to;
@@ -38,7 +38,7 @@ public struct RO_Line
     Width = width;
   }
 
-  public RO_Line(Vector3 from, Vector3 to, RGBA<float> fromColor, RGBA<float> toColor)
+  public RO_Line(Vector3 from, Vector3 to, RGBA32F fromColor, RGBA32F toColor)
   {
     From = from;
     To = to;
@@ -46,7 +46,7 @@ public struct RO_Line
     ToColor = toColor;
   }
 
-  public RO_Line(float fx, float fy, float fz, float tx, float ty, float tz, RGBA<float> fc, RGBA<float> tc)
+  public RO_Line(float fx, float fy, float fz, float tx, float ty, float tz, RGBA32F fc, RGBA32F tc)
   {
     From = new Vector3(fx, fy, fz);
     To = new Vector3(tx, ty, tz);

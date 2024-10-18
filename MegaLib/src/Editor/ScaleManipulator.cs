@@ -163,9 +163,9 @@ public class ScaleManipulator
 
   public void Draw(Layer_Line line)
   {
-    line.DrawBox(XCollider, _isXHover ? new RGBA<float>(1, 0, 0, 1) : new RGBA<float>(1, 1, 1, 1));
-    line.DrawBox(YCollider, _isYHover ? new RGBA<float>(0, 1, 0, 1) : new RGBA<float>(1, 1, 1, 1));
-    line.DrawBox(ZCollider, _isZHover ? new RGBA<float>(0, 0, 1, 1) : new RGBA<float>(1, 1, 1, 1));
+    line.DrawBox(XCollider, _isXHover ? new RGBA32F(1, 0, 0, 1) : new RGBA32F(1, 1, 1, 1));
+    line.DrawBox(YCollider, _isYHover ? new RGBA32F(0, 1, 0, 1) : new RGBA32F(1, 1, 1, 1));
+    line.DrawBox(ZCollider, _isZHover ? new RGBA32F(0, 0, 1, 1) : new RGBA32F(1, 1, 1, 1));
     line.DrawTranslateManipulator(Transform.Position);
   }
 }

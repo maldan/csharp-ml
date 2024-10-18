@@ -245,15 +245,15 @@ internal class TestScene : Render_Scene
     }*/
 
     var line = GetLayer<Layer_Line>("dynamicLine");
-    line.DrawGrid(4, 1f, new RGBA<float>(1, 1, 1, 0.5f), 1, new RGBA<float>(1, 1, 1, 0.25f));
+    line.DrawGrid(4, 1f, new RGBA32F(1, 1, 1, 0.5f), 1, new RGBA32F(1, 1, 1, 0.25f));
   }
 
   private void VerletPoint(float delta)
   {
     var point = GetLayer<Layer_Point>("dynamicPoint");
 
-    point.Draw(_vp, new RGBA<float>(1, 0, 0, 1), 4);
-    point.Draw(_vp2, new RGBA<float>(1, 0, 0, 1), 4);
+    point.Draw(_vp, new RGBA32F(1, 0, 0, 1), 4);
+    point.Draw(_vp2, new RGBA32F(1, 0, 0, 1), 4);
 
     _vp.Position = new Vector3(_x, 1, 0);
     _vp2.ApplyForce(new Vector3(0, -9.8f, 0));
@@ -332,7 +332,7 @@ internal class TestScene : Render_Scene
       {
         Position = point,
         Size = 8,
-        Color = new RGBA<float>(0, 1, 1, 1)
+        Color = new RGBA32F(0, 1, 1, 1)
       });
     }
     else
@@ -350,7 +350,7 @@ internal class TestScene : Render_Scene
     box.Transform.Position = new Vector3(-_x, 0, 0);
     box.Transform.Scale = new Vector3(_scaleX, 1, 1);
     box.Transform.Rotation = Quaternion.FromEuler(_time * 45f, _time * 45f, 0, "deg");
-    line.DrawBox(box, new RGBA<float>(0, 1, 0, 1));
+    line.DrawBox(box, new RGBA32F(0, 1, 0, 1));
 
     var ray = new Ray(new Vector3(_x, 0, -1), new Vector3(_x, 0, 1));
     box.RayIntersection(ray, out var point, out var isHit);
@@ -362,7 +362,7 @@ internal class TestScene : Render_Scene
       {
         Position = point,
         Size = 8,
-        Color = new RGBA<float>(0, 1, 0, 1)
+        Color = new RGBA32F(0, 1, 0, 1)
       });
     }
     else
@@ -395,12 +395,12 @@ internal class TestScene : Render_Scene
 
     foreach (var body in _physicsWorld.RigidBodies)
     {
-      line.DrawRigidBody(body, new RGBA<float>(1, 0, 0, 1));
+      line.DrawRigidBody(body, new RGBA32F(1, 0, 0, 1));
     }
 
     foreach (var collisionData in _physicsWorld.Collisions)
     {
-      pointLayer.Draw(collisionData.ContactPoint, new RGBA<float>(1, 0, 0, 1), 8f);
+      pointLayer.Draw(collisionData.ContactPoint, new RGBA32F(1, 0, 0, 1), 8f);
     }
 
     /*var line = GetLayer<Layer_Line>("dynamicLine");
@@ -464,11 +464,11 @@ internal class TestScene : Render_Scene
         for (var k = -16; k < 16; k++)
         {
           var p = new Vector3(i, j, k) * _cloudDensity;
-          var c = new RGBA<float>(1, 1, 1, 1);
+          var c = new RGBA32F(1, 1, 1, 1);
           var size = 1f;
           if (c2.PointIntersection(p))
           {
-            c = new RGBA<float>(1, 0, 0, 1);
+            c = new RGBA32F(1, 0, 0, 1);
             size = 4f;
           }
 
@@ -477,7 +477,7 @@ internal class TestScene : Render_Scene
       }
     }
 
-    linerLayer.DrawCapsule(_capsuleCollider, new RGBA<float>(1, 1, 1, 1));
+    linerLayer.DrawCapsule(_capsuleCollider, new RGBA32F(1, 1, 1, 1));
 
     linerLayer.DrawArc(
       Matrix4x4.Identity,
@@ -486,7 +486,7 @@ internal class TestScene : Render_Scene
       MathF.PI / 4,
       1f,
       10,
-      new RGBA<float>(1, 0, 0, 1)
+      new RGBA32F(1, 0, 0, 1)
     );
     linerLayer.DrawArc(
       Matrix4x4.Identity,
@@ -495,7 +495,7 @@ internal class TestScene : Render_Scene
       MathF.PI / 4,
       1f,
       10,
-      new RGBA<float>(0, 1, 0, 1)
+      new RGBA32F(0, 1, 0, 1)
     );
     linerLayer.DrawArc(
       Matrix4x4.Identity,
@@ -504,7 +504,7 @@ internal class TestScene : Render_Scene
       MathF.PI / 4,
       1f,
       10,
-      new RGBA<float>(0, 0, 1, 1)
+      new RGBA32F(0, 0, 1, 1)
     );
 
     /*linerLayer.DrawBox(
