@@ -888,6 +888,18 @@ public class Layer_Line : Layer_Base
           var mx = collider.Transform.Matrix * bone.Matrix;
           DrawBox(mx, boxCollider.Size, color);
         }
+
+        if (collider is CapsuleCollider capsuleCollider)
+        {
+          var mx = collider.Transform.Matrix * bone.Matrix;
+          DrawCapsule(mx, capsuleCollider.Radius, capsuleCollider.Height, color);
+        }
+
+        if (collider is SphereCollider sphereCollider)
+        {
+          var mx = collider.Transform.Matrix * bone.Matrix;
+          DrawSphere(mx, sphereCollider.Radius, color);
+        }
       }
     }
   }

@@ -148,6 +148,6 @@ public class BoxCollider : BaseCollider
 
   public override BoxCollider Clone()
   {
-    return new BoxCollider { Size = Size, Transform = Transform.Clone() };
+    return new BoxCollider { Transform = Transform.Clone(), Size = Size };
   }
 }

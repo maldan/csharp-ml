@@ -9,7 +9,7 @@ public class PlaneCollider : BaseCollider
 
   public override BaseCollider Clone()
   {
-    return new PlaneCollider();
+    return new PlaneCollider { Transform = Transform.Clone(), Normal = Normal };
   }
 
   public override void RayIntersection(Ray ray, out Vector3 point, out bool isHit)

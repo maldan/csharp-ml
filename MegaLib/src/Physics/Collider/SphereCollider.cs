@@ -10,7 +10,7 @@ public class SphereCollider : BaseCollider
 
   public override BaseCollider Clone()
   {
-    return new SphereCollider();
+    return new SphereCollider { Transform = Transform.Clone(), Radius = Radius };
   }
 
   public override void RayIntersection(Ray ray, out Vector3 point, out bool isHit)

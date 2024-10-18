@@ -11,7 +11,7 @@ public class CapsuleCollider : BaseCollider
 
   public override BaseCollider Clone()
   {
-    return new CapsuleCollider { Radius = Radius, Height = Height };
+    return new CapsuleCollider { Transform = Transform.Clone(), Radius = Radius, Height = Height };
   }
 
   public override void RayIntersection(Ray ray, out Vector3 point, out bool isHit)
