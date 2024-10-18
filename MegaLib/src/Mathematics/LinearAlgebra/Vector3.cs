@@ -295,6 +295,27 @@ public struct Vector3 : IBinarySerializable
     };
   }
 
+  public static Vector3 operator *(Vector3 point, Quaternion rotation)
+  {
+    // Извлекаем компоненты кватерниона
+    var x = rotation.X;
+    var y = rotation.Y;
+    var z = rotation.Z;
+    var w = rotation.W;
+
+    // Вычисляем кватернион, соответствующий вектору
+    var num1 = 2 * (y * point.Z - z * point.Y);
+    var num2 = 2 * (z * point.X - x * point.Z);
+    var num3 = 2 * (x * point.Y - y * point.X);
+
+    // Вычисляем новый вектор
+    return new Vector3(
+      point.X + w * num1 + (y * num3 - z * num2),
+      point.Y + w * num2 + (z * num1 - x * num3),
+      point.Z + w * num3 + (x * num2 - y * num1)
+    );
+  }
+
   public static Vector3 operator /(Vector3 a, float s)
   {
     return new Vector3

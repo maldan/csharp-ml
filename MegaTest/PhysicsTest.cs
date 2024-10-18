@@ -39,8 +39,11 @@ internal class TestScene : Render_Scene
   private Bone _fuckBone1 = new() { Length = 1 };
   // private RigidBody _rigidBody;
 
+  private CapsuleCollider _capsuleCollider = new() { Radius = 0.25f, Height = 1f };
+
   private float _cameraOrbitRadius = 10f;
   private Vector3 _cameraFocalPoint = new();
+  private Vector3 _cloudDensity = new(0.05f, 0.05f, 0.05f);
 
   public override void OnInit()
   {
@@ -72,20 +75,21 @@ internal class TestScene : Render_Scene
     {
       window.Style.SetArea(100, 200, 200, 200);
 
-      easyUi.Label("Size");
-      easyUi.VectorInput(() => { return _boxCollider.Size; }, (v) => { _boxCollider.Size = v; });
-
       easyUi.Label("Position");
-      easyUi.VectorInput(() => { return _fuckBone1.Position; },
-        (v) => { _fuckBone1.Position = v; });
+      easyUi.VectorInput(() => { return _capsuleCollider.Transform.Position; },
+        (v) => { _capsuleCollider.Transform.Position = v; });
 
       easyUi.Label("Scale");
-      easyUi.VectorInput(() => { return _boxCollider.Transform.Scale; },
-        (v) => { _boxCollider.Transform.Scale = v; });
+      easyUi.VectorInput(() => { return _capsuleCollider.Transform.Scale; },
+        (v) => { _capsuleCollider.Transform.Scale = v; });
 
       easyUi.Label("Rotation");
-      easyUi.VectorInput(() => { return _fuckBone1.Rotation.Euler.ToDegrees; },
-        (v) => { _fuckBone1.Rotation = Quaternion.FromEuler(v, "deg"); });
+      easyUi.VectorInput(() => { return _capsuleCollider.Transform.Rotation.Euler.ToDegrees; },
+        (v) => { _capsuleCollider.Transform.Rotation = Quaternion.FromEuler(v, "deg"); });
+
+      easyUi.Label("Density");
+      var d = easyUi.VectorInput(() => { return _cloudDensity; }, (v) => { _cloudDensity = v; });
+      d.ValueStep = 0.01f;
     });
 
     easyUi.Add<EasyUI_Element>(t =>
@@ -316,7 +320,7 @@ internal class TestScene : Render_Scene
     sc.Transform.Position = new Vector3(-_x, 0, 0);
     sc.Transform.Scale = new Vector3(_scaleX, 1, 1);
     sc.Transform.Rotation = Quaternion.FromEuler(_time * 45f, _time * 45f, _time * 45f, "deg");
-    line.Draw(sc, new RGBA<float>(0, 1, 0, 1));
+    // line.Draw(sc, new RGBA<float>(0, 1, 0, 1));
 
     var ray = new Ray(new Vector3(_x, 0, -1), new Vector3(_x, 0, 1));
     sc.RayIntersection(ray, out var point, out var isHit);
@@ -346,7 +350,7 @@ internal class TestScene : Render_Scene
     box.Transform.Position = new Vector3(-_x, 0, 0);
     box.Transform.Scale = new Vector3(_scaleX, 1, 1);
     box.Transform.Rotation = Quaternion.FromEuler(_time * 45f, _time * 45f, 0, "deg");
-    line.DrawBoxCollider(box, new RGBA<float>(0, 1, 0, 1));
+    line.DrawBox(box, new RGBA<float>(0, 1, 0, 1));
 
     var ray = new Ray(new Vector3(_x, 0, -1), new Vector3(_x, 0, 1));
     box.RayIntersection(ray, out var point, out var isHit);
@@ -431,12 +435,12 @@ internal class TestScene : Render_Scene
     var pointLayer = GetLayer<Layer_Point>("dynamicPoint");
     var linerLayer = GetLayer<Layer_Line>("dynamicLine");
 
-    var c2 = _boxCollider.Clone();
+    var c2 = _capsuleCollider;
     //var mx = Matrix4x4.Identity;
     //mx = mx.Translate(1, 0, 0);
     //mx = mx.Rotate(Quaternion.FromEuler(45, 20, 12, "deg"));
     // c2.Transform.Matrix = _boxCollider.Transform.Matrix * _fuckBone1.Matrix;
-    var bb = new BoxCollider()
+    /*var bb = new BoxCollider()
     {
       Transform = new Transform()
       {
@@ -451,7 +455,7 @@ internal class TestScene : Render_Scene
       -0.00, 1.15, -0.07, 1.00
     );
 
-    _fuckBone.Update(Matrix4x4.Identity);
+    _fuckBone.Update(Matrix4x4.Identity);*/
 
     for (var i = -16; i < 16; i++)
     {
@@ -459,7 +463,7 @@ internal class TestScene : Render_Scene
       {
         for (var k = -16; k < 16; k++)
         {
-          var p = c2.Transform.Position + new Vector3(i, j, k) * 0.01f;
+          var p = new Vector3(i, j, k) * _cloudDensity;
           var c = new RGBA<float>(1, 1, 1, 1);
           var size = 1f;
           if (c2.PointIntersection(p))
@@ -473,7 +477,37 @@ internal class TestScene : Render_Scene
       }
     }
 
-    linerLayer.DrawBox(
+    linerLayer.DrawCapsule(_capsuleCollider, new RGBA<float>(1, 1, 1, 1));
+
+    linerLayer.DrawArc(
+      Matrix4x4.Identity,
+      new Vector3(1, 0, 0),
+      0,
+      MathF.PI / 4,
+      1f,
+      10,
+      new RGBA<float>(1, 0, 0, 1)
+    );
+    linerLayer.DrawArc(
+      Matrix4x4.Identity,
+      new Vector3(0, 1, 0),
+      0,
+      MathF.PI / 4,
+      1f,
+      10,
+      new RGBA<float>(0, 1, 0, 1)
+    );
+    linerLayer.DrawArc(
+      Matrix4x4.Identity,
+      new Vector3(0, 0, 1),
+      0,
+      MathF.PI / 4,
+      1f,
+      10,
+      new RGBA<float>(0, 0, 1, 1)
+    );
+
+    /*linerLayer.DrawBox(
       new Matrix4x4(1.00, 0.00, 0.00, 0.00,
         0.00, 1.00, 0.00, 0.00,
         0.00, 0.00, 1.00, 0.00,
@@ -488,9 +522,9 @@ internal class TestScene : Render_Scene
       ,
       new RGBA<float>(0, 1, 0, 1));
 
-    linerLayer.DrawBoxCollider(c2, new RGBA<float>(0, 1, 0, 1));
+    linerLayer.DrawBox(c2, new RGBA<float>(0, 1, 0, 1));
 
-    pointLayer.Draw(new Vector3(0, 0, 5), new RGBA<float>(1, 0, 0, 1), 10);
+    pointLayer.Draw(new Vector3(0, 0, 5), new RGBA<float>(1, 0, 0, 1), 10);*/
   }
 }
 

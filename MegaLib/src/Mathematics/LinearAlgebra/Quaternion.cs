@@ -194,42 +194,6 @@ public struct Quaternion : IBinarySerializable
 
   public static Quaternion FromEuler(Vector3 v, string unit)
   {
-    /*var roll = v.X;
-    var pitch = v.Y;
-    var yaw = v.Z;
-
-    if (unit == "deg")
-    {
-      roll = roll.DegToRad();
-      pitch = pitch.DegToRad();
-      yaw = yaw.DegToRad();
-    }
-
-    //  Roll first, about axis the object is facing, then
-    //  pitch upward, then yaw to face into the new heading
-    float sr, cr, sp, cp, sy, cy;
-
-    var halfRoll = roll * 0.5f;
-    sr = MathF.Sin(halfRoll);
-    cr = MathF.Cos(halfRoll);
-
-    var halfPitch = pitch * 0.5f;
-    sp = MathF.Sin(halfPitch);
-    cp = MathF.Cos(halfPitch);
-
-    var halfYaw = yaw * 0.5f;
-    sy = MathF.Sin(halfYaw);
-    cy = MathF.Cos(halfYaw);
-
-    Quaternion result;
-
-    result.X = cy * sp * cr + sy * cp * sr;
-    result.Y = sy * cp * cr - cy * sp * sr;
-    result.Z = cy * cp * sr - sy * sp * cr;
-    result.W = cy * cp * cr + sy * sp * sr;
-
-    return result;*/
-
     var x = v.X;
     var y = v.Y;
     var z = v.Z;

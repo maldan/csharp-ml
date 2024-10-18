@@ -8,6 +8,11 @@ public class SphereCollider : BaseCollider
 {
   public float Radius;
 
+  public override BaseCollider Clone()
+  {
+    return new SphereCollider();
+  }
+
   public override void RayIntersection(Ray ray, out Vector3 point, out bool isHit)
   {
     isHit = false;

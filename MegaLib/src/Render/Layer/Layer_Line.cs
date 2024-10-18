@@ -52,25 +52,88 @@ public class Layer_Line : Layer_Base
     Add(new RO_Line(ray.Start, ray.End, color));
   }*/
 
+  public void DrawArc(
+    Matrix4x4 transform,
+    Vector3 axis,
+    float startAngle,
+    float endAngle,
+    float radius,
+    int segments,
+    RGBA<float> color)
+  {
+    // Выбираем начальный вектор для каждой оси
+    Vector3 startVector;
+    var dir = 1;
+    if (axis == Vector3.UnitX) // Если ось вращения X
+    {
+      startVector = new Vector3(0, 0, radius); // Начальная точка на оси Z (смотрит вперед)
+      dir = -1;
+    }
+    else if (axis == Vector3.UnitY) // Если ось вращения Y
+    {
+      startVector = new Vector3(radius, 0, 0); // Начальная точка на оси X (смотрит вправо)
+      dir = -1;
+    }
+    else if (axis == Vector3.UnitZ) // Если ось вращения Z
+    {
+      startVector = new Vector3(radius, 0, 0); // Начальная точка на оси X (смотрит вправо)
+    }
+    else
+    {
+      throw new ArgumentException("Ось должна быть X, Y или Z");
+    }
+
+    // Шаг угла между сегментами
+    var angleStep = (endAngle - startAngle) / segments;
+
+    // Переменная для предыдущей точки (инициализируем как пустую)
+    var prevPoint = Vector3.Zero;
+
+    // Проходим по сегментам и вычисляем точки дуги
+    for (var i = 0; i <= segments; i++)
+    {
+      // Текущий угол
+      var angle = startAngle + i * angleStep * dir;
+
+      // Кватернион для поворота вокруг заданной оси
+      var rotation = Quaternion.FromAxisAngle(axis, angle);
+
+      // Вращаем начальный вектор на текущий угол
+      var currentPoint = rotation * startVector;
+
+      // Применяем трансформацию для перевода в мировые координаты
+      currentPoint = Vector3.Transform(currentPoint, transform);
+
+      // Рисуем линию между предыдущей и текущей точками (начинаем со второй итерации)
+      if (i > 0)
+      {
+        DrawLine(prevPoint, currentPoint, color);
+      }
+
+      // Обновляем предыдущую точку
+      prevPoint = currentPoint;
+    }
+  }
+
   public void DrawCollider(BaseCollider collider, RGBA<float> color)
   {
     switch (collider)
     {
       case BoxCollider boxCollider:
-        DrawBoxCollider(boxCollider, color);
+        DrawBox(boxCollider, color);
         break;
       case SphereCollider sphereCollider:
-        DrawSphereCollider(sphereCollider, color);
+        DrawSphere(sphereCollider, color);
         break;
     }
   }
 
-  public void DrawSphereCollider(SphereCollider sphere, RGBA<float> color)
+  public void DrawSphere(SphereCollider sphere, RGBA<float> color)
   {
-    DrawSphere(sphere.Transform, sphere.Radius, color);
+    DrawSphere(sphere.Transform.Matrix, sphere.Radius, color);
   }
 
-  public void DrawBoxCollider(BoxCollider box, RGBA<float> color)
+  public void DrawBox(BoxCollider box, RGBA<float> color)
   {
     DrawBox(box.Transform.Matrix, box.Size, color);
 
@@ -289,12 +352,49 @@ public class Layer_Line : Layer_Base
     DrawBox(box.Matrix, box.Size, color);
   }
 
+  public void DrawCapsule(CapsuleCollider collider, RGBA<float> color)
+  {
+    DrawCapsule(collider.Transform.Matrix, collider.Radius, collider.Height, color);
+  }
+
+  public void DrawCapsule(Matrix4x4 matrix, float radius, float height, RGBA<float> color)
+  {
+    // Высота цилиндра (без учета сфер)
+    var cylinderHeight = height - 2 * radius;
+    if (cylinderHeight < 0) cylinderHeight = 0; // Если высота меньше, чем диаметр сфер
+
+    // Нижняя полусфера
+    var lowerMatrix = Matrix4x4.Identity.Translate(0, 0, cylinderHeight / 2 + radius) * matrix;
+    DrawArc(lowerMatrix, new Vector3(1, 0, 0), MathF.PI / 2, 3 * MathF.PI / 2, radius, 16, color);
+    DrawArc(lowerMatrix, new Vector3(0, 1, 0), 0, MathF.PI, radius, 16, color);
+    DrawArc(lowerMatrix, new Vector3(0, 0, 1), 0, MathF.PI * 2, radius, 16, color);
+
+    // Верхняя полусфера
+    var upperMatrix = Matrix4x4.Identity.Translate(0, 0, -(cylinderHeight / 2 + radius)) * matrix;
+    DrawArc(upperMatrix, new Vector3(1, 0, 0), -MathF.PI / 2, MathF.PI / 2, radius, 16, color);
+    DrawArc(upperMatrix, new Vector3(0, 1, 0), 0, -MathF.PI, radius, 16, color);
+    DrawArc(upperMatrix, new Vector3(0, 0, 1), 0, -MathF.PI * 2, radius, 16, color);
+
+    // Соединяем концы дуг линиями
+    var lowerStartX = Vector3.Transform(new Vector3(radius, 0, cylinderHeight / 2 + radius), matrix);
+    var lowerEndX = Vector3.Transform(new Vector3(-radius, 0, cylinderHeight / 2 + radius), matrix);
+    var lowerStartY = Vector3.Transform(new Vector3(0, radius, cylinderHeight / 2 + radius), matrix);
+    var lowerEndY = Vector3.Transform(new Vector3(0, -radius, cylinderHeight / 2 + radius), matrix);
+
+    var upperStartX = Vector3.Transform(new Vector3(radius, 0, -(cylinderHeight / 2 + radius)), matrix);
+    var upperEndX = Vector3.Transform(new Vector3(-radius, 0, -(cylinderHeight / 2 + radius)), matrix);
+    var upperStartY = Vector3.Transform(new Vector3(0, radius, -(cylinderHeight / 2 + radius)), matrix);
+    var upperEndY = Vector3.Transform(new Vector3(0, -radius, -(cylinderHeight / 2 + radius)), matrix);
+
+// Рисуем линии между верхними и нижними точками
+    DrawLine(lowerStartX, upperStartX, color); // Линия по оси X (справа)
+    DrawLine(lowerEndX, upperEndX, color); // Линия по оси X (слева)
+    DrawLine(lowerStartY, upperStartY, color); // Линия по оси Y (сверху)
+    DrawLine(lowerEndY, upperEndY, color); // Линия по оси Y (снизу)
+  }
+
   public void DrawBox(Matrix4x4 matrix, Vector3 size, RGBA<float> color)
   {
-    /*Console.WriteLine(matrix.Position);
-    Console.WriteLine(matrix.Rotation);
-    Console.WriteLine(matrix.Scaling);
-    Console.WriteLine("");*/
     // Половина размеров коробки (это будут смещения для вершин)
     var halfSize = size * 0.5f;
 
@@ -339,7 +439,7 @@ public class Layer_Line : Layer_Base
     DrawLine(vertices[3], vertices[7], color); // Верхняя левая
   }
 
-  public void DrawSphere(Transform transform, float radius, RGBA<float> color)
+  public void DrawSphere(Matrix4x4 matrix, float radius, RGBA<float> color)
   {
     var longitudeSegments = 16 / 2;
     var latitudeSegments = 16 / 2;
@@ -373,8 +473,8 @@ public class Layer_Line : Layer_Base
           radius * (float)Math.Cos(nextLat) * sinLon
         );
 
-        p1 *= transform.Matrix;
-        p2 *= transform.Matrix;
+        p1 *= matrix;
+        p2 *= matrix;
 
         // Рисуем линию между этими двумя точками
         Add(new RO_Line(p1, p2, color));
@@ -404,8 +504,8 @@ public class Layer_Line : Layer_Base
           radius * (float)Math.Cos(lat) * (float)Math.Sin(nextLon)
         );
 
-        p1 *= transform.Matrix;
-        p2 *= transform.Matrix;
+        p1 *= matrix;
+        p2 *= matrix;
 
         // Рисуем линию между этими двумя точками
         Add(new RO_Line(p1, p2, color));
@@ -418,14 +518,14 @@ public class Layer_Line : Layer_Base
     var tr = new Transform();
     tr.Position = body.Position;
     tr.Rotation = body.Rotation;
-    DrawSphere(tr, 0.1f, color);
+    DrawSphere(tr.Matrix, 0.1f, color);
 
     foreach (var collider in body.Colliders)
     {
       if (collider is SphereCollider sphereCollider)
       {
         var tr2 = new Transform(tr.Matrix * collider.Transform.Matrix);
-        DrawSphere(tr2, sphereCollider.Radius, new RGBA<float>(0, 1, 0, 1));
+        DrawSphere(tr2.Matrix, sphereCollider.Radius, new RGBA<float>(0, 1, 0, 1));
       }
 
       if (collider is PlaneCollider planeCollider)
@@ -535,7 +635,7 @@ public class Layer_Line : Layer_Base
     Add(new RO_Line(p4.X, p4.Y, p4.Z, p1.X, p1.Y, p1.Z, color, color)); // Правый нижний - левый нижний
   }
 
-  public void Draw(SphereCollider sphere, RGBA<float> color)
+  /*public void Draw(SphereCollider sphere, RGBA<float> color)
   {
     var longitudeSegments = 16 / 2;
     var latitudeSegments = 16 / 2;
@@ -610,6 +710,7 @@ public class Layer_Line : Layer_Base
       }
     }
   }
+  */
 
   public void DrawRectangle(Rectangle r, RGBA<float> color)
   {
