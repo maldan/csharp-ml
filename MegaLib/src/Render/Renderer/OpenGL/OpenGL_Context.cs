@@ -179,7 +179,7 @@ public class OpenGL_Context
     _cubeTextureList[texture.Id] = textureId;
   }
 
-  public void MapRenderTexture(Texture_2D<RGB<byte>> texture)
+  public void MapRenderTexture(Texture_2D<RGB8> texture)
   {
     if (texture?.RAW == null) return;
     if (_textureList.ContainsKey(texture.RAW.Id)) return;

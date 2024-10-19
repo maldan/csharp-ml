@@ -130,8 +130,8 @@ public class LR_Line : LR_Base
 
       d.Lines.Add(line.From);
       d.Lines.Add(line.To);
-      d.Colors.Add(new Vector4(line.FromColor.R, line.FromColor.G, line.FromColor.B, line.FromColor.A));
-      d.Colors.Add(new Vector4(line.ToColor.R, line.ToColor.G, line.ToColor.B, line.ToColor.A));
+      d.Colors.Add((Vector4)line.FromColor);
+      d.Colors.Add((Vector4)line.ToColor);
     });
 
     foreach (var (width, value) in _linesByWidth)

@@ -14,10 +14,10 @@ public class OpenGL_Framebuffer
   private uint _rbo;
   private uint _previousId;
 
-  private Texture_2D<RGB<byte>> _texture;
+  private Texture_2D<RGB8> _texture;
 
   // private readonly Dictionary<ulong, uint> _textureList = new();
-  public Texture_2D<RGB<byte>> Texture => _texture;
+  public Texture_2D<RGB8> Texture => _texture;
 
   public OpenGL_Framebuffer(OpenGL_Context context)
   {
@@ -32,7 +32,7 @@ public class OpenGL_Framebuffer
     OpenGL32.glBindFramebuffer(OpenGL32.GL_FRAMEBUFFER, _id);
 
     // Создает текстуру и маппим ее
-    _texture = new Texture_2D<RGB<byte>>(1280, 720);
+    _texture = new Texture_2D<RGB8>(1280, 720);
     _context.MapRenderTexture(_texture);
 
     // Прикрепляем текстуру к фреймбуферу

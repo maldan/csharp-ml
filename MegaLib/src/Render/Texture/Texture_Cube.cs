@@ -11,14 +11,14 @@ public class Texture_Cube
 {
   public ulong Id;
 
-  public ImageGPU<RGB<byte>> FRONT { get; set; }
-  public ImageGPU<RGB<byte>> BACK { get; set; }
+  public ImageGPU<RGB8> FRONT { get; set; }
+  public ImageGPU<RGB8> BACK { get; set; }
 
-  public ImageGPU<RGB<byte>> TOP { get; set; }
-  public ImageGPU<RGB<byte>> BOTTOM { get; set; }
+  public ImageGPU<RGB8> TOP { get; set; }
+  public ImageGPU<RGB8> BOTTOM { get; set; }
 
-  public ImageGPU<RGB<byte>> LEFT { get; set; }
-  public ImageGPU<RGB<byte>> RIGHT { get; set; }
+  public ImageGPU<RGB8> LEFT { get; set; }
+  public ImageGPU<RGB8> RIGHT { get; set; }
 
   public TextureOptions Options;
 
@@ -34,17 +34,17 @@ public class Texture_Cube
       UseMipMaps = true
     };
 
-    TOP = new ImageGPU<RGB<byte>>(4, 4);
-    BOTTOM = new ImageGPU<RGB<byte>>(4, 4);
-    LEFT = new ImageGPU<RGB<byte>>(4, 4);
-    RIGHT = new ImageGPU<RGB<byte>>(4, 4);
-    BACK = new ImageGPU<RGB<byte>>(4, 4);
-    FRONT = new ImageGPU<RGB<byte>>(4, 4);
+    TOP = new ImageGPU<RGB8>(4, 4);
+    BOTTOM = new ImageGPU<RGB8>(4, 4);
+    LEFT = new ImageGPU<RGB8>(4, 4);
+    RIGHT = new ImageGPU<RGB8>(4, 4);
+    BACK = new ImageGPU<RGB8>(4, 4);
+    FRONT = new ImageGPU<RGB8>(4, 4);
 
     var l = new[] { RIGHT, LEFT, TOP, BOTTOM, BACK, FRONT };
     foreach (var ll in l)
     {
-      ll.SetPixels(new RGB<byte>[]
+      ll.SetPixels(new RGB8[]
       {
         new(128, 128, 128), new(255, 255, 255), new(128, 128, 128), new(255, 255, 255),
         new(255, 255, 255), new(128, 128, 128), new(255, 255, 255), new(128, 128, 128),

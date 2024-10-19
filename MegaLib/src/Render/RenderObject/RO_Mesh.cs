@@ -27,7 +27,7 @@ public class RO_Mesh : RO_Base
   public ListGPU<uint> BoneIndexList;
 
   public Texture_2D<RGBA8> AlbedoTexture;
-  public Texture_2D<RGB<byte>> NormalTexture;
+  public Texture_2D<RGB8> NormalTexture;
   public Texture_2D<byte> RoughnessTexture;
   public Texture_2D<byte> MetallicTexture;
 
@@ -144,11 +144,11 @@ public class RO_Mesh : RO_Base
     albedo.Options.FiltrationMode = TextureFiltrationMode.Nearest;
     AlbedoTexture = albedo;
 
-    var normal = new Texture_2D<RGB<byte>>(1, 1)
+    var normal = new Texture_2D<RGB8>(1, 1)
     {
       RAW =
       {
-        [0] = new RGB<byte>(128, 128, 255)
+        [0] = new RGB8(128, 128, 255)
       }
     };
     normal.Options.FiltrationMode = TextureFiltrationMode.Nearest;
@@ -394,11 +394,11 @@ public class RO_Mesh : RO_Base
       Console.WriteLine(texturePath);
       if (TextureManager.Has(texturePath))
       {
-        NormalTexture = TextureManager.Get<RGB<byte>>(texturePath);
+        NormalTexture = TextureManager.Get<RGB8>(texturePath);
       }
       else
       {
-        var texture = mat.NormalTexture.Image.ToTexture2D<RGB<byte>>();
+        var texture = mat.NormalTexture.Image.ToTexture2D<RGB8>();
         if (texture != null)
         {
           NormalTexture = texture;

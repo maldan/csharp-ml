@@ -38,7 +38,7 @@ public class BitmapData<T> where T : struct
     ChannelAmount = Pixels switch
     {
       byte[] => 1,
-      RGB<byte>[] => 3,
+      RGB8[] => 3,
       RGBA8[] => 4,
       _ => 0
     };
@@ -118,7 +118,7 @@ public static class BitmapData
       targetBitmap.SetRaw(ptr, pixels.Length);
     }
 
-    if (typeof(T) == typeof(RGB<byte>))
+    if (typeof(T) == typeof(RGB8))
     {
       pixels = image.GetPixels().ToByteArray(PixelMapping.RGB);
       var ptr = Marshal.UnsafeAddrOfPinnedArrayElement(pixels, 0);
@@ -209,10 +209,10 @@ public static class BitmapData
         else
 
           // Преобразование в целевой формат
-        if (typeof(T) == typeof(RGB<byte>))
+        if (typeof(T) == typeof(RGB8))
         {
           // Если целевой формат RGB, игнорируем альфа-канал
-          var color = new RGB<byte>(b, g, r);
+          var color = new RGB8(b, g, r);
           targetBitmap.SetPixel(x, y, (T)(object)color);
         }
         else if (typeof(T) == typeof(RGBA8))
@@ -341,9 +341,9 @@ public static class BitmapData
           var grayValue = (byte)(object)bitmapData[x, y];
           pixelBuffer[targetOffset] = grayValue;
         }
-        else if (targetChannels == 3 && typeof(T) == typeof(RGB<byte>)) // 3-канальный (RGB)
+        else if (targetChannels == 3 && typeof(T) == typeof(RGB8)) // 3-канальный (RGB)
         {
-          var pixel = (RGB<byte>)(object)bitmapData[x, y];
+          var pixel = (RGB8)(object)bitmapData[x, y];
           pixelBuffer[targetOffset] = pixel.R;
           pixelBuffer[targetOffset + 1] = pixel.G;
           pixelBuffer[targetOffset + 2] = pixel.B;

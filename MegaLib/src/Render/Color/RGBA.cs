@@ -4,6 +4,7 @@ using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Render.Color;
 
+/*
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public readonly struct RGBA<T> where T : struct
 {
@@ -37,58 +38,6 @@ public readonly struct RGBA<T> where T : struct
     (T)Convert.ChangeType(Convert.ToSingle(1), typeof(T)),
     (T)Convert.ChangeType(Convert.ToSingle(1), typeof(T))
   );
-
-  // Add
-  /*public static RGBA<T> operator +(RGBA<T> a, RGBA<float> b)
-  {
-    return new RGBA<T>(
-      (T)Convert.ChangeType(Convert.ToSingle(a.R) + b.R, typeof(T)),
-      (T)Convert.ChangeType(Convert.ToSingle(a.G) + b.G, typeof(T)),
-      (T)Convert.ChangeType(Convert.ToSingle(a.B) + b.B, typeof(T)),
-      (T)Convert.ChangeType(Convert.ToSingle(a.A) + b.A, typeof(T))
-    );
-  }
-
-  public static RGBA<T> operator -(RGBA<T> a, RGBA<float> b)
-  {
-    return new RGBA<T>(
-      (T)Convert.ChangeType(Convert.ToSingle(a.R) - b.R, typeof(T)),
-      (T)Convert.ChangeType(Convert.ToSingle(a.G) - b.G, typeof(T)),
-      (T)Convert.ChangeType(Convert.ToSingle(a.B) - b.B, typeof(T)),
-      (T)Convert.ChangeType(Convert.ToSingle(a.A) - b.A, typeof(T))
-    );
-  }
-
-  public static RGBA<T> operator /(RGBA<T> a, float b)
-  {
-    return new RGBA<T>(
-      (T)Convert.ChangeType(Convert.ToSingle(a.R) / b, typeof(T)),
-      (T)Convert.ChangeType(Convert.ToSingle(a.G) / b, typeof(T)),
-      (T)Convert.ChangeType(Convert.ToSingle(a.B) / b, typeof(T)),
-      (T)Convert.ChangeType(Convert.ToSingle(a.A) / b, typeof(T))
-    );
-  }
-
-  // Он говорит что atleast one operator must be <T>
-  public static RGBA<float> operator *(RGBA<float> a, float b)
-  {
-    return new RGBA<float>(
-      a.R * b,
-      a.G * b,
-      a.B * b,
-      a.A * b
-    );
-  }*/
-
-  /*public static RGBA<T> operator *(RGBA<T> a, float b)
-  {
-    return new RGBA<T>(
-      (T)Convert.ChangeType(Convert.ToSingle(a.R) * b, typeof(T)),
-      (T)Convert.ChangeType(Convert.ToSingle(a.G) * b, typeof(T)),
-      (T)Convert.ChangeType(Convert.ToSingle(a.B) * b, typeof(T)),
-      (T)Convert.ChangeType(Convert.ToSingle(a.A) * b, typeof(T))
-    );
-  }*/
 
   // Lerp function
   public static RGBA<float> Lerp(RGBA<float> a, RGBA<float> b, float t)
@@ -136,5 +85,98 @@ public readonly struct RGBA<T> where T : struct
   public override string ToString()
   {
     return $"RGBA({R}, {G}, {B}, {A})";
+  }
+}
+*/
+
+public struct RGBA8
+{
+  public byte R;
+  public byte G;
+  public byte B;
+  public byte A;
+
+  public RGBA8(byte r, byte g, byte b, byte a)
+  {
+    R = r;
+    G = g;
+    B = b;
+    A = a;
+  }
+}
+
+public struct RGBA32F
+{
+  public float R;
+  public float G;
+  public float B;
+  public float A;
+
+  public RGBA32F(float r, float g, float b, float a)
+  {
+    R = r;
+    G = g;
+    B = b;
+    A = a;
+  }
+
+  public static RGBA32F operator +(RGBA32F a, RGBA32F b)
+  {
+    return new RGBA32F()
+    {
+      R = a.R + b.R,
+      G = a.G + b.G,
+      B = a.B + b.B,
+      A = a.A + b.A
+    };
+  }
+
+  public static RGBA32F operator *(RGBA32F a, float b)
+  {
+    return new RGBA32F()
+    {
+      R = a.R * b,
+      G = a.G * b,
+      B = a.B * b,
+      A = a.A * b
+    };
+  }
+
+  // Lerp function
+  public static RGBA32F Lerp(RGBA32F a, RGBA32F b, float t)
+  {
+    return new RGBA32F(
+      a.R + (b.R - a.R) * t,
+      a.G + (b.G - a.G) * t,
+      a.B + (b.B - a.B) * t,
+      a.A + (b.A - a.A) * t
+    );
+  }
+
+  public static RGBA32F FromHex(string color)
+  {
+    if (color.Length == 9)
+    {
+      // Извлекаем цвет
+      var r = int.Parse(color.Substring(1, 2), System.Globalization.NumberStyles.HexNumber);
+      var g = int.Parse(color.Substring(3, 2), System.Globalization.NumberStyles.HexNumber);
+      var b = int.Parse(color.Substring(5, 2), System.Globalization.NumberStyles.HexNumber);
+      var a = int.Parse(color.Substring(7, 2), System.Globalization.NumberStyles.HexNumber);
+
+      // Преобразовываем в значения от 0 до 1
+      return new RGBA32F(r / 255f, g / 255f, b / 255f, a / 255f);
+    }
+
+    return new RGBA32F();
+  }
+
+  public static explicit operator Vector4(RGBA32F rgba)
+  {
+    return new Vector4(rgba.R, rgba.G, rgba.B, rgba.A);
+  }
+
+  public override string ToString()
+  {
+    return $"RGBA32F({R}, {G}, {B}, {A})";
   }
 }

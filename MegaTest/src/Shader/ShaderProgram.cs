@@ -8,7 +8,7 @@ using NUnit.Framework;
 
 namespace MegaTest.Shader;
 
-public class ShaderProgramTest
+public class AShaderProgramTest
 {
   [Test]
   public void Basic()

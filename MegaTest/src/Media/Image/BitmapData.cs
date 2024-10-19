@@ -35,7 +35,7 @@ public class BitmapDataTest
 
     var tt = new Stopwatch();
     tt.Start();
-    var b = BitmapData.FromFile<RGB<byte>>("D:/csharp/VR Waifu/asset/model/Material_BaseColor.png");
+    var b = BitmapData.FromFile<RGB8>("D:/csharp/VR Waifu/asset/model/Material_BaseColor.png");
     tt.Stop();
     BitmapData.ToFile(b, "D:/csharp_lib/MegaLib/backup/b1.png");
     Console.WriteLine($"From RGB to RGB (1024x1024) {tt.ElapsedMilliseconds}");
