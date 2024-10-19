@@ -76,7 +76,7 @@ public class OpenGlTest
   {
     var s1 = new RO_Sprite();
     var s2 = new RO_Mesh();
-    var s3 = new RO_Skin();
+    var s3 = new RO_SkinnedMesh();
     Console.WriteLine(s1.Id);
     Console.WriteLine(s2.Id);
     Console.WriteLine(s3.Id);

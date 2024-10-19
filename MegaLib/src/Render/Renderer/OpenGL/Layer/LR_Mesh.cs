@@ -57,17 +57,32 @@ public class LR_Mesh : LR_Base
       Shader.EnableAttribute(mesh.BiTangentList, "aBiTangent");
 
       // Texture
-      if (mesh.AlbedoTexture != null) Shader.ActivateTexture(mesh.AlbedoTexture, "uAlbedoTexture", 0);
-      if (mesh.NormalTexture != null) Shader.ActivateTexture(mesh.NormalTexture, "uNormalTexture", 1);
-      if (mesh.RoughnessTexture != null) Shader.ActivateTexture(mesh.RoughnessTexture, "uRoughnessTexture", 2);
-      if (mesh.MetallicTexture != null) Shader.ActivateTexture(mesh.MetallicTexture, "uMetallicTexture", 3);
+      if (mesh.Material != null)
+      {
+        if (mesh.Material.AlbedoTexture != null)
+          Shader.ActivateTexture(mesh.Material.AlbedoTexture, "uAlbedoTexture", 0);
+        if (mesh.Material.NormalTexture != null)
+          Shader.ActivateTexture(mesh.Material.NormalTexture, "uNormalTexture", 1);
+        if (mesh.Material.RoughnessTexture != null)
+          Shader.ActivateTexture(mesh.Material.RoughnessTexture, "uRoughnessTexture", 2);
+        if (mesh.Material.MetallicTexture != null)
+          Shader.ActivateTexture(mesh.Material.MetallicTexture, "uMetallicTexture", 3);
+      }
 
       // Текстура с источниками света
       Context.MapTexture(Scene.LightTexture);
       Shader.ActivateTexture(Scene.LightTexture, "uLightTexture", 12);
 
       Shader.SetUniform("uModelMatrix", mesh.Transform.Matrix);
-      Shader.SetUniform("uTint", new Vector4(mesh.Tint.R, mesh.Tint.G, mesh.Tint.B, mesh.Tint.A));
+      if (mesh.Material != null)
+      {
+        Shader.SetUniform("uTint", (Vector4)mesh.Material.Tint);
+      }
+      else
+      {
+        Shader.SetUniform("uTint", new Vector4(1, 1, 1, 1));
+      }
+
 
       // Bind indices
       OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(mesh.IndexList));

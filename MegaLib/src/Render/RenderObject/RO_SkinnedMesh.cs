@@ -18,14 +18,14 @@ internal struct GasLight
   public float Weight;
 }
 
-public class RO_Skin : RO_Base, IAnimatable
+public class RO_SkinnedMesh : RO_Base, IAnimatable
 {
   public Skeleton Skeleton;
   public List<RO_Mesh> MeshList = [];
   public Texture_2D<float> BoneTexture;
-  public RGBA32F Tint = new(1, 1, 1, 1);
+  // public RGBA32F Tint = new(1, 1, 1, 1);
 
-  public RO_Skin()
+  public RO_SkinnedMesh()
   {
     Transform = new Transform();
     Skeleton = new Skeleton();
@@ -36,9 +36,9 @@ public class RO_Skin : RO_Base, IAnimatable
     BoneTexture.Options.UseMipMaps = false;
   }
 
-  public RO_Skin Instantiate()
+  public RO_SkinnedMesh Instantiate()
   {
-    var s = new RO_Skin();
+    var s = new RO_SkinnedMesh();
 
     s.Skeleton = Skeleton.Clone();
     // s.Transform = Transform.Clone();

@@ -69,10 +69,13 @@ public class OpenGL_Context
     MapBuffer(mesh.IndexList, true);
 
     // Map all textures
-    MapTexture(mesh.AlbedoTexture);
-    MapTexture(mesh.NormalTexture);
-    MapTexture(mesh.RoughnessTexture);
-    MapTexture(mesh.MetallicTexture);
+    if (mesh.Material != null)
+    {
+      MapTexture(mesh.Material.AlbedoTexture);
+      MapTexture(mesh.Material.NormalTexture);
+      MapTexture(mesh.Material.RoughnessTexture);
+      MapTexture(mesh.Material.MetallicTexture);
+    }
   }
 
   public void MapObject(RO_Sprite sprite)

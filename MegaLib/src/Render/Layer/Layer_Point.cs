@@ -64,12 +64,12 @@ public class Layer_Point : Layer_Base
     });
   }
 
-  public void DrawBoneInfluence(RO_Skin skin, Bone bone)
+  public void DrawBoneInfluence(RO_SkinnedMesh skinnedMesh, Bone bone)
   {
-    var boneIndex = skin.Skeleton.BoneList.IndexOf(bone);
+    var boneIndex = skinnedMesh.Skeleton.BoneList.IndexOf(bone);
     if (boneIndex == -1) return;
 
-    foreach (var mesh in skin.MeshList)
+    foreach (var mesh in skinnedMesh.MeshList)
     {
       for (var i = 0; i < mesh.VertexList.Count; i++)
       {
@@ -106,7 +106,7 @@ public class Layer_Point : Layer_Base
           continue;
         }
 
-        var bl = skin.Skeleton.BoneList;
+        var bl = skinnedMesh.Skeleton.BoneList;
 
         var mx1 = bl[bIndex.R].InverseBindMatrix * bl[bIndex.R].Matrix;
         var mx2 = bl[bIndex.G].InverseBindMatrix * bl[bIndex.G].Matrix;

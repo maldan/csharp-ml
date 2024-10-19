@@ -74,10 +74,10 @@ internal class RenderTestScene : Render_Scene
     _cube.FromMesh(cubeMesh);
     GetLayer<Layer_StaticMesh>("staticMesh").Add(_cube);
     _cube.InitDefaultTextures();
-    _cube.AlbedoTexture = new Texture_2D<RGBA8>(1, 1);
-    _cube.AlbedoTexture.RAW[0] = new RGBA8(0, 0, 0, 255);
-    _cube.RoughnessTexture.RAW[0] = 128;
-    _cube.MetallicTexture.RAW[0] = 255;
+    _cube.Material.AlbedoTexture = new Texture_2D<RGBA8>(1, 1);
+    _cube.Material.AlbedoTexture.RAW[0] = new RGBA8(0, 0, 0, 255);
+    _cube.Material.RoughnessTexture.RAW[0] = 128;
+    _cube.Material.MetallicTexture.RAW[0] = 255;
     _cube.Transform.Position = new Vector3(0, 0.5f, 0);
 
     var gridMesh = new RO_Mesh();
@@ -89,10 +89,10 @@ internal class RenderTestScene : Render_Scene
     _sphere.FromMesh(MeshGenerator.UVSphere(16, 16, 0.5f));
     _sphere.InitDefaultTextures();
     _sphere.Transform.Position = new Vector3(1, 0.5f, -1f);
-    _sphere.AlbedoTexture = new Texture_2D<RGBA8>(1, 1);
-    _sphere.AlbedoTexture.RAW[0] = new RGBA8(255, 255, 255, 255);
-    _sphere.RoughnessTexture.RAW[0] = 128;
-    _sphere.MetallicTexture.RAW[0] = 0;
+    _sphere.Material.AlbedoTexture = new Texture_2D<RGBA8>(1, 1);
+    _sphere.Material.AlbedoTexture.RAW[0] = new RGBA8(255, 255, 255, 255);
+    _sphere.Material.RoughnessTexture.RAW[0] = 128;
+    _sphere.Material.MetallicTexture.RAW[0] = 0;
     GetLayer<Layer_StaticMesh>("staticMesh").Add(_sphere);
 
     /*var ld = new LightPoint();

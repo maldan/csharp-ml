@@ -151,7 +151,7 @@ public class OpenGL_Renderer : IRenderer
           // Layer_UI => new LR_UI(_context, layer, _scene),
           //Layer_IMGUI => new LR_IMGUI(_context, layer, _scene),
           Layer_EasyUI => new LR_EasyUI(_context, layer, _scene),
-          Layer_SkinnedMesh => new LR_Skin(_context, layer, _scene),
+          Layer_SkinnedMesh => new LR_SkinnedMesh(_context, layer, _scene),
           Layer_Skybox => new LR_Skybox(_context, layer, _scene),
           //Layer_BitmapText => new GL_Layer_BitmapText(_context, layer, _scene),
           Layer_Capture => new LR_Capture(_context, layer, _scene),

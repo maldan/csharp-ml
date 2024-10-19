@@ -9,6 +9,7 @@ using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.Render.Buffer;
 using MegaLib.Render.Color;
+using MegaLib.Render.Material;
 using MegaLib.Render.Texture;
 
 namespace MegaLib.Render.RenderObject;
@@ -26,12 +27,12 @@ public class RO_Mesh : RO_Base
   public ListGPU<Vector4> BoneWeightList;
   public ListGPU<uint> BoneIndexList;
 
-  public Texture_2D<RGBA8> AlbedoTexture;
+  /*public Texture_2D<RGBA8> AlbedoTexture;
   public Texture_2D<RGB8> NormalTexture;
   public Texture_2D<byte> RoughnessTexture;
   public Texture_2D<byte> MetallicTexture;
-
-  public RGBA32F Tint = new(1, 1, 1, 1);
+  public RGBA32F Tint = new(1, 1, 1, 1);*/
+  public Material_PBR Material = new();
 
   protected AABB _boundingBox;
   public AABB BoundingBox => _boundingBox * Transform.Matrix;
@@ -55,10 +56,7 @@ public class RO_Mesh : RO_Base
       BoneWeightList = BoneWeightList,
       BoneIndexList = BoneIndexList,
 
-      AlbedoTexture = AlbedoTexture,
-      NormalTexture = NormalTexture,
-      RoughnessTexture = RoughnessTexture,
-      MetallicTexture = MetallicTexture
+      Material = Material
     };
   }
 
@@ -131,183 +129,8 @@ public class RO_Mesh : RO_Base
 
   public void InitDefaultTextures()
   {
-    var albedo = new Texture_2D<RGBA8>(2, 2)
-    {
-      RAW =
-      {
-        [0] = new RGBA8(255, 255, 255, 255),
-        [1] = new RGBA8(128, 128, 128, 255),
-        [2] = new RGBA8(128, 128, 128, 255),
-        [3] = new RGBA8(255, 255, 255, 255)
-      }
-    };
-    albedo.Options.FiltrationMode = TextureFiltrationMode.Nearest;
-    AlbedoTexture = albedo;
-
-    var normal = new Texture_2D<RGB8>(1, 1)
-    {
-      RAW =
-      {
-        [0] = new RGB8(128, 128, 255)
-      }
-    };
-    normal.Options.FiltrationMode = TextureFiltrationMode.Nearest;
-    NormalTexture = normal;
-
-    var roughness = new Texture_2D<byte>(1, 1)
-    {
-      RAW =
-      {
-        [0] = 128
-      }
-    };
-    roughness.Options.FiltrationMode = TextureFiltrationMode.Nearest;
-    RoughnessTexture = roughness;
-
-    var metalic = new Texture_2D<byte>(1, 1)
-    {
-      RAW =
-      {
-        [0] = 0
-      }
-    };
-    metalic.Options.FiltrationMode = TextureFiltrationMode.Nearest;
-    MetallicTexture = metalic;
+    Material?.InitDefaultTextures();
   }
-
-  /*public static RO_Mesh GenerateUVSphere(float radius, int longitudeSegments, int latitudeSegments)
-  {
-    var vertices = new ListGPU<Vector3>();
-    var uvs = new ListGPU<Vector2>();
-    var indices = new ListGPU<uint>();
-
-    for (var lat = 0; lat <= latitudeSegments; lat++)
-    {
-      var theta = lat * MathF.PI / latitudeSegments;
-      var sinTheta = MathF.Sin(theta);
-      var cosTheta = MathF.Cos(theta);
-
-      for (var lon = 0; lon <= longitudeSegments; lon++)
-      {
-        var phi = lon * 2 * MathF.PI / longitudeSegments;
-        var sinPhi = MathF.Sin(phi);
-        var cosPhi = MathF.Cos(phi);
-
-        var x = cosPhi * sinTheta;
-        var y = cosTheta;
-        var z = sinPhi * sinTheta;
-
-        vertices.Add(new Vector3(x, y, z) * radius);
-        uvs.Add(new Vector2((float)lon / longitudeSegments, (float)lat / latitudeSegments));
-      }
-    }
-
-    for (var lat = 0; lat < latitudeSegments; lat++)
-    for (var lon = 0; lon < longitudeSegments; lon++)
-    {
-      var current = lat * (longitudeSegments + 1) + lon;
-      var next = current + longitudeSegments + 1;
-
-      indices.Add((uint)current);
-      indices.Add((uint)next);
-      indices.Add((uint)current + 1);
-
-      indices.Add((uint)next);
-      indices.Add((uint)next + 1);
-      indices.Add((uint)current + 1);
-    }
-
-    var mesh = new RO_Mesh();
-    mesh.UV0List = uvs;
-    mesh.VertexList = vertices;
-    mesh.IndexList = indices;
-
-    return mesh;
-  }
-
-  public static RO_Mesh GenerateCube(float size)
-  {
-    var m = new RO_Mesh();
-    var vertices = new ListGPU<Vector3>();
-    var normals = new ListGPU<Vector3>();
-    var uv = new ListGPU<Vector2>();
-    var indices = new ListGPU<uint>();
-
-    // Front
-    vertices.Add(new Vector3(-1.0f, -1.0f, -1.0f));
-    vertices.Add(new Vector3(1.0f, -1.0f, -1.0f));
-    vertices.Add(new Vector3(1.0f, 1.0f, -1.0f));
-    vertices.Add(new Vector3(-1.0f, 1.0f, -1.0f));
-    for (var i = 0; i < 4; i++) normals.Add(new Vector3(0.0f, 0.0f, 1.0f));
-
-    // Back
-    vertices.Add(new Vector3(-1.0f, -1.0f, -1.0f));
-    vertices.Add(new Vector3(-1.0f, 1.0f, -1.0f));
-    vertices.Add(new Vector3(1.0f, 1.0f, -1.0f));
-    vertices.Add(new Vector3(1.0f, -1.0f, -1.0f));
-    for (var i = 0; i < 4; i++) normals.Add(new Vector3(0.0f, 0.0f, -1.0f));
-
-    // Top
-    vertices.Add(new Vector3(-1.0f, 1.0f, -1.0f));
-    vertices.Add(new Vector3(-1.0f, 1.0f, 1.0f));
-    vertices.Add(new Vector3(1.0f, 1.0f, 1.0f));
-    vertices.Add(new Vector3(1.0f, 1.0f, -1.0f));
-    for (var i = 0; i < 4; i++) normals.Add(new Vector3(0.0f, 1.0f, 0.0f));
-
-    // Bottom
-    vertices.Add(new Vector3(-1.0f, -1.0f, -1.0f));
-    vertices.Add(new Vector3(1.0f, -1.0f, -1.0f));
-    vertices.Add(new Vector3(1.0f, -1.0f, 1.0f));
-    vertices.Add(new Vector3(-1.0f, -1.0f, 1.0f));
-    for (var i = 0; i < 4; i++) normals.Add(new Vector3(0.0f, -1.0f, 0.0f));
-
-    // Left
-    vertices.Add(new Vector3(-1.0f, -1.0f, -1.0f));
-    vertices.Add(new Vector3(-1.0f, -1.0f, 1.0f));
-    vertices.Add(new Vector3(-1.0f, 1.0f, 1.0f));
-    vertices.Add(new Vector3(-1.0f, 1.0f, -1.0f));
-    for (var i = 0; i < 4; i++) normals.Add(new Vector3(-1.0f, 0.0f, 0.0f));
-
-    // Right
-    vertices.Add(new Vector3(1.0f, -1.0f, -1.0f));
-    vertices.Add(new Vector3(1.0f, 1.0f, -1.0f));
-    vertices.Add(new Vector3(1.0f, 1.0f, 1.0f));
-    vertices.Add(new Vector3(1.0f, -1.0f, 1.0f));
-    for (var i = 0; i < 4; i++) normals.Add(new Vector3(1.0f, 0.0f, 0.0f));
-
-
-    // UV
-    for (var i = 0; i < 6; i++)
-    {
-      uv.Add(new Vector2(0.0f, 0.0f));
-      uv.Add(new Vector2(1.0f, 0.0f));
-      uv.Add(new Vector2(1.0f, 1.0f));
-      uv.Add(new Vector2(0.0f, 1.0f));
-    }
-
-    // Indices
-    for (var i = 0; i < 6; i++)
-    {
-      var next = (uint)(i * 4);
-      indices.Add(next);
-      indices.Add(1 + next);
-      indices.Add(2 + next);
-      indices.Add(next);
-      indices.Add(2 + next);
-      indices.Add(3 + next);
-    }
-
-    for (var i = 0; i < vertices.Count; i++) vertices[i] *= size;
-
-    m.VertexList = vertices;
-    m.NormalList = normals;
-    m.UV0List = uv;
-    m.IndexList = indices;
-
-    m.CalculateTangent();
-
-    return m;
-  }*/
 
   public RO_Mesh FromMesh(Mesh.Mesh mesh2)
   {
@@ -355,9 +178,12 @@ public class RO_Mesh : RO_Base
     InitDefaultTextures();
 
     // Назначаем материалы
-    var mat = gltfMeshPrimitive.Material;
+    Material = new Material_PBR();
+    Material.InitDefaultTextures();
+    Material.FromGLTF(gltfMeshPrimitive);
 
-    // Базовую текстуру
+    // var mat = gltfMeshPrimitive.Material;
+    /*// Базовую текстуру
     if (mat is { HasBaseColorTexture: true })
     {
       var texturePath = gltfMeshPrimitive.Gltf.BaseURI + "/" + mat.BaseColorTexture.Image.URI;
@@ -425,6 +251,7 @@ public class RO_Mesh : RO_Base
         }
       }
     }
+    */
 
     return this;
   }

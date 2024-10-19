@@ -577,12 +577,26 @@ public class LR_Capture : LR_Base
         Shader.EnableAttribute(mesh.BoneIndexList, "aBoneIndex");
 
         // Texture
-        Shader.ActivateTexture(mesh.AlbedoTexture, "uAlbedoTexture", 0);
-        Shader.ActivateTexture(mesh.NormalTexture, "uNormalTexture", 1);
-        Shader.ActivateTexture(mesh.RoughnessTexture, "uRoughnessTexture", 2);
-        Shader.ActivateTexture(mesh.MetallicTexture, "uMetallicTexture", 3);
+        if (mesh.Material != null)
+        {
+          if (mesh.Material.AlbedoTexture != null)
+            Shader.ActivateTexture(mesh.Material.AlbedoTexture, "uAlbedoTexture", 0);
+          if (mesh.Material.NormalTexture != null)
+            Shader.ActivateTexture(mesh.Material.NormalTexture, "uNormalTexture", 1);
+          if (mesh.Material.RoughnessTexture != null)
+            Shader.ActivateTexture(mesh.Material.RoughnessTexture, "uRoughnessTexture", 2);
+          if (mesh.Material.MetallicTexture != null)
+            Shader.ActivateTexture(mesh.Material.MetallicTexture, "uMetallicTexture", 3);
+        }
 
-        Shader.SetUniform("uTint", new Vector4(skin.Tint.R, skin.Tint.G, skin.Tint.B, skin.Tint.A));
+        if (mesh.Material != null)
+        {
+          Shader.SetUniform("uTint", (Vector4)mesh.Material.Tint);
+        }
+        else
+        {
+          Shader.SetUniform("uTint", new Vector4(1, 1, 1, 1));
+        }
 
         // Bind indices
         OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(mesh.IndexList));
