@@ -45,13 +45,52 @@ public static partial class OpenXR
     };
 
     // Add extensions
-    createInfo.EnableExtensions(["XR_EXT_debug_utils", "XR_KHR_opengl_enable"]);
+    createInfo.EnableExtensions([
+      "XR_EXT_debug_utils",
+      "XR_KHR_opengl_enable",
+      "XR_EXT_hand_tracking"
+    ]);
 
     // Try to create
     var xrInstance = XrInstance.Zero;
     Check(xrCreateInstance(ref createInfo, ref xrInstance), "Can't create instance");
 
+
     return xrInstance;
+  }
+
+  public static void InitDebugMessenger(XrInstance xrInstance)
+  {
+    Console.WriteLine("Init Debug Messenger");
+    IntPtr functionPtr = 0;
+    var procName = Marshal.StringToHGlobalAnsi("xrCreateDebugUtilsMessengerEXT");
+
+    Check(xrGetInstanceProcAddr(
+      xrInstance,
+      procName,
+      ref functionPtr
+    ), "Can't get xrCreateDebugUtilsMessengerEXT");
+
+    var xrCreateDebugUtilsMessengerExt =
+      Marshal.GetDelegateForFunctionPointer<xrCreateDebugUtilsMessengerEXTDelegate>(functionPtr);
+
+    var debugMessengerCreateInfo = new XrDebugUtilsMessengerCreateInfoEXT
+    {
+      Type = XrStructureType.XR_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+      Next = IntPtr.Zero,
+      MessageSeverities = XrDebugUtilsMessageSeverityFlagsEXT.XR_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
+                          XrDebugUtilsMessageSeverityFlagsEXT.XR_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT,
+      MessageTypes = XrDebugUtilsMessageTypeFlagsEXT.XR_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                     XrDebugUtilsMessageTypeFlagsEXT.XR_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT,
+      UserCallback = DebugCallback,
+      UserData = IntPtr.Zero
+    };
+
+    Check(
+      xrCreateDebugUtilsMessengerExt(
+        xrInstance, ref debugMessengerCreateInfo, out _),
+      "FUCK"
+    );
   }
 
   public static void AttachActionSet(XrSession session, XrActionSet actionSet)

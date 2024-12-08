@@ -109,7 +109,14 @@ public class OpenGL_Renderer : IRenderer
         fov.AngleLeft, fov.AngleUp, fov.AngleRight, fov.AngleDown
       );
 
+      //var wt = VrInput.Headset.WorldTransform;
+      //wt = wt.Scale(new Vector3(-1, 0, 0))
+      //_scene.Camera.ViewMatrix = _scene.Camera.ViewMatrix.Scale(new Vector3(-1, 1, 1));
       _scene.Camera.ViewMatrix = VrInput.Headset.WorldTransform * _scene.Camera.ViewMatrix;
+
+      // Invert by x (I don't know why)
+      _scene.Camera.ViewMatrix = _scene.Camera.ViewMatrix.Scale(new Vector3(-1, 1, 1));
+
       //_scene.Camera.Position += VrInput.Headset.WorldTransform.Position;
       //_scene.Camera.Rotation *= VrInput.Headset.WorldTransform.Rotation;
 

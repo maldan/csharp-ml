@@ -14,6 +14,9 @@ public class VrAction
   private readonly IntPtr _session;
   private readonly IntPtr _space;
   public IntPtr ActionSet;
+  public IntPtr LeftHandTracker;
+  public IntPtr RightHandTracker;
+  public xrLocateHandJointsEXTDelegate LocateHandJoints;
 
   private Dictionary<string, IntPtr> _action = new();
 
@@ -121,7 +124,6 @@ public class VrAction
 
     OpenXR.Check(OpenXR.xrSyncActions(_session, ref actionsSyncInfo), "Failed to sync Actions.");
 
-
     // Читаем триггер, грип, A, B кнопки
     for (var i = 0; i < _controllerPath.Length; i++)
     {
@@ -143,7 +145,47 @@ public class VrAction
 
     UpdateControllerPosition(predictedDisplayTime);
 
+    UpdateHandsTracking(predictedDisplayTime);
+
     handle.Free();
+  }
+
+  public void UpdateHandsTracking(long predictedDisplayTime)
+  {
+    var locateInfo = new XrHandJointsLocateInfoEXT
+    {
+      type = XrStructureType.XR_TYPE_HAND_JOINTS_LOCATE_INFO_EXT,
+      next = IntPtr.Zero,
+      baseSpace = _space,
+      time = predictedDisplayTime
+    };
+
+    for (var i = 0; i < 2; i++)
+    {
+      var jointLocations = new XrHandJointLocationEXT[26];
+      var jointLocationsPtr = Marshal.UnsafeAddrOfPinnedArrayElement(jointLocations, 0);
+      var locations = new XrHandJointLocationsEXT
+      {
+        Type = XrStructureType.XR_TYPE_HAND_JOINT_LOCATIONS_EXT,
+        Next = IntPtr.Zero,
+        JointCount = 26,
+        JointLocations = jointLocationsPtr
+      };
+
+      var result = LocateHandJoints(i == 0 ? LeftHandTracker : RightHandTracker, in locateInfo, ref locations);
+      if (result == XrResult.XR_SUCCESS)
+      {
+        var hand = i == 0 ? VrInput.Headset.LeftHand : VrInput.Headset.RightHand;
+        for (var j = 0; j < jointLocations.Length; j++)
+        {
+          hand.Joints[j] = new Vector3(
+            -jointLocations[j].Pose.Position.X,
+            jointLocations[j].Pose.Position.Y,
+            jointLocations[j].Pose.Position.Z
+          );
+        }
+      }
+    }
   }
 
   private void UpdateControllerPosition(long predictedDisplayTime)

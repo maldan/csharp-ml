@@ -352,6 +352,13 @@ public class Layer_Line : Layer_Base
     DrawBox(box.Matrix, box.Size, color);
   }
 
+  public void DrawBox(Vector3 position, Vector3 size, RGBA32F color)
+  {
+    var mx = Matrix4x4.Identity;
+    mx = mx.Translate(position);
+    DrawBox(mx, size, color);
+  }
+
   public void DrawCapsule(CapsuleCollider collider, RGBA32F color)
   {
     DrawCapsule(collider.Transform.Matrix, collider.Radius, collider.Height, color);

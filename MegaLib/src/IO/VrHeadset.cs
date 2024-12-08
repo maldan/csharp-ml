@@ -1,4 +1,9 @@
+using System.Collections.Generic;
+using System.Dynamic;
 using MegaLib.Mathematics.LinearAlgebra;
+using MegaLib.OS.Api;
+using MegaLib.Render.Color;
+using MegaLib.Render.Layer;
 
 namespace MegaLib.IO;
 
@@ -65,11 +70,99 @@ public class VrController
   }
 }
 
+public class VrHand
+{
+  public List<Vector3> Joints = [];
+  private VrHeadset _headset;
+
+  public VrHand(VrHeadset headset)
+  {
+    _headset = headset;
+
+    for (var i = 0; i < 26; i++)
+    {
+      Joints.Add(new Vector3());
+    }
+  }
+
+  public void Draw(Layer_Line layerLine)
+  {
+    // Define the connections between joints
+    var jointConnections = new List<(XrHandJointEXT, XrHandJointEXT)>
+    {
+      // Palm and Wrist
+      (XrHandJointEXT.XR_HAND_JOINT_WRIST_EXT, XrHandJointEXT.XR_HAND_JOINT_PALM_EXT),
+
+      // Thumb
+      (XrHandJointEXT.XR_HAND_JOINT_PALM_EXT, XrHandJointEXT.XR_HAND_JOINT_THUMB_METACARPAL_EXT),
+      (XrHandJointEXT.XR_HAND_JOINT_THUMB_METACARPAL_EXT, XrHandJointEXT.XR_HAND_JOINT_THUMB_PROXIMAL_EXT),
+      (XrHandJointEXT.XR_HAND_JOINT_THUMB_PROXIMAL_EXT, XrHandJointEXT.XR_HAND_JOINT_THUMB_DISTAL_EXT),
+      (XrHandJointEXT.XR_HAND_JOINT_THUMB_DISTAL_EXT, XrHandJointEXT.XR_HAND_JOINT_THUMB_TIP_EXT),
+
+      // Index Finger
+      (XrHandJointEXT.XR_HAND_JOINT_PALM_EXT, XrHandJointEXT.XR_HAND_JOINT_INDEX_METACARPAL_EXT),
+      (XrHandJointEXT.XR_HAND_JOINT_INDEX_METACARPAL_EXT, XrHandJointEXT.XR_HAND_JOINT_INDEX_PROXIMAL_EXT),
+      (XrHandJointEXT.XR_HAND_JOINT_INDEX_PROXIMAL_EXT, XrHandJointEXT.XR_HAND_JOINT_INDEX_INTERMEDIATE_EXT),
+      (XrHandJointEXT.XR_HAND_JOINT_INDEX_INTERMEDIATE_EXT, XrHandJointEXT.XR_HAND_JOINT_INDEX_DISTAL_EXT),
+      (XrHandJointEXT.XR_HAND_JOINT_INDEX_DISTAL_EXT, XrHandJointEXT.XR_HAND_JOINT_INDEX_TIP_EXT),
+
+      // Middle Finger
+      (XrHandJointEXT.XR_HAND_JOINT_PALM_EXT, XrHandJointEXT.XR_HAND_JOINT_MIDDLE_METACARPAL_EXT),
+      (XrHandJointEXT.XR_HAND_JOINT_MIDDLE_METACARPAL_EXT, XrHandJointEXT.XR_HAND_JOINT_MIDDLE_PROXIMAL_EXT),
+      (XrHandJointEXT.XR_HAND_JOINT_MIDDLE_PROXIMAL_EXT, XrHandJointEXT.XR_HAND_JOINT_MIDDLE_INTERMEDIATE_EXT),
+      (XrHandJointEXT.XR_HAND_JOINT_MIDDLE_INTERMEDIATE_EXT, XrHandJointEXT.XR_HAND_JOINT_MIDDLE_DISTAL_EXT),
+      (XrHandJointEXT.XR_HAND_JOINT_MIDDLE_DISTAL_EXT, XrHandJointEXT.XR_HAND_JOINT_MIDDLE_TIP_EXT),
+
+      // Ring Finger
+      (XrHandJointEXT.XR_HAND_JOINT_PALM_EXT, XrHandJointEXT.XR_HAND_JOINT_RING_METACARPAL_EXT),
+      (XrHandJointEXT.XR_HAND_JOINT_RING_METACARPAL_EXT, XrHandJointEXT.XR_HAND_JOINT_RING_PROXIMAL_EXT),
+      (XrHandJointEXT.XR_HAND_JOINT_RING_PROXIMAL_EXT, XrHandJointEXT.XR_HAND_JOINT_RING_INTERMEDIATE_EXT),
+      (XrHandJointEXT.XR_HAND_JOINT_RING_INTERMEDIATE_EXT, XrHandJointEXT.XR_HAND_JOINT_RING_DISTAL_EXT),
+      (XrHandJointEXT.XR_HAND_JOINT_RING_DISTAL_EXT, XrHandJointEXT.XR_HAND_JOINT_RING_TIP_EXT),
+
+      // Little Finger
+      (XrHandJointEXT.XR_HAND_JOINT_PALM_EXT, XrHandJointEXT.XR_HAND_JOINT_LITTLE_METACARPAL_EXT),
+      (XrHandJointEXT.XR_HAND_JOINT_LITTLE_METACARPAL_EXT, XrHandJointEXT.XR_HAND_JOINT_LITTLE_PROXIMAL_EXT),
+      (XrHandJointEXT.XR_HAND_JOINT_LITTLE_PROXIMAL_EXT, XrHandJointEXT.XR_HAND_JOINT_LITTLE_INTERMEDIATE_EXT),
+      (XrHandJointEXT.XR_HAND_JOINT_LITTLE_INTERMEDIATE_EXT, XrHandJointEXT.XR_HAND_JOINT_LITTLE_DISTAL_EXT),
+      (XrHandJointEXT.XR_HAND_JOINT_LITTLE_DISTAL_EXT, XrHandJointEXT.XR_HAND_JOINT_LITTLE_TIP_EXT)
+    };
+
+    foreach (var (joint1, joint2) in jointConnections)
+    {
+      var p1 = GetJointWorldPosition((int)joint1);
+      var p2 = GetJointWorldPosition((int)joint2);
+      layerLine.DrawLine(p1, p2, new RGBA32F(0, 1, 0, 1), 6f); // Drawing in green
+    }
+  }
+
+  public Vector3 GetJointWorldPosition(int index)
+  {
+    // To
+    /*var fr = Matrix4x4.Identity;
+    var position = (Joints[index]
+                      .AddW(0.0f)
+                    * _headset.RotationOffset.Inverted.Matrix4x4).DropW() + _headset.PositionOffset;
+
+    fr = fr.Translate(position);
+    fr = fr.Rotate(_headset.RotationOffset.Inverted);*/
+    var mm = Matrix4x4.Identity;
+
+    mm = mm.Translate(_headset.PositionOffset.X, -_headset.PositionOffset.Y, -_headset.PositionOffset.Z);
+    mm = mm.Rotate(_headset.RotationOffset.Inverted);
+
+    return Joints[index] * mm;
+  }
+}
+
 public class VrHeadset
 {
   public Matrix4x4 LocalTransform = Matrix4x4.Identity;
   public VrSide Left;
   public VrSide Right;
+
+  public VrHand LeftHand { get; private set; }
+  public VrHand RightHand { get; private set; }
 
   public VrController LeftController { get; private set; }
   public VrController RightController { get; private set; }
@@ -80,7 +173,7 @@ public class VrHeadset
 
   public Matrix4x4 WorldTransform =>
     Matrix4x4.Identity
-      .Rotate(RotationOffset)
+      .Rotate(RotationOffset.Inverted)
       .Translate(PositionOffset);
 
   public VrHeadset()
@@ -90,11 +183,14 @@ public class VrHeadset
 
     LeftController = new VrController(this);
     RightController = new VrController(this);
+
+    LeftHand = new VrHand(this);
+    RightHand = new VrHand(this);
   }
 
   public void OffsetPosition(Vector3 dir)
   {
-    var hh = RotationOffset.Inverted * LocalTransform.Rotation.Inverted;
+    var hh = RotationOffset * LocalTransform.Rotation;
     var head = Matrix4x4.Identity.Rotate(hh);
 
     var dirNew = dir.AddW(1.0f) * head;
@@ -110,8 +206,8 @@ public class VrHeadset
   {
     OffsetPosition(new Vector3(delta * -LeftController.ThumbstickDirection.X, 0.0f,
       delta * LeftController.ThumbstickDirection.Y));
-    OffsetRotation(new Vector3(delta * -RightController.ThumbstickDirection.Y,
-      delta * RightController.ThumbstickDirection.X, 0.0f));
+    OffsetRotation(new Vector3(delta * RightController.ThumbstickDirection.Y,
+      delta * -RightController.ThumbstickDirection.X, 0.0f));
   }
 
   /*public void CalculateOffset()

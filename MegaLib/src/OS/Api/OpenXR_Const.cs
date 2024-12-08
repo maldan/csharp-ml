@@ -21,6 +21,7 @@ using XrSpaceLocationFlags = ulong;
 using XrPath = ulong;
 using XrAction = IntPtr;
 using XrActionSet = IntPtr;
+using XrHandTrackerEXT = IntPtr;
 
 //using XrSwapchainUsageFlags = System.UInt64;
 
@@ -1665,15 +1666,30 @@ public enum XrReferenceSpaceType
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct XrExtensionProperties
+public unsafe struct XrExtensionProperties
 {
   public XrStructureType Type;
   public IntPtr Next;
 
-  [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)OpenXR.XR_MAX_EXTENSION_NAME_SIZE)]
-  public string ExtensionName;
+  //[MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)OpenXR.XR_MAX_EXTENSION_NAME_SIZE)]
+  //public string ExtensionName;
+  public fixed char ExtensionName[(int)OpenXR.XR_MAX_EXTENSION_NAME_SIZE];
 
   public uint ExtensionVersion;
+
+  public string GetExtensionName()
+  {
+    fixed (char* namePtr = ExtensionName)
+    {
+      var length = 0;
+      while (length < OpenXR.XR_MAX_EXTENSION_NAME_SIZE && namePtr[length] != '\0')
+      {
+        length++;
+      }
+
+      return new string(namePtr, 0, length);
+    }
+  }
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -1826,6 +1842,219 @@ public struct XrInteractionProfileSuggestedBinding
   public IntPtr SuggestedBindings;
 };
 
+[Flags]
+public enum XrDebugUtilsMessageSeverityFlagsEXT
+{
+  XR_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT = 0x00000001,
+  XR_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT = 0x00000010,
+  XR_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT = 0x00000100,
+  XR_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT = 0x00001000
+}
+
+[Flags]
+public enum XrDebugUtilsMessageTypeFlagsEXT
+{
+  XR_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT = 0x00000001,
+  XR_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT = 0x00000002,
+  XR_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT = 0x00000004,
+  XR_DEBUG_UTILS_MESSAGE_TYPE_CONFORMANCE_BIT_EXT = 0x00000008
+}
+
+public delegate uint PFN_xrDebugUtilsMessengerCallbackEXT(
+  XrDebugUtilsMessageSeverityFlagsEXT messageSeverity,
+  XrDebugUtilsMessageTypeFlagsEXT messageTypes,
+  IntPtr pCallbackData,
+  IntPtr pUserData
+);
+
+[StructLayout(LayoutKind.Sequential)]
+public struct XrDebugUtilsMessengerCreateInfoEXT
+{
+  public XrStructureType Type;
+  public IntPtr Next;
+  public XrDebugUtilsMessageSeverityFlagsEXT MessageSeverities;
+  public XrDebugUtilsMessageTypeFlagsEXT MessageTypes;
+  public PFN_xrDebugUtilsMessengerCallbackEXT UserCallback;
+  public IntPtr UserData;
+}
+
+[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+public unsafe struct XrDebugUtilsMessengerCallbackDataEXT
+{
+  public XrStructureType Type;
+  public IntPtr Next;
+  public string MessageId;
+  public string FunctionName;
+  public string Message;
+  public uint ObjectCount;
+  public XrDebugUtilsObjectNameInfoEXT* Objects;
+  public uint SessionLabelCount;
+  public XrDebugUtilsLabelEXT* SessionLabels;
+}
+
+public enum XrHandEXT
+{
+  XR_HAND_LEFT_EXT = 1,
+  XR_HAND_RIGHT_EXT = 2,
+  XR_HAND_MAX_ENUM_EXT = 0x7FFFFFFF
+}
+
+public enum XrHandJointSetEXT
+{
+  XR_HAND_JOINT_SET_DEFAULT_EXT = 0,
+  XR_HAND_JOINT_SET_HAND_WITH_FOREARM_ULTRALEAP = 1000149000,
+  XR_HAND_JOINT_SET_MAX_ENUM_EXT = 0x7FFFFFFF
+}
+
+[StructLayout(LayoutKind.Sequential)]
+public struct XrHandTrackerCreateInfoEXT
+{
+  public XrStructureType Type;
+  public IntPtr Next;
+  public XrHandEXT Hand;
+  public XrHandJointSetEXT HandJointSet;
+}
+
+/*public struct XrHandTrackerEXT
+{
+  public ulong Handle;
+}*/
+
+[StructLayout(LayoutKind.Sequential)]
+public struct XrHandJointsLocateInfoEXT
+{
+  public XrStructureType type;
+  public IntPtr next;
+  public XrSpace baseSpace;
+  public XrTime time;
+}
+
+[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+public delegate XrResult xrCreateHandTrackerEXTDelegate(
+  XrSession session,
+  ref XrHandTrackerCreateInfoEXT createInfo,
+  ref XrHandTrackerEXT handTracker
+);
+
+[StructLayout(LayoutKind.Sequential)]
+public struct XrHandJointLocationsEXT
+{
+  public XrStructureType Type;
+  public IntPtr Next;
+  public XrBool32 IsActive;
+  public uint JointCount;
+  public IntPtr JointLocations;
+}
+
+[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+public delegate XrResult xrLocateHandJointsEXTDelegate(
+  XrHandTrackerEXT handTracker,
+  in XrHandJointsLocateInfoEXT locateInfo,
+  ref XrHandJointLocationsEXT locations
+);
+
+public enum XrHandJointEXT
+{
+  XR_HAND_JOINT_PALM_EXT = 0,
+  XR_HAND_JOINT_WRIST_EXT = 1,
+  XR_HAND_JOINT_THUMB_METACARPAL_EXT = 2,
+  XR_HAND_JOINT_THUMB_PROXIMAL_EXT = 3,
+  XR_HAND_JOINT_THUMB_DISTAL_EXT = 4,
+  XR_HAND_JOINT_THUMB_TIP_EXT = 5,
+  XR_HAND_JOINT_INDEX_METACARPAL_EXT = 6,
+  XR_HAND_JOINT_INDEX_PROXIMAL_EXT = 7,
+  XR_HAND_JOINT_INDEX_INTERMEDIATE_EXT = 8,
+  XR_HAND_JOINT_INDEX_DISTAL_EXT = 9,
+  XR_HAND_JOINT_INDEX_TIP_EXT = 10,
+  XR_HAND_JOINT_MIDDLE_METACARPAL_EXT = 11,
+  XR_HAND_JOINT_MIDDLE_PROXIMAL_EXT = 12,
+  XR_HAND_JOINT_MIDDLE_INTERMEDIATE_EXT = 13,
+  XR_HAND_JOINT_MIDDLE_DISTAL_EXT = 14,
+  XR_HAND_JOINT_MIDDLE_TIP_EXT = 15,
+  XR_HAND_JOINT_RING_METACARPAL_EXT = 16,
+  XR_HAND_JOINT_RING_PROXIMAL_EXT = 17,
+  XR_HAND_JOINT_RING_INTERMEDIATE_EXT = 18,
+  XR_HAND_JOINT_RING_DISTAL_EXT = 19,
+  XR_HAND_JOINT_RING_TIP_EXT = 20,
+  XR_HAND_JOINT_LITTLE_METACARPAL_EXT = 21,
+  XR_HAND_JOINT_LITTLE_PROXIMAL_EXT = 22,
+  XR_HAND_JOINT_LITTLE_INTERMEDIATE_EXT = 23,
+  XR_HAND_JOINT_LITTLE_DISTAL_EXT = 24,
+  XR_HAND_JOINT_LITTLE_TIP_EXT = 25
+}
+
+public enum XrObjectType
+{
+  XR_OBJECT_TYPE_UNKNOWN = 0,
+  XR_OBJECT_TYPE_INSTANCE = 1,
+  XR_OBJECT_TYPE_SESSION = 2,
+  XR_OBJECT_TYPE_SWAPCHAIN = 3,
+  XR_OBJECT_TYPE_SPACE = 4,
+  XR_OBJECT_TYPE_ACTION_SET = 5,
+  XR_OBJECT_TYPE_ACTION = 6,
+  XR_OBJECT_TYPE_DEBUG_UTILS_MESSENGER_EXT = 1000019000,
+
+  // Additional object types provided by other extensions
+  XR_OBJECT_TYPE_SPATIAL_ANCHOR_MSFT = 1000039000,
+  XR_OBJECT_TYPE_HAND_TRACKER_EXT = 1000051000,
+  XR_OBJECT_TYPE_SCENE_OBSERVER_MSFT = 1000097000,
+  XR_OBJECT_TYPE_SCENE_MSFT = 1000097001,
+  XR_OBJECT_TYPE_FACIAL_TRACKER_HTC = 1000104000,
+  XR_OBJECT_TYPE_FOVEATION_PROFILE_FB = 1000114000,
+  XR_OBJECT_TYPE_TRIANGLE_MESH_FB = 1000117000,
+  XR_OBJECT_TYPE_PASSTHROUGH_FB = 1000118000,
+  XR_OBJECT_TYPE_PASSTHROUGH_LAYER_FB = 1000118002,
+  XR_OBJECT_TYPE_GEOMETRY_INSTANCE_FB = 1000118004,
+  XR_OBJECT_TYPE_MARKER_DETECTOR_ML = 1000138000,
+  XR_OBJECT_TYPE_EXPORTED_LOCALIZATION_MAP_ML = 1000139000,
+  XR_OBJECT_TYPE_SPATIAL_ANCHORS_STORAGE_ML = 1000141000,
+  XR_OBJECT_TYPE_SPATIAL_ANCHOR_STORE_CONNECTION_MSFT = 1000142000,
+  XR_OBJECT_TYPE_FACE_TRACKER_FB = 1000201000,
+  XR_OBJECT_TYPE_EYE_TRACKER_FB = 1000202000,
+  XR_OBJECT_TYPE_VIRTUAL_KEYBOARD_META = 1000219000,
+  XR_OBJECT_TYPE_SPACE_USER_FB = 1000241000,
+  XR_OBJECT_TYPE_PASSTHROUGH_COLOR_LUT_META = 1000266000,
+  XR_OBJECT_TYPE_FACE_TRACKER2_FB = 1000287012,
+  XR_OBJECT_TYPE_ENVIRONMENT_DEPTH_PROVIDER_META = 1000291000,
+  XR_OBJECT_TYPE_ENVIRONMENT_DEPTH_SWAPCHAIN_META = 1000291001,
+  XR_OBJECT_TYPE_PASSTHROUGH_HTC = 1000317000,
+  XR_OBJECT_TYPE_BODY_TRACKER_HTC = 1000320000,
+  XR_OBJECT_TYPE_PLANE_DETECTOR_EXT = 1000429000,
+  XR_OBJECT_TYPE_WORLD_MESH_DETECTOR_ML = 1000474000,
+  XR_OBJECT_TYPE_MAX_ENUM = 0x7FFFFFFF
+}
+
+[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+public struct XrDebugUtilsObjectNameInfoEXT
+{
+  public XrStructureType type;
+  public IntPtr next;
+  public XrObjectType objectType;
+  public ulong objectHandle;
+  [MarshalAs(UnmanagedType.LPStr)] public string objectName;
+}
+
+[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+public struct XrDebugUtilsLabelEXT
+{
+  public XrStructureType type;
+  public IntPtr next;
+  [MarshalAs(UnmanagedType.LPStr)] public string labelName;
+}
+
+public struct XrDebugUtilsMessengerEXT
+{
+  public IntPtr Handle;
+}
+
+// Provided by XR_EXT_hand_tracking
+public struct XrHandJointLocationEXT
+{
+  public XrSpaceLocationFlags LocationFlags;
+  public XrPosef Pose;
+  public float Radius;
+};
+
 public static partial class OpenXR
 {
   public const uint XR_TRUE = 1;
@@ -1902,6 +2131,29 @@ public static partial class OpenXR
     };
     var status = xrPollEvent(xrInstance, ref eventData);
     return (status, eventData);
+  }
+
+  [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+  public delegate XrResult xrCreateDebugUtilsMessengerEXTDelegate(
+    XrInstance instance,
+    ref XrDebugUtilsMessengerCreateInfoEXT createInfo,
+    out XrDebugUtilsMessengerEXT messenger
+  );
+
+  public static uint DebugCallback(
+    XrDebugUtilsMessageSeverityFlagsEXT messageSeverity,
+    XrDebugUtilsMessageTypeFlagsEXT messageTypes,
+    IntPtr pCallbackData,
+    IntPtr pUserData)
+  {
+    // Retrieve the callback data
+    var callbackData = Marshal.PtrToStructure<XrDebugUtilsMessengerCallbackDataEXT>(pCallbackData);
+
+    // Process the debug message
+    Console.WriteLine(
+      $"[{messageSeverity}] {callbackData.MessageId}: {callbackData.FunctionName} - {callbackData.Message}");
+
+    return 0; // XR_FALSE to indicate that the application should not abort
   }
 
   /*[DllImport("D:/csharp_lib/MegaLib/MegaLib/lib/openxr_loader.dll", CharSet = CharSet.Ansi,

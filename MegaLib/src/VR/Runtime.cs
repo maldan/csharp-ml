@@ -43,6 +43,10 @@ public class VrRuntime
     // Create instance
     var xrInstance = OpenXR.CreateInstance();
     OpenXR.PrintInstanceVersion(xrInstance);
+    OpenXR.InitDebugMessenger(xrInstance);
+
+    //EnumerateApiLayers();
+    //EnumerateExtensions();
 
     // System info
     var systemId = OpenXR.GetSystemId(xrInstance);
@@ -154,6 +158,138 @@ public class VrRuntime
 
     VrAction = new VrAction(Instance, Session, LocalSpace);
     VrAction.Init();
+
+    InitHandTracking();
+  }
+
+  public void InitHandTracking()
+  {
+    IntPtr xrCreateHandTrackerExtPtr = 0;
+    IntPtr xrLocateHandJointsExtPtr = 0;
+
+    var xrCreateHandTrackerExt = Marshal.StringToHGlobalAnsi("xrCreateHandTrackerEXT");
+    var xrLocateHandJointsExt = Marshal.StringToHGlobalAnsi("xrLocateHandJointsEXT");
+
+    OpenXR.Check(OpenXR.xrGetInstanceProcAddr(
+      Instance,
+      xrCreateHandTrackerExt,
+      ref xrCreateHandTrackerExtPtr
+    ), "Failed xrCreateHandTrackerEXT");
+
+    OpenXR.Check(OpenXR.xrGetInstanceProcAddr(
+      Instance,
+      xrLocateHandJointsExt,
+      ref xrLocateHandJointsExtPtr
+    ), "Failed xrLocateHandJointsEXT");
+
+    var xrCreateHandTrackerEXT =
+      Marshal.GetDelegateForFunctionPointer<xrCreateHandTrackerEXTDelegate>(xrCreateHandTrackerExtPtr);
+    var xrLocateHandJointsEXT =
+      Marshal.GetDelegateForFunctionPointer<xrLocateHandJointsEXTDelegate>(xrLocateHandJointsExtPtr);
+
+    var createLeftInfo = new XrHandTrackerCreateInfoEXT
+    {
+      Type = XrStructureType.XR_TYPE_HAND_TRACKER_CREATE_INFO_EXT,
+      Next = IntPtr.Zero,
+      Hand = XrHandEXT.XR_HAND_LEFT_EXT, // or XR_HAND_RIGHT_EXT
+      HandJointSet = XrHandJointSetEXT.XR_HAND_JOINT_SET_DEFAULT_EXT
+    };
+    var createRightInfo = new XrHandTrackerCreateInfoEXT
+    {
+      Type = XrStructureType.XR_TYPE_HAND_TRACKER_CREATE_INFO_EXT,
+      Next = IntPtr.Zero,
+      Hand = XrHandEXT.XR_HAND_RIGHT_EXT, // or XR_HAND_RIGHT_EXT
+      HandJointSet = XrHandJointSetEXT.XR_HAND_JOINT_SET_DEFAULT_EXT
+    };
+
+    IntPtr leftHandTracker = 0;
+    IntPtr rightHandTracker = 0;
+    OpenXR.Check(xrCreateHandTrackerEXT(Session, ref createLeftInfo, ref leftHandTracker),
+      "Failed xrCreateHandTrackerEXT");
+    OpenXR.Check(xrCreateHandTrackerEXT(Session, ref createRightInfo, ref rightHandTracker),
+      "Failed xrCreateHandTrackerEXT");
+    VrAction.LeftHandTracker = leftHandTracker;
+    VrAction.RightHandTracker = rightHandTracker;
+    VrAction.LocateHandJoints = xrLocateHandJointsEXT;
+  }
+
+  public void EnumerateApiLayers()
+  {
+    Console.WriteLine("Enumerate api layers");
+
+    uint layerCount = 0;
+    // First call to get the number of API layers
+    OpenXR.Check(OpenXR.xrEnumerateApiLayerProperties(0, ref layerCount, IntPtr.Zero),
+      "Failed to get API layer count.");
+    if (layerCount == 0)
+    {
+      Console.WriteLine("No API layers found.");
+      return;
+    }
+
+    // Allocate memory for the API layer properties
+    var layers = new XrApiLayerProperties[layerCount];
+    for (uint i = 0; i < layerCount; i++)
+    {
+      layers[i].Type = XrStructureType.XR_TYPE_API_LAYER_PROPERTIES;
+      layers[i].Next = IntPtr.Zero;
+    }
+
+    // Pin the array in memory
+    var handle = GCHandle.Alloc(layers, GCHandleType.Pinned);
+    try
+    {
+      var layersPtr = handle.AddrOfPinnedObject();
+
+      // Second call to get the API layer properties
+      OpenXR.Check(
+        OpenXR.xrEnumerateApiLayerProperties(layerCount, ref layerCount, layersPtr),
+        "Failed to enumerate API layers.");
+
+      // Display the API layers
+      for (uint i = 0; i < layerCount; i++)
+      {
+        Console.WriteLine($"Layer Name: {layers[i].LayerName}");
+        Console.WriteLine($"Description: {layers[i].Description}");
+        Console.WriteLine($"Spec Version: {layers[i].SpecVersion}");
+        Console.WriteLine($"Layer Version: {layers[i].LayerVersion}");
+        Console.WriteLine();
+      }
+    }
+    finally
+    {
+      // Free the pinned handle
+      handle.Free();
+    }
+  }
+
+  public void EnumerateExtensions()
+  {
+    // Enumerate extensions
+    Console.WriteLine("Enumerate extensions");
+    uint extensionCount = 0;
+    OpenXR.Check(OpenXR.xrEnumerateInstanceExtensionProperties(
+      IntPtr.Zero, 0, ref extensionCount, IntPtr.Zero
+    ), "Failed to enumerate extensions");
+    Console.WriteLine($"Count {extensionCount}");
+    var extensions = new XrExtensionProperties[extensionCount];
+    for (var i = 0; i < extensions.Length; i++)
+    {
+      extensions[i].Type = XrStructureType.XR_TYPE_EXTENSION_PROPERTIES;
+    }
+
+    var extPtr = Marshal.UnsafeAddrOfPinnedArrayElement(extensions, 0);
+
+    // Second call to get the extension properties
+    OpenXR.Check(OpenXR.xrEnumerateInstanceExtensionProperties(
+      IntPtr.Zero,
+      extensionCount,
+      ref extensionCount, extPtr), "Failed to enumerate extensions");
+
+    for (var i = 0; i < extensionCount; i++)
+    {
+      Console.WriteLine($"Ext: {extensions[i].GetExtensionName()} ({extensions[i].ExtensionVersion})");
+    }
   }
 
   public XrPosef GetHeadsetPose(long predictedDisplayTime)
@@ -286,10 +422,14 @@ public class VrRuntime
       // Считываем позицию шлема и ориентацию
       var headPose = GetHeadsetPose(frameState.PredictedDisplayTime);
       var mx = Matrix4x4.Identity;
-      mx = mx.Translate(headPose.Position.X, headPose.Position.Y, -headPose.Position.Z);
+      mx = mx.Translate(headPose.Position.X, headPose.Position.Y, headPose.Position.Z);
       mx = mx.Rotate(new Quaternion(headPose.Orientation.X, headPose.Orientation.Y, headPose.Orientation.Z,
         headPose.Orientation.W));
       VrInput.Headset.LocalTransform = mx;
+    }
+    else
+    {
+      VrAction.UpdateHandsTracking(frameState.PredictedDisplayTime);
     }
 
     // Begin
