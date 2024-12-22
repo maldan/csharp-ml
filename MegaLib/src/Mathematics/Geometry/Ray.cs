@@ -33,6 +33,17 @@ public struct Ray
     return $"Ray(P: {Position}, D: {Direction}, L: {Length})";
   }
 
+  public static Ray FromPointDirection(Vector3 position, Vector3 direction)
+  {
+    var r = new Ray
+    {
+      Position = position,
+      Direction = direction,
+      Length = 10
+    };
+    return r;
+  }
+
   public static Ray FromCamera(Camera_Base cameraBase)
   {
     // Получение координат мыши и параметров экрана

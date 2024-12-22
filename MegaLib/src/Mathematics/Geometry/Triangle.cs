@@ -18,6 +18,16 @@ public struct Triangle : IRayIntersectable
     C = c;
   }
 
+  public bool IsDegenerate
+  {
+    get
+    {
+      var edge1 = B - A;
+      var edge2 = C - A;
+      return Vector3.Cross(edge1, edge2).LengthSquared < 1e-6f;
+    }
+  }
+
   public void RayIntersection(Ray ray, out Vector3 point, out bool isHit)
   {
     var edge1 = B - A;

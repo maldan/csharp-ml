@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.Render.Buffer;
@@ -7,7 +8,7 @@ using MegaLib.Render.RenderObject;
 
 namespace MegaLib.Render.Mesh;
 
-public class Mesh
+public class Mesh : IPointIntersectable
 {
   public List<Vector3> VertexList = [];
   public List<Vector2> UV0List = [];
@@ -15,6 +16,20 @@ public class Mesh
   public List<uint> IndexList = [];
 
   public int TriangleCount => IndexList.Count / 3;
+
+  public void AddTriangle(Triangle triangle)
+  {
+    // Add the vertices of the triangle to the vertex list
+    VertexList.Add(triangle.A);
+    VertexList.Add(triangle.B);
+    VertexList.Add(triangle.C);
+
+    // Add the indices for this triangle to the index list
+    var baseIndex = (uint)(VertexList.Count - 3); // Index of the first vertex of this triangle
+    IndexList.Add(baseIndex); // First vertex
+    IndexList.Add(baseIndex + 1); // Second vertex
+    IndexList.Add(baseIndex + 2); // Third vertex
+  }
 
   // Метод для автоматического расчета нормалей
   public void CalculateNormals()
@@ -78,6 +93,12 @@ public class Mesh
     return new Triangle { A = vertexA, B = vertexB, C = vertexC };
   }
 
+  public Mesh Rotate(Quaternion q)
+  {
+    for (var i = 0; i < VertexList.Count; i++) VertexList[i] *= q;
+    return this;
+  }
+
   public Mesh Translate(Vector3 offset)
   {
     for (var i = 0; i < VertexList.Count; i++) VertexList[i] += offset;
@@ -92,6 +113,194 @@ public class Mesh
     }
 
     return mesh;
+  }
+
+  public bool IsTriangleInsideMesh(Triangle triangle)
+  {
+    // Test the centroid of the triangle
+    var centroid = (triangle.A + triangle.B + triangle.C) / 3;
+    return PointIntersection(centroid);
+  }
+
+  public void PointIntersection(Vector3 point, out bool isHit)
+  {
+    var intersections = 0;
+    // Use a diagonal ray direction to avoid alignment issues
+    var rayDirection = Vector3.Forward;
+
+    for (var i = 0; i < TriangleCount; i++)
+    {
+      var triangle = GetTriangleById(i);
+      var ray = Ray.FromPointDirection(point, rayDirection);
+      ray.Length = 100000;
+      if (triangle.RayIntersection(ray, out _))
+      {
+        intersections++;
+      }
+    }
+
+    // If the number of intersections is odd, the point is inside the mesh
+    isHit = intersections % 2 == 1;
+  }
+
+  public bool PointIntersection(Vector3 point)
+  {
+    PointIntersection(point, out var isHit);
+    return isHit;
+  }
+}
+
+public static class MeshBoolean
+{
+  private static List<Triangle> Triangulate(List<Vector3> vertices)
+  {
+    var triangles = new List<Triangle>();
+
+    // Simplified triangulation assuming convex polygons
+    for (var i = 1; i < vertices.Count - 1; i++)
+    {
+      triangles.Add(new Triangle
+      {
+        A = vertices[0],
+        B = vertices[i],
+        C = vertices[i + 1]
+      });
+    }
+
+    return triangles;
+  }
+
+  public static List<Triangle> SplitTriangle(Triangle triangle, List<Vector3> intersectionPoints)
+  {
+    // Combine the original triangle vertices with intersection points
+    var vertices = new List<Vector3> { triangle.A, triangle.B, triangle.C };
+    vertices.AddRange(intersectionPoints);
+
+    // Remove duplicate points with some tolerance for floating-point precision
+    vertices = vertices.Distinct().ToList();
+
+    // Triangulate the resulting polygon
+    return Triangulate(vertices);
+  }
+
+  private static bool IsPointOnEdge(Vector3 start, Vector3 end, Vector3 point)
+  {
+    // Calculate the distance from the point to the edge
+    var edge = end - start;
+    var toPoint = point - start;
+    var cross = Vector3.Cross(edge, toPoint);
+
+    // Check if the point is collinear and lies within the edge segment
+    return cross.LengthSquared < float.Epsilon && Vector3.Dot(toPoint, edge) >= 0 &&
+           Vector3.Dot(toPoint, edge) <= edge.LengthSquared;
+  }
+
+  private static List<Vector3> DeduplicateAndSortPoints(Triangle triangle, List<Vector3> points)
+  {
+    // Remove duplicate points with a small epsilon tolerance
+    points = points.Distinct().ToList();
+
+    // Sort points along the edges of the triangle
+    var sortedPoints = new List<Vector3>();
+
+    // Sort points along edge A-B
+    sortedPoints.AddRange(points
+      .Where(p => IsPointOnEdge(triangle.A, triangle.B, p))
+      .OrderBy(p => (p - triangle.A).LengthSquared));
+
+    // Sort points along edge B-C
+    sortedPoints.AddRange(points
+      .Where(p => IsPointOnEdge(triangle.B, triangle.C, p))
+      .OrderBy(p => (p - triangle.B).LengthSquared));
+
+    // Sort points along edge C-A
+    sortedPoints.AddRange(points
+      .Where(p => IsPointOnEdge(triangle.C, triangle.A, p))
+      .OrderBy(p => (p - triangle.C).LengthSquared));
+
+    return sortedPoints.Distinct().ToList(); // Ensure no duplicate points
+  }
+
+  public static Mesh SplitMesh(Mesh mesh, Mesh otherMesh)
+  {
+    var splitMesh = new Mesh(); // Resulting mesh with split triangles
+
+    // Loop through each triangle in the input mesh
+    for (var i = 0; i < mesh.TriangleCount; i++)
+    {
+      var triangle = mesh.GetTriangleById(i); // Get the current triangle
+
+      // Collect all intersection points for this triangle
+      var intersectionPoints = new List<Vector3>();
+      for (var j = 0; j < otherMesh.TriangleCount; j++)
+      {
+        var otherTriangle = otherMesh.GetTriangleById(j);
+
+        // Check for intersection with the other triangle
+        if (Triangle.TriangleIntersection(triangle, otherTriangle, out var points))
+        {
+          intersectionPoints.AddRange(points); // Add the intersection points
+        }
+      }
+
+      // If there are intersection points, split the triangle
+      if (intersectionPoints.Count > 0)
+      {
+        // Remove duplicates and sort the points along the triangle edges
+        intersectionPoints = DeduplicateAndSortPoints(triangle, intersectionPoints);
+
+        // Split the triangle into smaller triangles
+        var newTriangles = SplitTriangle(triangle, intersectionPoints);
+
+        // Add all the new triangles to the split mesh
+        foreach (var newTriangle in newTriangles)
+        {
+          splitMesh.AddTriangle(newTriangle);
+        }
+      }
+      else
+      {
+        // No intersections, keep the original triangle
+        splitMesh.AddTriangle(triangle);
+      }
+    }
+
+    return splitMesh; // Return the new split mesh
+  }
+
+  public static Mesh Difference(Mesh meshA, Mesh meshB)
+  {
+    var resultMesh = new Mesh();
+
+    // Step 1: Split Mesh A and Mesh B
+    var splitMeshA = SplitMesh(meshA, meshB);
+    var splitMeshB = SplitMesh(meshB, meshA);
+
+    // Step 2: Add triangles from Mesh A that are outside Mesh B
+    for (var i = 0; i < splitMeshA.TriangleCount; i++)
+    {
+      var triangle = splitMeshA.GetTriangleById(i);
+
+      // Keep triangles that are outside Mesh B
+      if (!meshB.IsTriangleInsideMesh(triangle))
+      {
+        if (!triangle.IsDegenerate) resultMesh.AddTriangle(triangle);
+      }
+    }
+
+    // Step 3: Add boundary triangles from Mesh B
+    for (var i = 0; i < splitMeshB.TriangleCount; i++)
+    {
+      var triangle = splitMeshB.GetTriangleById(i);
+
+      // Add boundary triangles that are inside Mesh A
+      if (meshA.IsTriangleInsideMesh(triangle))
+      {
+        if (!triangle.IsDegenerate) resultMesh.AddTriangle(triangle);
+      }
+    }
+
+    return resultMesh;
   }
 }
 

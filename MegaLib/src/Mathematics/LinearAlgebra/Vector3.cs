@@ -529,3 +529,32 @@ public struct Vector3 : IBinarySerializable
     writer.Write(Z);
   }
 }
+
+public class Vector3Comparer : IEqualityComparer<Vector3>
+{
+  private readonly float _epsilon;
+
+  // Constructor to specify the tolerance for equality
+  public Vector3Comparer(float epsilon = 1e-6f)
+  {
+    _epsilon = epsilon;
+  }
+
+  public bool Equals(Vector3 v1, Vector3 v2)
+  {
+    // Two vectors are equal if all their components are within the epsilon range
+    return Math.Abs(v1.X - v2.X) < _epsilon &&
+           Math.Abs(v1.Y - v2.Y) < _epsilon &&
+           Math.Abs(v1.Z - v2.Z) < _epsilon;
+  }
+
+  public int GetHashCode(Vector3 v)
+  {
+    // Combine hash codes of components, reducing precision to avoid floating-point issues
+    var xHash = (int)(v.X / _epsilon);
+    var yHash = (int)(v.Y / _epsilon);
+    var zHash = (int)(v.Z / _epsilon);
+
+    return xHash ^ yHash ^ zHash;
+  }
+}
