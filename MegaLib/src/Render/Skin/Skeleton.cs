@@ -19,7 +19,7 @@ public class Skeleton : IAnimatable
   // Cache
   private readonly Dictionary<string, Bone> _boneMap = new();
 
-  public Bone Root => BoneList[0];
+  // public Bone Root => BoneList[0];
 
   public Skeleton Clone()
   {
@@ -77,7 +77,8 @@ public class Skeleton : IAnimatable
     mx = mx.Rotate(Rotation);
     mx = mx.Scale(Scale);
 
-    Root.Update(mx);
+    // Update root bones. It may have more than 1 root bone
+    foreach (var bone in BoneList.Where(bone => bone.ParentBone == null)) bone.Update(mx);
   }
 
   public void Animate(Animation.Animation animation)
@@ -101,6 +102,7 @@ public class Skeleton : IAnimatable
       bone.FromGLTFBone(gltfSkin.BoneList[i]);
       boneMap[gltfSkin.BoneList[i].JointId] = bone;
       BoneList.Add(bone);
+      // Console.WriteLine(bone.Name);
     }
 
     // Fill hierarchy

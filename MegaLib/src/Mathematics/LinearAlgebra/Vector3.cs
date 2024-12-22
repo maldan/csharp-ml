@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using MegaLib.Ext;
@@ -391,6 +392,34 @@ public struct Vector3 : IBinarySerializable
   public static Vector3 UnitZ => new(0, 0, 1);
 
   #endregion
+
+  public bool Equals(Vector3 v1, Vector3 v2)
+  {
+    return v1 == v2;
+  }
+
+  public int GetHashCode(Vector3 v)
+  {
+    var xHash = (int)(v.X / float.Epsilon);
+    var yHash = (int)(v.Y / float.Epsilon);
+    var zHash = (int)(v.Z / float.Epsilon);
+    return xHash ^ yHash ^ zHash;
+  }
+
+  public bool Equals(Vector3 other)
+  {
+    return X.Equals(other.X) && Y.Equals(other.Y) && Z.Equals(other.Z);
+  }
+
+  public override bool Equals(object obj)
+  {
+    return obj is Vector3 other && Equals(other);
+  }
+
+  public override int GetHashCode()
+  {
+    return HashCode.Combine(X, Y, Z);
+  }
 
   public Vector3 Clone()
   {

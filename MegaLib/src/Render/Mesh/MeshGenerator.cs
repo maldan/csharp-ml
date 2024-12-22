@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.Render.Buffer;
 using MegaLib.Render.RenderObject;
@@ -12,6 +13,8 @@ public class Mesh
   public List<Vector2> UV0List = [];
   public List<Vector3> NormalList = [];
   public List<uint> IndexList = [];
+
+  public int TriangleCount => IndexList.Count / 3;
 
   // Метод для автоматического расчета нормалей
   public void CalculateNormals()
@@ -50,6 +53,45 @@ public class Mesh
     {
       NormalList[i] = -NormalList[i].Normalized;
     }
+  }
+
+  public Triangle GetTriangleById(int triangleId)
+  {
+    // Each triangle is represented by 3 consecutive indices in the IndexList.
+    var indexOffset = triangleId * 3;
+
+    // Ensure the ID is within bounds
+    if (indexOffset + 2 >= IndexList.Count)
+      throw new ArgumentOutOfRangeException(nameof(triangleId), "Triangle ID is out of bounds.");
+
+    // Get the indices of the triangle's vertices
+    var indexA = IndexList[indexOffset];
+    var indexB = IndexList[indexOffset + 1];
+    var indexC = IndexList[indexOffset + 2];
+
+    // Retrieve the corresponding vertices from the VertexList
+    var vertexA = VertexList[(int)indexA];
+    var vertexB = VertexList[(int)indexB];
+    var vertexC = VertexList[(int)indexC];
+
+    // Create and return the triangle
+    return new Triangle { A = vertexA, B = vertexB, C = vertexC };
+  }
+
+  public Mesh Translate(Vector3 offset)
+  {
+    for (var i = 0; i < VertexList.Count; i++) VertexList[i] += offset;
+    return this;
+  }
+
+  public static Mesh operator *(Mesh mesh, Matrix4x4 matrix)
+  {
+    for (var i = 0; i < mesh.VertexList.Count; i++)
+    {
+      mesh.VertexList[i] *= matrix;
+    }
+
+    return mesh;
   }
 }
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using MegaLib.Mathematics.LinearAlgebra;
@@ -31,17 +32,60 @@ public class VrController
   {
     get
     {
-      // To
+      /*// To
       var fr = Matrix4x4.Identity;
-      var position = (GripLocalTransform
-                        .Position
-                        .AddW(0.0f)
-                      * _headset.RotationOffset.Inverted.Matrix4x4).DropW() + _headset.PositionOffset;
+      var gp = GripLocalTransform
+        .Position * new Vector3(-1, 1, -1);
+      var hp = _headset.PositionOffset * new Vector3(1, -1, -1);
+
+      var position = (
+        gp.AddW(0.0f) * _headset.RotationOffset.Matrix4x4).DropW() + hp;
 
       fr = fr.Translate(position);
-      fr = fr.Rotate(_headset.RotationOffset.Inverted * GripLocalTransform.Rotation);
+      fr = fr.Rotate(_headset.RotationOffset * GripLocalTransform.Rotation);
 
-      return fr;
+      return fr;*/
+
+      var gt = GripLocalTransform;
+      gt.M30 *= -1;
+      gt.M32 *= -1;
+      // gt = gt.Scale(new Vector3(1, 1, -1));
+      // Console.WriteLine(gt.Position);
+
+      var mm = Matrix4x4.Identity;
+
+      //mm = mm.Translate(_headset.PositionOffset.X, -_headset.PositionOffset.Y, -_headset.PositionOffset.Z);
+      //mm = mm.Rotate(_headset.RotationOffset.Inverted);
+
+      return gt * mm;
+    }
+  }
+
+  public Matrix4x4 AimWorldTransform
+  {
+    get
+    {
+      var gt = AimLocalTransform;
+      var gnt2 = Matrix4x4.Identity;
+      gnt2 = gnt2.Translate(gt.Position * new Vector3(-1, 1, -1));
+      gnt2 = gnt2.Rotate(new Quaternion(
+        gt.Rotation.X,
+        -gt.Rotation.Y,
+        -gt.Rotation.Z,
+        gt.Rotation.W
+      ));
+
+      var mm = Matrix4x4.Identity;
+      mm = mm.Translate(_headset.PositionOffset.X, _headset.PositionOffset.Y, _headset.PositionOffset.Z);
+
+      mm = mm.Rotate(new Quaternion(
+        _headset.RotationOffset.X,
+        -_headset.RotationOffset.Y,
+        -_headset.RotationOffset.Z,
+        _headset.RotationOffset.W
+      ));
+
+      return gnt2 * mm;
     }
   }
 
@@ -67,6 +111,14 @@ public class VrController
   public VrController(VrHeadset headset)
   {
     _headset = headset;
+  }
+
+  public void DrawLine(Layer_Line layerLine)
+  {
+    var p1 = new Vector3(0, 0, 0.01f) * AimWorldTransform;
+    var p2 = Vector3.Backward * AimWorldTransform;
+
+    layerLine.DrawLine(p1, p2, new RGBA32F(1, 0, 0, 1), 1f);
   }
 }
 
@@ -147,9 +199,14 @@ public class VrHand
     fr = fr.Translate(position);
     fr = fr.Rotate(_headset.RotationOffset.Inverted);*/
     var mm = Matrix4x4.Identity;
+    mm = mm.Translate(_headset.PositionOffset.X, _headset.PositionOffset.Y, _headset.PositionOffset.Z);
 
-    mm = mm.Translate(_headset.PositionOffset.X, -_headset.PositionOffset.Y, -_headset.PositionOffset.Z);
-    mm = mm.Rotate(_headset.RotationOffset.Inverted);
+    mm = mm.Rotate(new Quaternion(
+      _headset.RotationOffset.X,
+      -_headset.RotationOffset.Y,
+      -_headset.RotationOffset.Z,
+      _headset.RotationOffset.W
+    ));
 
     return Joints[index] * mm;
   }
@@ -169,12 +226,12 @@ public class VrHeadset
   public VrController[] Controller => [LeftController, RightController];
 
   public Vector3 PositionOffset;
-  public Quaternion RotationOffset = Quaternion.Identity;
+  public Quaternion RotationOffset = Quaternion.FromEuler(0, 180, 0, "deg");
 
   public Matrix4x4 WorldTransform =>
     Matrix4x4.Identity
       .Rotate(RotationOffset.Inverted)
-      .Translate(PositionOffset);
+      .Translate(PositionOffset * new Vector3(1, -1, -1));
 
   public VrHeadset()
   {
@@ -192,8 +249,9 @@ public class VrHeadset
   {
     var hh = RotationOffset * LocalTransform.Rotation;
     var head = Matrix4x4.Identity.Rotate(hh);
-
     var dirNew = dir.AddW(1.0f) * head;
+    dirNew.Y *= -1;
+    dirNew.Z *= -1;
     PositionOffset += dirNew.DropW();
   }
 
@@ -206,6 +264,7 @@ public class VrHeadset
   {
     OffsetPosition(new Vector3(delta * -LeftController.ThumbstickDirection.X, 0.0f,
       delta * LeftController.ThumbstickDirection.Y));
+
     OffsetRotation(new Vector3(delta * RightController.ThumbstickDirection.Y,
       delta * -RightController.ThumbstickDirection.X, 0.0f));
   }

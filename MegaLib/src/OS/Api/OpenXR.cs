@@ -55,7 +55,6 @@ public static partial class OpenXR
     var xrInstance = XrInstance.Zero;
     Check(xrCreateInstance(ref createInfo, ref xrInstance), "Can't create instance");
 
-
     return xrInstance;
   }
 

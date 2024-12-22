@@ -1072,4 +1072,28 @@ public class Layer_Line : Layer_Base
     Add(new RO_Line(center, center + Vector3.Right * 0.5f, new RGBA32F(1, 0, 0, 1), 3.0f));
     Add(new RO_Line(center, center + Vector3.Forward * 0.5f, new RGBA32F(0.2f, 0.5f, 1, 1), 3.0f));
   }
+
+  public void DrawMesh(Mesh.Mesh mesh, RGBA32F color)
+  {
+    if (mesh?.VertexList == null || mesh.IndexList == null) return;
+
+    // Iterate over each triangle defined by the mesh
+    for (var i = 0; i < mesh.IndexList.Count; i += 3)
+    {
+      // Get the indices of the triangle vertices
+      var index1 = mesh.IndexList[i];
+      var index2 = mesh.IndexList[i + 1];
+      var index3 = mesh.IndexList[i + 2];
+
+      // Get the positions of the vertices
+      var vertex1 = mesh.VertexList[(int)index1];
+      var vertex2 = mesh.VertexList[(int)index2];
+      var vertex3 = mesh.VertexList[(int)index3];
+
+      // Draw the edges of the triangle
+      DrawLine(vertex1, vertex2, color);
+      DrawLine(vertex2, vertex3, color);
+      DrawLine(vertex3, vertex1, color);
+    }
+  }
 }

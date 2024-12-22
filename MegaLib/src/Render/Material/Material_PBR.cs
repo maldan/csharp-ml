@@ -42,7 +42,7 @@ public class Material_PBR
     {
       RAW =
       {
-        [0] = 128
+        [0] = 64
       }
     };
     roughness.Options.FiltrationMode = TextureFiltrationMode.Nearest;

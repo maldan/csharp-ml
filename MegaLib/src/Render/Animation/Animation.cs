@@ -224,6 +224,29 @@ public static class AnimationEx
       seqOut.TimeList = seqIn.TimeList.ToArray().ToList();
       seqOut.ValueList = seqIn.ValueList.ToArray().ToList();
 
+      if (gltfAnimation.Gltf.IsZInverted)
+      {
+        if (seqOut.Type is AnimationKeyType.Translate)
+        {
+          for (var i = 0; i < seqOut.ValueList.Count; i++)
+          {
+            seqOut.ValueList[i] = seqOut.ValueList[i] with { Z = seqOut.ValueList[i].Z * -1 };
+          }
+        }
+
+        if (seqOut.Type == AnimationKeyType.Rotate)
+        {
+          for (var i = 0; i < seqOut.ValueList.Count; i++)
+          {
+            seqOut.ValueList[i] = seqOut.ValueList[i] with
+            {
+              X = seqOut.ValueList[i].X * -1,
+              Y = seqOut.ValueList[i].Y * -1
+            };
+          }
+        }
+      }
+
       // Добавляем в список секвенции
       input.SequenceList.Add(seqOut);
     }
