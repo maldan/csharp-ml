@@ -13,7 +13,6 @@ using MegaLib.Render.Color;
 using MegaLib.Render.IMGUI;
 using MegaLib.Render.Layer;
 using MegaLib.Render.Light;
-using MegaLib.Render.Mesh;
 using MegaLib.Render.Renderer.OpenGL;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Scene;

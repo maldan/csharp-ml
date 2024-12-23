@@ -528,6 +528,11 @@ public struct Vector3 : IBinarySerializable
     writer.Write(Y);
     writer.Write(Z);
   }
+
+  public static explicit operator Vector3(IVector3 v)
+  {
+    return new Vector3(v.X, v.Y, v.Z);
+  }
 }
 
 public class Vector3Comparer : IEqualityComparer<Vector3>

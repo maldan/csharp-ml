@@ -1073,7 +1073,7 @@ public class Layer_Line : Layer_Base
     Add(new RO_Line(center, center + Vector3.Forward * 0.5f, new RGBA32F(0.2f, 0.5f, 1, 1), 3.0f));
   }
 
-  public void DrawMesh(Mesh.Mesh mesh, RGBA32F color)
+  public void DrawMesh(Mathematics.Geometry.Mesh mesh, RGBA32F color)
   {
     if (mesh?.VertexList == null || mesh.IndexList == null) return;
 

@@ -132,7 +132,7 @@ public class RO_Mesh : RO_Base
     Material?.InitDefaultTextures();
   }
 
-  public RO_Mesh FromMesh(Mesh.Mesh mesh2)
+  public RO_Mesh FromMesh(Mathematics.Geometry.Mesh mesh2)
   {
     VertexList = new ListGPU<Vector3>(mesh2.VertexList);
     UV0List = new ListGPU<Vector2>(mesh2.UV0List);

@@ -147,4 +147,9 @@ public struct IVector3
   {
     return $"IVector3({X}, {Y}, {Z})";
   }
+
+  public static explicit operator IVector3(Vector3 v)
+  {
+    return new IVector3((int)v.X, (int)v.Y, (int)v.Z);
+  }
 }

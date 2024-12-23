@@ -27,7 +27,7 @@ public class Random
     return (float)scaled;
   }
 
-  public float RangeInt(int value1, int value2)
+  public int RangeInt(int value1, int value2)
   {
     var minValue = Math.Min(value1, value2);
     var maxValue = Math.Max(value1, value2);
