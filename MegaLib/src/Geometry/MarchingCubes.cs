@@ -1,114 +1,19 @@
 using System;
-using System.Collections.Generic;
 using MegaLib.Mathematics.LinearAlgebra;
+using MegaLib.Voxel;
 
-namespace MegaLib.Mathematics.Geometry;
+namespace MegaLib.Geometry;
 
-public class VoxelGrid
+public static class MarchingCubes
 {
-  public int Width;
-  public int Height;
-  public int Depth;
-  public float VoxelSize = 1;
-
-  public Vector3 Center => new(Width / 2, Height / 2, Depth / 2);
-
-  private bool[,,] _data;
-
-  public VoxelGrid(int w, int h, int d)
-  {
-    Width = w;
-    Height = h;
-    Depth = d;
-    _data = new bool[w, h, d];
-  }
-
-  public bool this[int x, int y, int z]
-  {
-    get => _data[x, y, z];
-    set => _data[x, y, z] = value;
-  }
-
-  public Mesh ToMesh()
-  {
-    var mesh = new Mesh();
-    var grid = this;
-
-    for (var x = 0; x < grid.Width - 1; x++)
-    {
-      for (var y = 0; y < grid.Height - 1; y++)
-      {
-        for (var z = 0; z < grid.Depth - 1; z++)
-        {
-          // Get the cube's corner states (8 corners)
-          var cubeCorners = new bool[8];
-          for (var i = 0; i < 8; i++)
-          {
-            var corner = MarchingCubesTables.cubeCorners[i];
-            var dx = x + (int)corner.X;
-            var dy = y + (int)corner.Y;
-            var dz = z + (int)corner.Z;
-            cubeCorners[i] = !grid[dx, dy, dz];
-          }
-
-          // Determine cube configuration index
-          var cubeIndex = 0;
-          for (var i = 0; i < 8; i++)
-          {
-            if (cubeCorners[i]) cubeIndex |= 1 << i;
-          }
-
-          // Retrieve the edges for the current cube configuration from the triTable
-          var edges = MarchingCubesTables.triTable[cubeIndex];
-          if (edges[0] == -1) continue; // No triangles for this configuration
-
-          // Interpolate the vertices for the edges based on the triTable configuration
-          for (var i = 0; edges[i] != -1; i += 3)
-          {
-            var v1 = MarchingCubesTables.InterpolateEdge(x, y, z, edges[i], grid);
-            var v2 = MarchingCubesTables.InterpolateEdge(x, y, z, edges[i + 1], grid);
-            var v3 = MarchingCubesTables.InterpolateEdge(x, y, z, edges[i + 2], grid);
-
-            // Add the vertices to the mesh
-            mesh.VertexList.Add(v1 * VoxelSize);
-            mesh.VertexList.Add(v2 * VoxelSize);
-            mesh.VertexList.Add(v3 * VoxelSize);
-
-            // Add UVs and normals (you can compute them based on your needs)
-            mesh.UV0List.Add(new Vector2(v1.X, v1.Y)); // Example UV mapping
-            mesh.UV0List.Add(new Vector2(v2.X, v2.Y));
-            mesh.UV0List.Add(new Vector2(v3.X, v3.Y));
-
-            // For normals, use a simple cross-product of the triangle's edges
-            var normal = Vector3.Cross(v2 - v1, v3 - v1).Normalized;
-            mesh.NormalList.Add(normal);
-            mesh.NormalList.Add(normal);
-            mesh.NormalList.Add(normal);
-
-            // Add indices for the triangle
-            var baseIndex = (uint)(mesh.VertexList.Count - 3);
-            mesh.IndexList.Add(baseIndex);
-            mesh.IndexList.Add(baseIndex + 1);
-            mesh.IndexList.Add(baseIndex + 2);
-          }
-        }
-      }
-    }
-
-    return mesh;
-  }
-}
-
-public static class MarchingCubesTables
-{
-  public static int[][] edgeConnections =
+  public static int[][] EdgeConnections =
   [
     [0, 1], [1, 2], [2, 3], [3, 0],
     [4, 5], [5, 6], [6, 7], [7, 4],
     [0, 4], [1, 5], [2, 6], [3, 7]
   ];
 
-  public static Vector3[] cubeCorners =
+  public static Vector3[] CubeCorners =
   [
     new Vector3(0, 0, 1),
     new Vector3(1, 0, 1),
@@ -120,7 +25,7 @@ public static class MarchingCubesTables
     new Vector3(0, 1, 0)
   ];
 
-  public static int[][] triTable =
+  public static int[][] TriTable =
   [
     [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
     new int[] { 0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
@@ -380,18 +285,18 @@ public static class MarchingCubesTables
     new int[] { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }
   ];
 
-  public static Vector3 InterpolateEdge(int x, int y, int z, int edgeIndex, VoxelGrid grid)
+  public static Vector3 InterpolateEdge<T>(int x, int y, int z, int edgeIndex, VoxelArray<T> grid) where T : struct
   {
     // Get the two corner points for the edge
-    var edgeVertex1 = edgeConnections[edgeIndex][0];
-    var edgeVertex2 = edgeConnections[edgeIndex][1];
+    var edgeVertex1 = EdgeConnections[edgeIndex][0];
+    var edgeVertex2 = EdgeConnections[edgeIndex][1];
 
-    var p1 = cubeCorners[edgeVertex1] + new Vector3(x, y, z);
-    var p2 = cubeCorners[edgeVertex2] + new Vector3(x, y, z);
+    var p1 = CubeCorners[edgeVertex1] + new Vector3(x, y, z);
+    var p2 = CubeCorners[edgeVertex2] + new Vector3(x, y, z);
 
     // Voxel values at the two vertices
-    var v1 = grid[(int)p1.X, (int)p1.Y, (int)p1.Z];
-    var v2 = grid[(int)p2.X, (int)p2.Y, (int)p2.Z];
+    var v1 = grid.HasDataAt((int)p1.X, (int)p1.Y, (int)p1.Z);
+    var v2 = grid.HasDataAt((int)p2.X, (int)p2.Y, (int)p2.Z);
 
     // Interpolate to find the point of intersection along the edge
     return InterpolateEdge(p1, p2, v1 ? 1 : 0, v2 ? 1 : 0, 0.5f); // Assuming a threshold value of 0.5
