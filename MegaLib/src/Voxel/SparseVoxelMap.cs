@@ -22,6 +22,12 @@ public class SparseVoxelMap<T> where T : struct
     );
   }
 
+  public T this[IVector3 p]
+  {
+    get => this[p.X, p.Y, p.Z];
+    set => this[p.X, p.Y, p.Z] = value;
+  }
+
   public T this[int x, int y, int z]
   {
     get
@@ -56,10 +62,95 @@ public class SparseVoxelMap<T> where T : struct
     }
   }
 
+  public bool HasDataAt(int x, int y, int z)
+  {
+    var chunkPos = GetChunkPos(x, y, z);
+    var localX = (x % _chunkSize + _chunkSize) % _chunkSize;
+    var localY = (y % _chunkSize + _chunkSize) % _chunkSize;
+    var localZ = (z % _chunkSize + _chunkSize) % _chunkSize;
+
+    return _chunks.TryGetValue(chunkPos, out var chunk) && chunk.HasDataAt(localX, localY, localZ);
+  }
+
   public VoxelArray<T> GetChunk(int x, int y, int z)
   {
     var chunkPos = GetChunkPos(x, y, z);
     return _chunks.GetValueOrDefault(chunkPos);
+  }
+
+  public Mesh ChunkToMeshR(int xx, int yy, int zz)
+  {
+    var mesh = new Mesh();
+
+    // Define cube face directions and offsets
+    Vector3[] faceNormals =
+    {
+      new(0, 0, -1), // Back
+      new(0, 0, 1), // Front
+      new(0, -1, 0), // Bottom
+      new(0, 1, 0), // Top
+      new(-1, 0, 0), // Left
+      new(1, 0, 0) // Right
+    };
+
+    Vector3[,] faceVertices =
+    {
+      // Back
+      { new(0, 0, 0), new(1, 0, 0), new(1, 1, 0), new(0, 1, 0) },
+      // Front
+      { new(1, 0, 1), new(0, 0, 1), new(0, 1, 1), new(1, 1, 1) },
+      // Bottom
+      { new(0, 0, 1), new(1, 0, 1), new(1, 0, 0), new(0, 0, 0) },
+      // Top
+      { new(0, 1, 0), new(1, 1, 0), new(1, 1, 1), new(0, 1, 1) },
+      // Left
+      { new(0, 0, 1), new(0, 0, 0), new(0, 1, 0), new(0, 1, 1) },
+      // Right
+      { new(1, 0, 0), new(1, 0, 1), new(1, 1, 1), new(1, 1, 0) }
+    };
+
+    uint[] faceTriangles = { 0, 1, 2, 0, 2, 3 }; // Two triangles per face
+
+    var chunkOffset = new IVector3(xx, yy, zz);
+
+    //var chunkOffset = GetChunkPos(xx, yy, zz) * _chunkSize;
+
+    for (var x = 0; x < _chunkSize; x++)
+    {
+      for (var y = 0; y < _chunkSize; y++)
+      {
+        for (var z = 0; z < _chunkSize; z++)
+        {
+          if (!HasDataAt(x + chunkOffset.X, y + chunkOffset.Y, z + chunkOffset.Z)) continue;
+
+          // Add visible faces
+          for (var i = 0; i < 6; i++)
+          {
+            var neighborPos = new Vector3(x, y, z) + faceNormals[i];
+            if (!HasDataAt((int)neighborPos.X, (int)neighborPos.Y, (int)neighborPos.Z))
+            {
+              // Generate face
+              var vertices = new Vector3[4];
+              for (var v = 0; v < 4; v++)
+              {
+                vertices[v] = faceVertices[i, v] + new Vector3(x, y, z);
+                //vertices[v] *= 0.5f;
+                vertices[v] -= 0.5f;
+              }
+
+              mesh.AddQuad(
+                vertices,
+                faceTriangles,
+                faceNormals[i],
+                new Vector2[] { new(0, 0), new(1, 0), new(1, 1), new(0, 1) }
+              );
+            }
+          }
+        }
+      }
+    }
+
+    return mesh;
   }
 
   public Mesh ChunkToMesh(int xx, int yy, int zz)

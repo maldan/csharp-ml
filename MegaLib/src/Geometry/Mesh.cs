@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Mathematics.Geometry;
@@ -25,6 +26,16 @@ public class Mesh : IPointIntersectable
     IndexList.Add(baseIndex); // First vertex
     IndexList.Add(baseIndex + 1); // Second vertex
     IndexList.Add(baseIndex + 2); // Third vertex
+  }
+
+  public void AddQuad(Vector3[] quadVertices, uint[] quadTriangles, Vector3 normal, Vector2[] uvs)
+  {
+    var baseIndex = (uint)VertexList.Count;
+
+    VertexList.AddRange(quadVertices);
+    IndexList.AddRange(quadTriangles.Select(t => t + baseIndex));
+    NormalList.AddRange(Enumerable.Repeat(normal, quadVertices.Length));
+    UV0List.AddRange(uvs);
   }
 
   // Метод для автоматического расчета нормалей
