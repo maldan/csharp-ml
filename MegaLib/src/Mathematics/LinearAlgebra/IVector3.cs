@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace MegaLib.Mathematics.LinearAlgebra;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct IVector3
+public struct IVector3 : IEquatable<IVector3>
 {
   public int X;
   public int Y;
@@ -130,7 +130,7 @@ public struct IVector3
 
   public bool Equals(IVector3 other)
   {
-    return X == other.X && Y == other.Y && Z == other.Z;
+    return this == other;
   }
 
   public override bool Equals(object obj)
@@ -140,7 +140,15 @@ public struct IVector3
 
   public override int GetHashCode()
   {
-    return HashCode.Combine(X, Y, Z);
+    // Use a hash code combining technique
+    unchecked
+    {
+      int hash = 17;
+      hash = hash * 31 + X.GetHashCode();
+      hash = hash * 31 + Y.GetHashCode();
+      hash = hash * 31 + Z.GetHashCode();
+      return hash;
+    }
   }
 
   public override string ToString()

@@ -154,6 +154,7 @@ public class OpenGL_Renderer : IRenderer
           Layer_Line => new LR_Line(_context, layer, _scene),
           Layer_Point => new LR_Point(_context, layer, _scene),
           Layer_StaticMesh => new LR_Mesh(_context, layer, _scene),
+          Layer_Voxel => new LR_Voxel(_context, layer, _scene),
           Layer_Sprite => new LR_Sprite(_context, layer, _scene),
           // Layer_UI => new LR_UI(_context, layer, _scene),
           //Layer_IMGUI => new LR_IMGUI(_context, layer, _scene),

@@ -6,14 +6,22 @@ using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Voxel;
 
-public class SparseVoxelMap<T> where T : struct
+public class SparseVoxelMap8
 {
-  private Dictionary<IVector3, VoxelArray<T>> _chunks = new();
-  private int _chunkSize = 16;
+  private Dictionary<IVector3, VoxelArray8> _chunks = new();
+  private HashSet<IVector3> _changed = new();
+  
+  private int _chunkSize;
   public int ChunkCount => _chunks.Count;
-
+  public float VoxelSize = 1f;
+  
+  public SparseVoxelMap8(int chunkSize = 16)
+  {
+    _chunkSize = chunkSize;
+  }
+  
   // Adjusting for negative coordinates
-  private IVector3 GetChunkPos(int x, int y, int z)
+  public IVector3 GetChunkPosition(int x, int y, int z)
   {
     return new IVector3(
       x < 0 ? x / _chunkSize - 1 : x / _chunkSize,
@@ -22,17 +30,27 @@ public class SparseVoxelMap<T> where T : struct
     );
   }
 
-  public T this[IVector3 p]
+  public IVector3 GetChunkLocalPosition(int x, int y, int z)
+  {
+    // Normalize indices for chunk-local access
+    var localX = (x % _chunkSize + _chunkSize) % _chunkSize;
+    var localY = (y % _chunkSize + _chunkSize) % _chunkSize;
+    var localZ = (z % _chunkSize + _chunkSize) % _chunkSize;
+
+    return new IVector3(localX, localY, localZ);
+  }
+
+  public byte this[IVector3 p]
   {
     get => this[p.X, p.Y, p.Z];
     set => this[p.X, p.Y, p.Z] = value;
   }
 
-  public T this[int x, int y, int z]
+  public byte this[int x, int y, int z]
   {
     get
     {
-      var chunkPos = GetChunkPos(x, y, z);
+      var chunkPos = GetChunkPosition(x, y, z);
       if (!_chunks.TryGetValue(chunkPos, out var chunk)) return default;
 
       // Normalize indices for chunk-local access
@@ -44,7 +62,7 @@ public class SparseVoxelMap<T> where T : struct
     }
     set
     {
-      var chunkPos = GetChunkPos(x, y, z);
+      var chunkPos = GetChunkPosition(x, y, z);
       // Normalize indices for chunk-local access
       var localX = (x % _chunkSize + _chunkSize) % _chunkSize;
       var localY = (y % _chunkSize + _chunkSize) % _chunkSize;
@@ -54,17 +72,18 @@ public class SparseVoxelMap<T> where T : struct
 
       if (!_chunks.TryGetValue(chunkPos, out var chunk))
       {
-        chunk = new VoxelArray<T>(_chunkSize, _chunkSize, _chunkSize);
+        chunk = new VoxelArray8(_chunkSize, _chunkSize, _chunkSize);
         _chunks[chunkPos] = chunk;
       }
 
       chunk[localX, localY, localZ] = value;
+      _changed.Add(chunkPos);
     }
   }
 
   public bool HasDataAt(int x, int y, int z)
   {
-    var chunkPos = GetChunkPos(x, y, z);
+    var chunkPos = GetChunkPosition(x, y, z);
     var localX = (x % _chunkSize + _chunkSize) % _chunkSize;
     var localY = (y % _chunkSize + _chunkSize) % _chunkSize;
     var localZ = (z % _chunkSize + _chunkSize) % _chunkSize;
@@ -72,10 +91,37 @@ public class SparseVoxelMap<T> where T : struct
     return _chunks.TryGetValue(chunkPos, out var chunk) && chunk.HasDataAt(localX, localY, localZ);
   }
 
-  public VoxelArray<T> GetChunk(int x, int y, int z)
+  public VoxelArray8 GetChunk(int x, int y, int z)
   {
-    var chunkPos = GetChunkPos(x, y, z);
+    var chunkPos = GetChunkPosition(x, y, z);
     return _chunks.GetValueOrDefault(chunkPos);
+  }
+  
+  public Dictionary<IVector3, Mesh> BuildChanged()
+  {
+    if (_changed.Count <= 0) return null;
+    
+    var outList = new Dictionary<IVector3, Mesh>();
+
+    Console.WriteLine($"CHANGED: {_changed.Count}");
+    
+    foreach (var chunk in _changed)
+    {
+      Console.WriteLine($"Ch: {chunk}");
+      var mesh = ChunkToMeshR(chunk);
+      if (mesh == null) continue;
+      if (mesh.VertexList.Count == 0) continue;
+      outList.Add(chunk, mesh);
+    }
+    
+    _changed.Clear();
+    
+    return outList;
+  }
+
+  public Mesh ChunkToMeshR(IVector3 position)
+  {
+    return ChunkToMeshR(position.X, position.Y, position.Z);
   }
 
   public Mesh ChunkToMeshR(int xx, int yy, int zz)
@@ -84,14 +130,14 @@ public class SparseVoxelMap<T> where T : struct
 
     // Define cube face directions and offsets
     Vector3[] faceNormals =
-    {
+    [
       new(0, 0, -1), // Back
       new(0, 0, 1), // Front
       new(0, -1, 0), // Bottom
       new(0, 1, 0), // Top
       new(-1, 0, 0), // Left
       new(1, 0, 0) // Right
-    };
+    ];
 
     Vector3[,] faceVertices =
     {
@@ -109,11 +155,15 @@ public class SparseVoxelMap<T> where T : struct
       { new(1, 0, 0), new(1, 0, 1), new(1, 1, 1), new(1, 1, 0) }
     };
 
-    uint[] faceTriangles = { 0, 1, 2, 0, 2, 3 }; // Two triangles per face
+    uint[] faceTriangles = [0, 1, 2, 0, 2, 3]; // Two triangles per face
 
-    var chunkOffset = new IVector3(xx, yy, zz);
-
+    var chunkOffset = new IVector3(xx, yy, zz) * _chunkSize;
+    Console.WriteLine(chunkOffset);
+    // var chunkLocalPosition = GetChunkPosition(xx, yy, zz);
+    
     //var chunkOffset = GetChunkPos(xx, yy, zz) * _chunkSize;
+    var rnd = new Mathematics.Random();
+    
 
     for (var x = 0; x < _chunkSize; x++)
     {
@@ -121,28 +171,34 @@ public class SparseVoxelMap<T> where T : struct
       {
         for (var z = 0; z < _chunkSize; z++)
         {
-          if (!HasDataAt(x + chunkOffset.X, y + chunkOffset.Y, z + chunkOffset.Z)) continue;
+          var gx = x + chunkOffset.X;
+          var gy = y + chunkOffset.Y;
+          var gz = z + chunkOffset.Z;
+          
+          if (!HasDataAt(gx, gy, gz)) continue;
 
+          var vv = this[gx, gy, gz];
+          
           // Add visible faces
           for (var i = 0; i < 6; i++)
           {
-            var neighborPos = new Vector3(x, y, z) + faceNormals[i];
+            var neighborPos = new Vector3(gx, gy, gz) + faceNormals[i];
             if (!HasDataAt((int)neighborPos.X, (int)neighborPos.Y, (int)neighborPos.Z))
             {
               // Generate face
               var vertices = new Vector3[4];
               for (var v = 0; v < 4; v++)
               {
-                vertices[v] = faceVertices[i, v] + new Vector3(x, y, z);
-                //vertices[v] *= 0.5f;
-                vertices[v] -= 0.5f;
+                vertices[v] = faceVertices[i, v] + new Vector3(gx, gy, gz);
+                vertices[v] *= VoxelSize;
+                //vertices[v] -= 0.5f;
               }
 
               mesh.AddQuad(
                 vertices,
                 faceTriangles,
                 faceNormals[i],
-                new Vector2[] { new(0, 0), new(1, 0), new(1, 1), new(0, 1) }
+                NumberToQuadUV(vv, 128)
               );
             }
           }
@@ -153,6 +209,26 @@ public class SparseVoxelMap<T> where T : struct
     return mesh;
   }
 
+  public static List<Vector2> NumberToQuadUV(int n, int gridSize)
+  {
+    // Calculate the row and column of the quad
+    int row = n / gridSize;
+    int col = n % gridSize;
+
+    // Calculate normalized coordinates for the bottom-left corner
+    float u = (float)col / gridSize;
+    float v = (float)row / gridSize;
+
+    // Create the list of UV coordinates for the quad corners
+    return new List<Vector2>
+    {
+      new Vector2(u, v),                          // BottomLeft
+      new Vector2(u + 1.0f / gridSize, v),        // BottomRight
+      new Vector2(u + 1.0f / gridSize, v + 1.0f / gridSize), // TopRight
+      new Vector2(u, v + 1.0f / gridSize)         // TopLeft
+    };
+  }
+  
   public Mesh ChunkToMesh(int xx, int yy, int zz)
   {
     var mesh = new Mesh();
@@ -237,5 +313,26 @@ public class SparseVoxelMap<T> where T : struct
     }
 
     return mesh;
+  }
+
+  public void AddSphere(IVector3 center, float radius, byte value)
+  {
+    var areaSize = (int)(radius);
+    
+    for (var i = -areaSize; i < areaSize; i++)
+    {
+      for (var j = -areaSize; j < areaSize; j++)
+      {
+        for (var k = -areaSize; k < areaSize; k++)
+        {
+          var pos = center + new IVector3(i, j, k);
+          
+          if (Vector3.Distance((Vector3)center, (Vector3)pos) < radius * 0.5f)
+          {
+            this[pos] = value;
+          }
+        }
+      }
+    }
   }
 }

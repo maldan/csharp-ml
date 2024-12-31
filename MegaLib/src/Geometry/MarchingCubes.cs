@@ -285,7 +285,7 @@ public static class MarchingCubes
     new int[] { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }
   ];
 
-  public static Vector3 InterpolateEdge<T>(int x, int y, int z, int edgeIndex, VoxelArray<T> grid) where T : struct
+  public static Vector3 InterpolateEdge(int x, int y, int z, int edgeIndex, IVoxelArray grid)
   {
     // Get the two corner points for the edge
     var edgeVertex1 = EdgeConnections[edgeIndex][0];

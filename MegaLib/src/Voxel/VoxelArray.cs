@@ -5,7 +5,12 @@ using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Voxel;
 
-public class VoxelArray<T> where T : struct
+public interface IVoxelArray
+{
+  public bool HasDataAt(int x, int y, int z);
+}
+
+public class VoxelArray8 : IVoxelArray
 {
   public int Width;
   public int Height;
@@ -13,17 +18,17 @@ public class VoxelArray<T> where T : struct
 
   public Vector3 Center => new(Width / 2, Height / 2, Depth / 2);
 
-  private T[,,] _data;
+  private byte[,,] _data;
 
-  public VoxelArray(int w, int h, int d)
+  public VoxelArray8(int w, int h, int d)
   {
     Width = w;
     Height = h;
     Depth = d;
-    _data = new T[w, h, d];
+    _data = new byte[w, h, d];
   }
 
-  public T this[int x, int y, int z]
+  public byte this[int x, int y, int z]
   {
     get => IsInBounds(x, y, z) ? _data[x, y, z] : default;
     set
@@ -34,13 +39,14 @@ public class VoxelArray<T> where T : struct
 
   public bool HasDataAt(int x, int y, int z)
   {
-    return _data switch
+    return _data[x, y, z] != 0;
+    /*return _data switch
     {
       byte[,,] v => v[x, y, z] != 0,
       short[,,] v => v[x, y, z] != 0,
       int[,,] v => v[x, y, z] != 0,
       _ => false
-    };
+    };*/
   }
 
   public bool IsInBounds(int x, int y, int z)
@@ -48,7 +54,7 @@ public class VoxelArray<T> where T : struct
     return x >= 0 && x < Width && y >= 0 && y < Height && z >= 0 && z < Depth;
   }
 
-  public Mesh ToMesh()
+  /*public Mesh ToMesh()
   {
     var mesh = new Mesh();
     var grid = this;
@@ -115,5 +121,5 @@ public class VoxelArray<T> where T : struct
     }
 
     return mesh;
-  }
+  }*/
 }

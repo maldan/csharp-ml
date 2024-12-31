@@ -28,7 +28,7 @@ public class Mesh : IPointIntersectable
     IndexList.Add(baseIndex + 2); // Third vertex
   }
 
-  public void AddQuad(Vector3[] quadVertices, uint[] quadTriangles, Vector3 normal, Vector2[] uvs)
+  public void AddQuad(Vector3[] quadVertices, uint[] quadTriangles, Vector3 normal, List<Vector2> uvs)
   {
     var baseIndex = (uint)VertexList.Count;
 

@@ -1,4 +1,5 @@
 using System;
+using MegaLib.Ext;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.Render.Color;
 using MegaLib.Render.Texture;
@@ -74,9 +75,21 @@ public class Shader_Base
   }
 
   [ShaderBuiltinMethod]
+  protected Vector4 mix(Vector4 v1, Vector4 v2, float t)
+  {
+    throw new Exception("FUCK");
+  }
+
+  [ShaderBuiltinMethod]
   protected Vector3 reflect(Vector3 a, Vector3 b)
   {
     return Vector3.Reflect(a, b);
+  }
+  
+  [ShaderBuiltinMethod]
+  protected float clamp(float v, float min, float max)
+  {
+    return v.Clamp(min, max);
   }
 
   [ShaderBuiltinMethod]
