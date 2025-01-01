@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using MegaLib.Ext;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.Render.Color;
@@ -6,8 +7,18 @@ using MegaLib.Render.Texture;
 
 namespace MegaLib.Render.Shader;
 
+public struct GlIn
+{
+  public Vector4 gl_Position;  // Clip-space position of the vertex.
+  public float gl_PointSize; // Point size, if applicable (optional, used for point primitives).
+  public float[] gl_ClipDistance; // Array of user-defined clipping distances.
+}
+
 public class Shader_Base
 {
+  protected List<GlIn> gl_in;
+  protected Vector4 gl_Position;
+  
   [ShaderBuiltinMethod]
   protected Vector3 normalize(Vector3 v)
   {
@@ -36,6 +47,12 @@ public class Shader_Base
   protected float pow(float a, float b)
   {
     return MathF.Pow(a, b);
+  }
+  
+  [ShaderBuiltinMethod]
+  protected float abs(float a)
+  {
+    return MathF.Abs(a);
   }
 
   [ShaderBuiltinMethod]
@@ -126,5 +143,17 @@ public class Shader_Base
   protected Vector3 pow(Vector3 a, Vector3 b)
   {
     return Vector3.Pow(a, b);
+  }
+  
+  [ShaderBuiltinMethod]
+  protected void EmitVertex()
+  {
+    
+  }
+  
+  [ShaderBuiltinMethod]
+  protected void EndPrimitive()
+  {
+    
   }
 }

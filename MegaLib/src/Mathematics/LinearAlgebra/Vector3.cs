@@ -430,6 +430,11 @@ public struct Vector3 : IBinarySerializable
   {
     return new Vector3(MathF.Floor(X), MathF.Floor(Y), MathF.Floor(Z));
   }
+  
+  public Vector3 Round()
+  {
+    return new Vector3(MathF.Round(X), MathF.Round(Y), MathF.Round(Z));
+  }
 
   public float this[int index]
   {

@@ -267,6 +267,11 @@ public struct Matrix4x4
       M30 = M30, M31 = M31, M32 = M32, M33 = M33
     };
   }
+  
+  public Matrix4x4 Scale(float x, float y, float z)
+  {
+    return Scale(new Vector3(x, y, z));
+  }
 
   // Статическая функция для нахождения обратной матрицы
   public static Matrix4x4 Inverse(Matrix4x4 matrix)

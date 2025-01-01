@@ -51,6 +51,7 @@ public class ListGPU<T> : IEnumerable<T>
 
   public ListGPU(int capacity)
   {
+    if (capacity < 1) capacity = 1;
     _capacity = capacity;
     _array = new T[_capacity];
     _count = 0;
@@ -98,6 +99,7 @@ public class ListGPU<T> : IEnumerable<T>
         Array.Resize(ref _array, _capacity);
       }
 
+      // Console.WriteLine($"CC: {_count}/{_array.Length}/{_capacity}");
       _array[_count++] = item;
     }
 
@@ -126,7 +128,9 @@ public class ListGPU<T> : IEnumerable<T>
   public void Clear()
   {
     // Array.Clear(_array, 0, _count);
+    _array = new T[_capacity];
     _count = 0;
+
     IsChanged = true;
   }
 
@@ -144,7 +148,7 @@ public class ListGPU<T> : IEnumerable<T>
   {
     if (!IsChanged) return;
     //var handle = GCHandle.Alloc(_array, GCHandleType.Pinned);
-    OnSync?.Invoke(_array);
+    OnSync?.Invoke(_array[.._count]);
     IsChanged = false;
     //handle.Free();
   }

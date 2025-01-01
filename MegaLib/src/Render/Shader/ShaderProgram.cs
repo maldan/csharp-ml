@@ -28,6 +28,12 @@ public class ShaderFieldAttributeAttribute : Attribute;
 [AttributeUsage(AttributeTargets.Method)]
 public class ShaderBuiltinMethodAttribute : Attribute;
 
+[AttributeUsage(AttributeTargets.Class)]
+public class ShaderEmbedText(string value) : Attribute
+{
+  public string Value { get; } = value;
+}
+
 public class ShaderProgram
 {
   // Класс для хранения информации о параметрах метода
@@ -50,6 +56,7 @@ public class ShaderProgram
     foreach (var sharpClass in sharpCompiler.ClassList)
     {
       if (sharpClass.Name.Contains("Vertex")) dict["vertex"] = CompileClass(sharpClass);
+      if (sharpClass.Name.Contains("Geometry")) dict["geometry"] = CompileClass(sharpClass);
       if (sharpClass.Name.Contains("Fragment")) dict["fragment"] = CompileClass(sharpClass);
     }
 
@@ -70,6 +77,20 @@ public class ShaderProgram
       outShader.Add("precision highp usampler2D;");
       outShader.Add("precision highp sampler2D;");
       outShader.Add("");
+
+      if (sharpClass.HasAttribute("ShaderEmbedText"))
+      {
+        var attr = sharpClass.GetAttribute("ShaderEmbedText");
+        foreach (var x in attr.PositionalArguments)
+        {
+          var lines = x[1..^1].Split("\\n");
+          foreach (var line in lines)
+          {
+            outShader.Add(line);
+          }
+        }
+        outShader.Add("");
+      }
 
       var locationCounter = 0;
       foreach (var sharpField in sharpClass.FieldList)
@@ -129,7 +150,15 @@ public class ShaderProgram
       // Заменяем декларацию переменные типа Vector3 normal = на vec3 normal = 
       methodText = Regex.Replace(methodText, $@"([a-zA-Z0-9\.]+) ([a-zA-Z0-9]+) =",
         (match) => $"{ReplaceTypes(match.Groups[1].Value)} {match.Groups[2].Value} =");
-
+      
+      // Заменяем декларацию переменные типа Vector3[] normal = new[] на vec3 normal[] = vec3[]
+      methodText = Regex.Replace(methodText, @" = new\[\]\s*\{([\s\S]*?)\};",
+        (match) => @" = new[] (" +match.Groups[1].Value+");");
+      
+      // Заменяем декларацию переменные типа Vector3[] normal = new[] на vec3 normal[] = vec3[]
+      methodText = Regex.Replace(methodText, $@"([a-zA-Z0-9\.]+)\[\] ([a-zA-Z0-9]+) = new\[\]",
+        (match) => $"{ReplaceTypes(match.Groups[1].Value)} {match.Groups[2].Value}[] = {ReplaceTypes(match.Groups[1].Value)}[]");
+      
       // Заменяем new Vector3( на vec3(
       methodText = Regex.Replace(methodText, $@"\bnew ([a-zA-Z0-9]+)\(",
         (match) => $"{ReplaceTypes(match.Groups[1].Value)}(");
@@ -178,7 +207,7 @@ public class ShaderProgram
   private static string ReplaceTypes(string sharpType)
   {
     sharpType = sharpType.Split(".").Last();
-
+    
     return sharpType switch
     {
       "Matrix3x3" => "mat3",
@@ -190,6 +219,7 @@ public class ShaderProgram
 
       "Vector2" => "vec2",
       "Vector3" => "vec3",
+      "Vector3[]" => "vec3",
       "Vector4" => "vec4",
       "Texture_2D<float>" => "sampler2D",
       "Texture_2D<RGBA32F>" => "sampler2D",

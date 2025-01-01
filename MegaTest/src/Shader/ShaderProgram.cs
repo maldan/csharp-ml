@@ -18,6 +18,15 @@ public class AShaderProgramTest
     File.WriteAllText("D:/csharp_lib/MegaLib/backup/fragment.glsl", x["fragment"]);
   }
 
+  [Test]
+  public void Basic2()
+  {
+    var x = ShaderProgram.Compile("Voxel");
+    //File.WriteAllText("F:/csharp_lib/MegaLib/backup/vertex.glsl", x["vertex"]);
+    File.WriteAllText("F:/csharp_lib/MegaLib/backup/geometry.glsl", x["geometry"]);
+    //File.WriteAllText("F:/csharp_lib/MegaLib/backup/fragment.glsl", x["fragment"]);
+  }
+
   /*[Test]
   public void Basic2()
   {

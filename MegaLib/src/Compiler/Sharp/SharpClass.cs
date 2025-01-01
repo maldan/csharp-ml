@@ -137,4 +137,14 @@ public class SharpClass
     _classDeclaration = classDeclaration;
     _semanticModel = semanticModel;
   }
+  
+  public bool HasAttribute(string name)
+  {
+    return AttributeList.Any(x => x.Name == name);
+  }
+  
+  public SharpAttribute GetAttribute(string name)
+  {
+    return AttributeList.FirstOrDefault(x => x.Name == name);
+  }
 }

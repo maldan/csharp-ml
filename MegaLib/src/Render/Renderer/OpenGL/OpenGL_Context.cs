@@ -77,6 +77,20 @@ public class OpenGL_Context
       MapTexture(mesh.Material.MetallicTexture);
     }
   }
+  
+  public void MapObject(RO_VoxelMesh mesh)
+  {
+    // Already mapped
+    if (_vaoList.ContainsKey(mesh.Id)) return;
+
+    // Create vao
+    uint vaoId = 0;
+    OpenGL32.glGenVertexArrays(1, ref vaoId);
+    _vaoList[mesh.Id] = vaoId;
+
+    // Map all buffers
+    MapBuffer(mesh.VertexList);
+  }
 
   public void MapObject(RO_Sprite sprite)
   {
@@ -314,7 +328,7 @@ public class OpenGL_Context
 
       // Upload
       var dataPtr = Marshal.UnsafeAddrOfPinnedArrayElement(data, 0);
-      var size = Marshal.SizeOf(data[0]) * data.Length;
+      var size = Marshal.SizeOf(typeof(T)) * data.Length;
 
       OpenGL32.glBufferData(target, (IntPtr)size, dataPtr, OpenGL32.GL_STATIC_DRAW);
 

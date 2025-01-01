@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 
-namespace MegaLib.Mathematics.Geometry;
+namespace MegaLib.Geometry;
 
 public class Mesh : IPointIntersectable
 {
@@ -13,6 +14,18 @@ public class Mesh : IPointIntersectable
   public List<uint> IndexList = [];
 
   public int TriangleCount => IndexList.Count / 3;
+
+  public Mesh()
+  {
+  }
+
+  public Mesh(int capacity)
+  {
+    VertexList = new List<Vector3>(capacity);
+    UV0List = new List<Vector2>(capacity);
+    NormalList = new List<Vector3>(capacity);
+    IndexList = new List<uint>(capacity);
+  }
 
   public void AddTriangle(Triangle triangle)
   {

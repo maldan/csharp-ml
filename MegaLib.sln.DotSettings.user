@@ -1,5 +1,6 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AInt32_002Ecs_002Fl_003AC_0021_003FUsers_003Fblack_003FAppData_003FRoaming_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003Faef21ab35a6576cdcb99a56e6a8c84076d069f09ad1be52cfedaf49ee667855_003FInt32_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AStopwatch_002Ecs_002Fl_003AC_0021_003FUsers_003Fblack_003FAppData_003FRoaming_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F6f1177229869fc3b39b93634f346be9918deca7bf8d9698944992ea75e6796c_003FStopwatch_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/Environment/Hierarchy/Build/BuildTool/CustomBuildToolPath/@EntryValue">C:\Program Files\dotnet\sdk\8.0.404\MSBuild.dll</s:String>
 	<s:String x:Key="/Default/Environment/Hierarchy/Build/BuildTool/DotNetCliExePath/@EntryValue">C:\Program Files\dotnet\dotnet.exe</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=1032be87_002D5c1e_002D489c_002Db031_002D5cf75138504b/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="TestBasic #11" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
@@ -27,6 +28,7 @@
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Render.Color.RGBA.Test2&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.PhysicsTest.TestBasic&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Mathematics.NoiseTest.TestBasic&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Voxel.VoxelTest.TestSpeed&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
 	
@@ -60,6 +62,9 @@
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Voxel.VoxelTest.TestBasic&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Voxel.VoxelTest.TestBasic2&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Mathematics.NoiseTest.TestBasic&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Voxel.VoxelTest.TestSpeed&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Voxel.VoxelTest.TestSpeed2&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Shader.AShaderProgramTest.Basic2&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
 	

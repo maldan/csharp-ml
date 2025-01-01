@@ -40,6 +40,7 @@ public static class Mouse
   [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   ];
+  private static byte[] _previousState = new byte[_state.Length];
 
   public static void Init()
   {
@@ -79,6 +80,12 @@ public static class Mouse
       }
     }
 
+    // Предыдущее состояние клавиш
+    for (var i = 0; i < _state.Length; i++)
+    {
+      _previousState[i] = _state[i];
+    }
+    
     _state[(int)MouseKey.Left] = (byte)(User32.GetAsyncKeyState((int)MouseKey.Left) < 0 ? 1 : 0);
     _state[(int)MouseKey.Right] = (byte)(User32.GetAsyncKeyState((int)MouseKey.Right) < 0 ? 1 : 0);
     _state[(int)MouseKey.Center] = (byte)(User32.GetAsyncKeyState((int)MouseKey.Center) < 0 ? 1 : 0);
@@ -92,5 +99,10 @@ public static class Mouse
   public static bool IsKeyUp(MouseKey key)
   {
     return _state[(int)key] == 0;
+  }
+  
+  public static bool IsKeyPressed(MouseKey key)
+  {
+    return IsKeyDown(key) && _previousState[(int)key] == 0;
   }
 }

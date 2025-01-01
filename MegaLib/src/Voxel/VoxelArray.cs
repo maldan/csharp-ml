@@ -28,6 +28,12 @@ public class VoxelArray8 : IVoxelArray
     _data = new byte[w, h, d];
   }
 
+  public byte this[IVector3 p]
+  {
+    get => this[p.X, p.Y, p.Z];
+    set => this[p.X, p.Y, p.Z] = value;
+  }
+  
   public byte this[int x, int y, int z]
   {
     get => IsInBounds(x, y, z) ? _data[x, y, z] : default;
@@ -35,6 +41,11 @@ public class VoxelArray8 : IVoxelArray
     {
       if (IsInBounds(x, y, z)) _data[x, y, z] = value;
     }
+  }
+
+  public bool HasDataAt(IVector3 pos)
+  {
+    return HasDataAt(pos.X, pos.Y, pos.Z);
   }
 
   public bool HasDataAt(int x, int y, int z)
