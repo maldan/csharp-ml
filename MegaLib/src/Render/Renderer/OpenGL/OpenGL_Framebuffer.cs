@@ -15,10 +15,14 @@ public class OpenGL_Framebuffer
   private uint _previousId;
 
   private Texture_2D<RGB8> _texture;
-
-  // private readonly Dictionary<ulong, uint> _textureList = new();
   public Texture_2D<RGB8> Texture => _texture;
 
+  private Texture_2D<RGB8> _normalTexture; // High precision format for normals
+  public Texture_2D<RGB8> NormalTexture => _normalTexture;
+  
+  private Texture_2D<float> _depthTexture; // High precision format for normals
+  public Texture_2D<float> DepthTexture => _depthTexture;
+  
   public OpenGL_Framebuffer(OpenGL_Context context)
   {
     _context = context;
@@ -42,17 +46,46 @@ public class OpenGL_Framebuffer
       OpenGL32.GL_TEXTURE_2D,
       _context.GetTextureId(_texture),
       0);
+    
+    // Create and map normal texture
+    _normalTexture = new Texture_2D<RGB8>(1280, 720); // Use high precision for normals
+    _context.MapRenderTexture(_normalTexture);
+    OpenGL32.glFramebufferTexture2D(
+      OpenGL32.GL_FRAMEBUFFER,
+      OpenGL32.GL_COLOR_ATTACHMENT1, // Attachment point 1
+      OpenGL32.GL_TEXTURE_2D,
+      _context.GetTextureId(_normalTexture),
+      0);
 
     // Создаем рендербуфер для глубины и трафарета
-    OpenGL32.glGenRenderbuffers(1, ref _rbo);
+    /*OpenGL32.glGenRenderbuffers(1, ref _rbo);
     OpenGL32.glBindRenderbuffer(OpenGL32.GL_RENDERBUFFER, _rbo);
     OpenGL32.glRenderbufferStorage(OpenGL32.GL_RENDERBUFFER, OpenGL32.GL_DEPTH24_STENCIL8, 1280, 720);
     OpenGL32.glBindRenderbuffer(OpenGL32.GL_RENDERBUFFER, 0);
 
     // Прикрепляем рендербуфер к фреймбуферу
     OpenGL32.glFramebufferRenderbuffer(OpenGL32.GL_FRAMEBUFFER, OpenGL32.GL_DEPTH_STENCIL_ATTACHMENT,
-      OpenGL32.GL_RENDERBUFFER, _rbo);
+      OpenGL32.GL_RENDERBUFFER, _rbo);*/
+    
+    // Create and attach depth texture
+    _depthTexture = new Texture_2D<float>(1280, 720);
+    _context.MapDepthTexture(_depthTexture);
+    OpenGL32.glFramebufferTexture2D(
+      OpenGL32.GL_FRAMEBUFFER,
+      OpenGL32.GL_DEPTH_ATTACHMENT,
+      OpenGL32.GL_TEXTURE_2D,
+      _context.GetTextureId(_depthTexture),
+      0);
 
+    // Specify the attachments to draw into
+    var drawBuffers = new uint[]
+    {
+      OpenGL32.GL_COLOR_ATTACHMENT0, // Color
+      OpenGL32.GL_COLOR_ATTACHMENT1,  // Normals
+      //OpenGL32.GL_DEPTH_ATTACHMENT  // Normals
+    };
+    OpenGL32.glDrawBuffers(2, drawBuffers);
+    
     // Проверяем фреймбуфер на корректность
     var status = OpenGL32.glCheckFramebufferStatus(OpenGL32.GL_FRAMEBUFFER);
     if (OpenGL32.glCheckFramebufferStatus(OpenGL32.GL_FRAMEBUFFER) != OpenGL32.GL_FRAMEBUFFER_COMPLETE)
@@ -81,50 +114,42 @@ public class OpenGL_Framebuffer
 
     // Unbind
     OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, 0);
-
-    // Расайз буфера
-    OpenGL32.glBindRenderbuffer(OpenGL32.GL_RENDERBUFFER, _rbo);
-    OpenGL32.glRenderbufferStorage(OpenGL32.GL_RENDERBUFFER, OpenGL32.GL_DEPTH24_STENCIL8, width, height);
-    OpenGL32.glBindRenderbuffer(OpenGL32.GL_RENDERBUFFER, 0);
-  }
-
-  /*private void MapTexture(Texture_2D<RGB<byte>> texture)
-  {
-    if (texture?.RAW == null) return;
-    if (_textureList.ContainsKey(texture.RAW.Id)) return;
-
-    // Create gl texture
-    uint textureId = 0;
-    OpenGL32.glGenTextures(1, ref textureId);
-    if (textureId == 0) throw new Exception("Can't create texture");
-
-    // Bind
-    OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, textureId);
-
-    // Fill texture
+    
+    // Resize normal texture
+    OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, _context.GetTextureId(_normalTexture));
     OpenGL32.glTexImage2D(
       OpenGL32.GL_TEXTURE_2D,
       0,
-      (int)OpenGL32.GL_RGB,
-      texture.RAW.Width,
-      texture.RAW.Height,
+      (int)OpenGL32.GL_RGBA8,
+      width,
+      height,
       0,
-      OpenGL32.GL_RGB, OpenGL32.GL_UNSIGNED_BYTE,
+      OpenGL32.GL_RGBA, OpenGL32.GL_UNSIGNED_BYTE,
       0
     );
 
-    OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_MIN_FILTER, (int)OpenGL32.GL_LINEAR);
-    OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_MAG_FILTER, (int)OpenGL32.GL_LINEAR);
-    OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_WRAP_S, (int)OpenGL32.GL_CLAMP_TO_EDGE);
-    OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_WRAP_T, (int)OpenGL32.GL_CLAMP_TO_EDGE);
-
-    // Unbind
     OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, 0);
 
-    // Save to buffer
-    _textureList[texture.RAW.Id] = textureId;
-  }*/
-
+    // Resize depth texture
+    OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, _context.GetTextureId(_depthTexture));
+    OpenGL32.glTexImage2D(
+      OpenGL32.GL_TEXTURE_2D,
+      0,
+      (int)OpenGL32.GL_DEPTH_COMPONENT32F,
+      width,
+      height,
+      0,
+      OpenGL32.GL_DEPTH_COMPONENT,
+      OpenGL32.GL_FLOAT,
+      IntPtr.Zero);
+    OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, 0);
+    
+    // Расайз буфера
+    /*OpenGL32.glBindRenderbuffer(OpenGL32.GL_RENDERBUFFER, _rbo);
+    OpenGL32.glRenderbufferStorage(OpenGL32.GL_RENDERBUFFER, OpenGL32.GL_DEPTH24_STENCIL8, width, height);
+    OpenGL32.glBindRenderbuffer(OpenGL32.GL_RENDERBUFFER, 0);*/
+  }
+  
   public void Bind()
   {
     var currentFBO = 0;

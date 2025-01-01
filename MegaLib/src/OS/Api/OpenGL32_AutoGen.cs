@@ -647,5 +647,11 @@ GetProcedure<glDeleteRenderbuffersDelegate>("glDeleteRenderbuffers")(n, buffers)
 }
 private delegate void glDeleteRenderbuffersDelegate(GLsizei n, GLuint[] buffers);
 
+// 
+public static void glDrawBuffers(GLsizei n, GLenum[] bufs) {
+GetProcedure<glDrawBuffersDelegate>("glDrawBuffers")(n, bufs);
+}
+private delegate void glDrawBuffersDelegate(GLsizei n, GLenum[] bufs);
+
 }
 }

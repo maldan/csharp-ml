@@ -8,9 +8,19 @@ namespace MegaLib.Render.Shader;
 public class VoxelVertexShader : Shader_Base
 {
   [ShaderFieldAttribute] public Vector3 aPosition;
-
+  [ShaderFieldAttribute] public int aVoxel;
+  [ShaderFieldAttribute] public int aShadow;
+  [ShaderFieldAttribute] public uint aColor;
+  
+  [ShaderFieldOut] public int vo_Voxel;
+  [ShaderFieldOut] public int vo_Shadow;
+  [ShaderFieldOut] public uint vo_Color;
+  
   public Vector4 Main()
   {
+    vo_Voxel = aVoxel;
+    vo_Shadow = aShadow;
+    vo_Color = aColor;
     return new Vector4(aPosition, 1.0f);
   }
 }
@@ -23,34 +33,15 @@ public class VoxelGeometryShader : Shader_Base
   [ShaderFieldUniform] public Vector3 uCameraPosition;
 
   [ShaderFieldOut] public Vector3 vo_WorldPosition;
-  [ShaderFieldOut] public Vector2 vo_UV;
-
-  private void GenerateTop(Vector3 center, float halfSize)
-  {
-    // Calculate the four vertices of the top face
-    var bottomLeft = new Vector3(center.X - halfSize, center.Y + halfSize, center.Z - halfSize);
-    var bottomRight = new Vector3(center.X + halfSize, center.Y + halfSize, center.Z - halfSize);
-    var topLeft = new Vector3(center.X - halfSize, center.Y + halfSize, center.Z + halfSize);
-    var topRight = new Vector3(center.X + halfSize, center.Y + halfSize, center.Z + halfSize);
-
-    // Emit the vertices
-    vo_WorldPosition = bottomLeft;
-    gl_Position = uProjectionMatrix * uViewMatrix * new Vector4(bottomLeft, 1.0f);
-    EmitVertex();
-
-    vo_WorldPosition = bottomRight;
-    gl_Position = uProjectionMatrix * uViewMatrix * new Vector4(bottomRight, 1.0f);
-    EmitVertex();
-
-    vo_WorldPosition = topLeft;
-    gl_Position = uProjectionMatrix * uViewMatrix * new Vector4(topLeft, 1.0f);
-    EmitVertex();
-
-    vo_WorldPosition = topRight;
-    gl_Position = uProjectionMatrix * uViewMatrix * new Vector4(topRight, 1.0f);
-    EmitVertex();
-  }
-
+  [ShaderFieldOut] public Vector3 vo_Normal;
+  [ShaderFieldOut] public float vo_Light;
+  [ShaderFieldOut] public int go_Shadow;
+  [ShaderFieldOut] public uint go_Color;
+  
+  [ShaderFieldIn] public int[] vo_Voxel;
+  [ShaderFieldIn] public int[] vo_Shadow;
+  [ShaderFieldIn] public uint[] vo_Color;
+   
   private void GenerateFace(Vector3 center, float halfSize, Vector3 normal)
   {
     // Calculate the tangent and bitangent vectors for the face
@@ -90,40 +81,78 @@ public class VoxelGeometryShader : Shader_Base
     var topLeft = faceCenter - tangent + bitangent;
     var topRight = faceCenter + tangent + bitangent;
 
+    var lightValue = 1.0f;  // 00100000 - Right face
+    if ((vo_Voxel[0] & (1 << 6)) != 0)
+    {
+      lightValue = 1f;
+    }
+    
     // Emit vertices based on the face normal
     if (normal.Y == 1.0f || normal.X == -1.0f || normal.Z == -1.0f) // Front-facing
     {
       vo_WorldPosition = bottomLeft;
+      vo_Normal = normal;
+      vo_Light = lightValue;
+      go_Shadow = vo_Shadow[0];
+      go_Color = vo_Color[0];
       gl_Position = uProjectionMatrix * uViewMatrix * new Vector4(bottomLeft, 1.0f);
       EmitVertex();
 
       vo_WorldPosition = bottomRight;
+      vo_Normal = normal;
+      vo_Light = lightValue;
+      go_Shadow = vo_Shadow[0];
+      go_Color = vo_Color[0];
       gl_Position = uProjectionMatrix * uViewMatrix * new Vector4(bottomRight, 1.0f);
       EmitVertex();
 
       vo_WorldPosition = topLeft;
+      vo_Normal = normal;
+      vo_Light = lightValue;
+      go_Shadow = vo_Shadow[0];
+      go_Color = vo_Color[0];
       gl_Position = uProjectionMatrix * uViewMatrix * new Vector4(topLeft, 1.0f);
       EmitVertex();
 
       vo_WorldPosition = topRight;
+      vo_Normal = normal;
+      vo_Light = lightValue;
+      go_Shadow = vo_Shadow[0];
+      go_Color = vo_Color[0];
       gl_Position = uProjectionMatrix * uViewMatrix * new Vector4(topRight, 1.0f);
       EmitVertex();
     }
     else // Back-facing
     {
       vo_WorldPosition = bottomLeft;
+      vo_Normal = normal;
+      vo_Light = lightValue;
+      go_Shadow = vo_Shadow[0];
+      go_Color = vo_Color[0];
       gl_Position = uProjectionMatrix * uViewMatrix * new Vector4(bottomLeft, 1.0f);
       EmitVertex();
 
       vo_WorldPosition = topLeft;
+      vo_Normal = normal;
+      vo_Light = lightValue;
+      go_Shadow = vo_Shadow[0];
+      go_Color = vo_Color[0];
       gl_Position = uProjectionMatrix * uViewMatrix * new Vector4(topLeft, 1.0f);
       EmitVertex();
 
       vo_WorldPosition = bottomRight;
+      vo_Normal = normal;
+      vo_Light = lightValue;
+      go_Shadow = vo_Shadow[0];
+      go_Color = vo_Color[0];
       gl_Position = uProjectionMatrix * uViewMatrix * new Vector4(bottomRight, 1.0f);
       EmitVertex();
 
       vo_WorldPosition = topRight;
+      vo_Normal = normal;
+      vo_Light = lightValue;
+      go_Shadow = vo_Shadow[0];
+      go_Color = vo_Color[0];
       gl_Position = uProjectionMatrix * uViewMatrix * new Vector4(topRight, 1.0f);
       EmitVertex();
     }
@@ -150,49 +179,28 @@ public class VoxelGeometryShader : Shader_Base
       return;
     }
 
-    GenerateFace(center, 0.5f, new Vector3(0, 1, 0));
+    // Masks for each side
+    // Bitmask for voxelInfo
+    int backMask = 1 << 0;  // 00000001 - Back face
+    int frontMask = 1 << 1; // 00000010 - Front face
+    int bottomMask = 1 << 2; // 00000100 - Bottom face
+    int topMask = 1 << 3;    // 00001000 - Top face
+    int leftMask = 1 << 4;   // 00010000 - Left face
+    int rightMask = 1 << 5;  // 00100000 - Right face
+    
+    if ((vo_Voxel[0] & backMask) != 0) GenerateFace(center, 0.5f, new Vector3(0, 0, -1));
+    if ((vo_Voxel[0] & frontMask) != 0) GenerateFace(center, 0.5f, new Vector3(0, 0, 1));
+    if ((vo_Voxel[0] & topMask) != 0) GenerateFace(center, 0.5f, new Vector3(0, 1, 0));
+    if ((vo_Voxel[0] & bottomMask) != 0) GenerateFace(center, 0.5f, new Vector3(0, -1, 0));
+    if ((vo_Voxel[0] & leftMask) != 0) GenerateFace(center, 0.5f, new Vector3(-1, 0, 0));
+    if ((vo_Voxel[0] & rightMask) != 0) GenerateFace(center, 0.5f, new Vector3(1, 0, 0));
+    
+    /*GenerateFace(center, 0.5f, new Vector3(0, 1, 0));
     GenerateFace(center, 0.5f, new Vector3(0, -1, 0));
     GenerateFace(center, 0.5f, new Vector3(-1, 0, 0));
     GenerateFace(center, 0.5f, new Vector3(1, 0, 0));
     GenerateFace(center, 0.5f, new Vector3(0, 0, -1));
-    GenerateFace(center, 0.5f, new Vector3(0, 0, 1));
-    
-    // Half-size of the cube
-    /*float halfSize = 0.5f;
-
-    // Cube vertices offsets from the center
-    var offsets = new[]
-    {
-      new Vector3(-halfSize, -halfSize, -halfSize), // 0
-      new Vector3(halfSize, -halfSize, -halfSize), // 1
-      new Vector3(halfSize, halfSize, -halfSize), // 2
-      new Vector3(-halfSize, halfSize, -halfSize), // 3
-      new Vector3(-halfSize, -halfSize, halfSize), // 4
-      new Vector3(halfSize, -halfSize, halfSize), // 5
-      new Vector3(halfSize, halfSize, halfSize), // 6
-      new Vector3(-halfSize, halfSize, halfSize) // 7
-    };
-
-    // Cube faces (triangle strip order)
-    var indices = new[]
-    {
-      0, 1, 3, 2, // Front face
-      7, 6, 4, 5, // Back face
-      0, 1, 4, 5, // Bottom face
-      3, 2, 7, 6 // Top face
-    };
-
-    // Emit vertices for the cube
-    for (int i = 0; i < 14; i++)
-    {
-      var position = center + offsets[indices[i]];
-      gl_Position = uProjectionMatrix * uViewMatrix * new Vector4(position, 1.0f);
-      vo_WorldPosition = position;
-
-      EmitVertex();
-    }*/
-
-   
+    GenerateFace(center, 0.5f, new Vector3(0, 0, 1));*/
   }
 }
 
@@ -204,8 +212,12 @@ public class VoxelFragmentShader : Shader_Base
 
   //[ShaderFieldIn] public Vector3 vo_CameraPosition;
   [ShaderFieldIn] public Vector3 vo_Normal;
+  [ShaderFieldIn] public float vo_Light;
+  [ShaderFieldIn] public int go_Shadow;
+  [ShaderFieldIn] public uint go_Color;
 
-  [ShaderFieldOut] public Vector4 color;
+  [ShaderFieldOut] public Vector4 fragColor;
+  [ShaderFieldOut] public Vector4 fragNormal;
 
   [ShaderFieldUniform] public Texture_2D<RGBA32F> uAlbedoTexture;
   [ShaderFieldUniform] public Texture_2D<RGBA32F> uNormalTexture;
@@ -216,11 +228,14 @@ public class VoxelFragmentShader : Shader_Base
 
   public void Main()
   {
-    var texelColor = texture(uAlbedoTexture, vo_UV);
-
+    var r = ((go_Color >> 24) & toUInt(0xFF)) / 255.0f; // Extract Red
+    var g = ((go_Color >> 16) & toUInt(0xFF)) / 255.0f; // Extract Green
+    var b = ((go_Color >> 8) & toUInt(0xFF)) / 255.0f;  // Extract Blue
+    var texelColor = new Vector4(r, g, b, 1.0f);
+    
     // color = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 
-    var fogStart = 0;
+    var fogStart = 64f;
     var fogEnd = 128f * 3f;
 
     // Calculate the distance from the camera to the fragment
@@ -230,27 +245,39 @@ public class VoxelFragmentShader : Shader_Base
     float fogFactor = clamp((fogEnd - distance) / (fogEnd - fogStart), 0.0f, 1.0f);
 
     // Interpolate between the fragment color and the fog color
-    var objectColor = new Vector4(1.0f, 1.0f, 1.0f, 1.0f); // Example object color
-    color = mix(new Vector4(0.0f, 0.0f, 0.0f, 1.0f), objectColor, fogFactor);
+    //var objectColor = new Vector4(1.0f, 1.0f, 1.0f, 1.0f); // Example object color
+    var finalColor = mix(new Vector4(0.0f, 0.0f, 0.0f, 1.0f), texelColor, fogFactor*0.001f+1f);
 
     // Light
     // Calculate normalized light direction
     //var lightPosition = normalize(new Vector3(0.0f, 1.0f, 1.0f));
-    //var lightDir = normalize(new Vector3(0.0f, 1.0f, 1.0f));
+    var lightDir = normalize(new Vector3(1.0f, 1.0f, 1.0f));
 
     // Normalize the normal (it should already be normalized if provided correctly)
-    //var normal = normalize(vo_Normal);
+    var normal = normalize(vo_Normal);
 
     // Lambertian reflection: max(0, dot(N, L))
-    //float diff = max(dot(normal, lightDir), 0.5f);
+    float diff = max(dot(normal, lightDir), 0.25f);
 
     // Final diffuse color
     //var diffuse = uDiffuseColor * uLightColor * diff;
 
-    /*color.R *= diff;
-    color.G *= diff;
-    color.B *= diff;*/
+    finalColor.R *= diff * vo_Light + go_Shadow * 0.0001f;
+    finalColor.G *= diff * vo_Light + go_Shadow * 0.0001f;
+    finalColor.B *= diff * vo_Light + go_Shadow * 0.0001f;
 
+    // HDR
+    //var finalColor = new Vector3(color.R, color.G, color.B);
+
+    // HDR
+    //finalColor = finalColor / (finalColor + new Vector3(1.0f));
+    
+    // Gamma
+    //finalColor = pow(finalColor, new Vector3(1.0f / 2.2f));
+
+    fragColor = finalColor;
+    fragNormal = new Vector4(normal, 1.0f);
+    
     /*var mat = getMaterial(uAlbedoTexture, uNormalTexture, uRoughnessTexture, uMetallicTexture, vo_UV, vo_TBN);
 
     // Light

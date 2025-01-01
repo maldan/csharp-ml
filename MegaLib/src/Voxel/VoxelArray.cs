@@ -18,23 +18,23 @@ public class VoxelArray8 : IVoxelArray
 
   public Vector3 Center => new(Width / 2, Height / 2, Depth / 2);
 
-  private byte[,,] _data;
+  private ushort[,,] _data;
 
   public VoxelArray8(int w, int h, int d)
   {
     Width = w;
     Height = h;
     Depth = d;
-    _data = new byte[w, h, d];
+    _data = new ushort[w, h, d];
   }
 
-  public byte this[IVector3 p]
+  public ushort this[IVector3 p]
   {
     get => this[p.X, p.Y, p.Z];
     set => this[p.X, p.Y, p.Z] = value;
   }
   
-  public byte this[int x, int y, int z]
+  public ushort this[int x, int y, int z]
   {
     get => IsInBounds(x, y, z) ? _data[x, y, z] : default;
     set

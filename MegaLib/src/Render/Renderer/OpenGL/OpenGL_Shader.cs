@@ -118,6 +118,12 @@ public class OpenGL_Shader
     var id = GetUniformLocation(name);
     OpenGL32.glUniform3f(id, v.X, v.Y, v.Z);
   }
+  
+  public void SetUniform(string name, int res, float[] v)
+  {
+    var id = GetUniformLocation(name);
+    if (res == 3) OpenGL32.glUniform3fv(id, v.Length, v);
+  }
 
   public void SetUniform(string name, Vector4 v)
   {

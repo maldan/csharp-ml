@@ -93,6 +93,7 @@ public class ShaderProgram
       }
 
       var locationCounter = 0;
+      var locationOutCounter = 0;
       foreach (var sharpField in sharpClass.FieldList)
       {
         if (sharpField.HasAttribute("ShaderFieldUniform"))
@@ -100,10 +101,37 @@ public class ShaderProgram
         if (sharpField.HasAttribute("ShaderFieldAttribute"))
           outShader.Add(
             $"layout (location = {locationCounter++}) in {ReplaceTypes(sharpField.Type)} {sharpField.Name};");
+        
+        // In
         if (sharpField.HasAttribute("ShaderFieldIn"))
-          outShader.Add($"in {ReplaceTypes(sharpField.Type)} {sharpField.Name};");
+        {
+          var flat = "";
+          var type = ReplaceTypes(sharpField.Type.Replace("[]", ""));
+          if (type == "int" || type == "uint") flat = "flat";
+          
+          if (sharpField.Type.Contains("[]"))
+          {
+            outShader.Add($"{flat} in {type} {sharpField.Name}[];");
+          }
+          else
+          {
+            outShader.Add($"{flat} in {type} {sharpField.Name};");
+          }
+        }
+        
+        // Out
         if (sharpField.HasAttribute("ShaderFieldOut"))
-          outShader.Add($"out {ReplaceTypes(sharpField.Type)} {sharpField.Name};");
+        {
+          var layout = "";
+          if (sharpClass.Name.Contains("Fragment"))
+          {
+            layout = $"layout(location = {locationOutCounter++})";
+          }
+          var type = ReplaceTypes(sharpField.Type);
+          var flat = "";
+          if (type == "int" || type == "uint") flat = "flat";
+          outShader.Add($"{layout} {flat} out {type} {sharpField.Name};");
+        }
       }
 
       outShader.Add("");

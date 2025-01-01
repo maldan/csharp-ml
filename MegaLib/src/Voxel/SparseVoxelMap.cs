@@ -16,10 +16,13 @@ public class SparseVoxelMap8
   private HashSet<IVector3> _changed = new();
   private VoxelArray8 _lastChunk;
   private IVector3 _lastChunkPosition;
+
+  private IVector3 _lightCurrentPosition = new IVector3(0, 20, 0);
   
   private int _chunkSize;
   public int ChunkCount => _chunks.Count;
   public float VoxelSize = 1f;
+  public uint[] Palette = new uint[256];
 
   public SparseVoxelMap8(int chunkSize = 16)
   {
@@ -47,13 +50,13 @@ public class SparseVoxelMap8
     return new IVector3(localX, localY, localZ);
   }
 
-  public byte this[IVector3 p]
+  public ushort this[IVector3 p]
   {
     get => this[p.X, p.Y, p.Z];
     set => this[p.X, p.Y, p.Z] = value;
   }
 
-  public byte this[int x, int y, int z]
+  public ushort this[int x, int y, int z]
   {
     get
     {
@@ -92,7 +95,7 @@ public class SparseVoxelMap8
         chunk[localPos] = value;
         _lastChunk = chunk;
       }
-      
+
       _changed.Add(chunkPos);
       _lastChunkPosition = chunkPos;
     }
@@ -102,7 +105,7 @@ public class SparseVoxelMap8
   {
     return HasDataAt(p.X, p.Y, p.Z);
   }
-  
+
   public bool HasDataAt(int x, int y, int z)
   {
     /*var chunkPos = GetChunkPosition(x, y, z);
@@ -122,13 +125,14 @@ public class SparseVoxelMap8
       }
       return false;
     }*/
-    
+
     var chunkPos = GetChunkPosition(x, y, z);
     var localPos = GetChunkLocalPosition(x, y, z);
     if (_chunks.TryGetValue(chunkPos, out var chunk))
     {
       return chunk.HasDataAt(localPos);
     }
+
     return false;
   }
 
@@ -142,6 +146,12 @@ public class SparseVoxelMap8
   {
     if (_changed.Count <= 0) return null;
 
+    // Refresh lights
+    /*for (int i = 0; i < 32*32; i++)
+    {
+      LightStep();
+    }*/
+    
     var outList = new Dictionary<IVector3, RO_VoxelMesh>();
 
     Console.WriteLine($"CHANGED: {_changed.Count}");
@@ -173,7 +183,7 @@ public class SparseVoxelMap8
   {
     return ChunkToMeshR(position.X, position.Y, position.Z);
   }
-  
+
   public RO_VoxelMesh ChunkToMeshR2(IVector3 position)
   {
     return ChunkToMeshR2(position.X, position.Y, position.Z);
@@ -193,32 +203,9 @@ public class SparseVoxelMap8
       new(-1, 0, 0), // Left
       new(1, 0, 0) // Right
     ];
-
-    Vector3[,] faceVertices =
-    {
-      // Back
-      { new(0, 0, 0), new(1, 0, 0), new(1, 1, 0), new(0, 1, 0) },
-      // Front
-      { new(1, 0, 1), new(0, 0, 1), new(0, 1, 1), new(1, 1, 1) },
-      // Bottom
-      { new(0, 0, 1), new(1, 0, 1), new(1, 0, 0), new(0, 0, 0) },
-      // Top
-      { new(0, 1, 0), new(1, 1, 0), new(1, 1, 1), new(0, 1, 1) },
-      // Left
-      { new(0, 0, 1), new(0, 0, 0), new(0, 1, 0), new(0, 1, 1) },
-      // Right
-      { new(1, 0, 0), new(1, 0, 1), new(1, 1, 1), new(1, 1, 0) }
-    };
-
-    uint[] faceTriangles = [0, 1, 2, 0, 2, 3]; // Two triangles per face
-
-    var chunkOffset = new IVector3(xx, yy, zz) * _chunkSize;
-    Console.WriteLine(chunkOffset);
-    // var chunkLocalPosition = GetChunkPosition(xx, yy, zz);
-
-    //var chunkOffset = GetChunkPos(xx, yy, zz) * _chunkSize;
-    var rnd = new Mathematics.Random();
     
+    var chunkOffset = new IVector3(xx, yy, zz) * _chunkSize;
+
     for (var x = 0; x < _chunkSize; x++)
     {
       for (var y = 0; y < _chunkSize; y++)
@@ -228,43 +215,43 @@ public class SparseVoxelMap8
           var gx = x + chunkOffset.X;
           var gy = y + chunkOffset.Y;
           var gz = z + chunkOffset.Z;
+          
+          var voxelValue = this[gx, gy, gz];
+          if (voxelValue == 0) continue;
 
-          if (!HasDataAt(gx, gy, gz)) continue;
-
-          var vv = this[gx, gy, gz];
-
-          // Add visible faces
+          // Keep everything except visibility info
+          
+          var voxelInfo = 0;
+          var lightInfo = 0;
+          var voxelColor = Palette[(byte)voxelValue];
+          
+          // Determine which faces are visible
           for (var i = 0; i < 6; i++)
           {
             var neighborPos = new Vector3(gx, gy, gz) + faceNormals[i];
             if (!HasDataAt((int)neighborPos.X, (int)neighborPos.Y, (int)neighborPos.Z))
             {
-              // Generate face
-              var vertices = new Vector3[4];
-              for (var v = 0; v < 4; v++)
-              {
-                vertices[v] = faceVertices[i, v] + new Vector3(gx, gy, gz);
-                vertices[v] *= VoxelSize;
-                vertices[v] -= 0.5f;
-              }
-              
-              /*mesh.AddQuad(
-                vertices,
-                faceTriangles,
-                faceNormals[i],
-                NumberToQuadUV(vv, 8)
-              );*/
+              voxelInfo |= (byte)(1 << i); // Set the bit corresponding to this face
             }
           }
+
+          /*if (!HasDataAt(gx, gy, gz-1) && HasDataAt(gx, gy-1, gz-1))
+          {
+            lightInfo |= 0b0000_0000_0000_0001;
+          }*/
+          
+          if (voxelInfo == 0) continue;
           
           mesh.VertexList.Add(new Vector3(gx, gy, gz));
+          mesh.ColorList.Add(voxelColor);
+          mesh.VoxelInfoList.Add(voxelInfo); // Store voxelInfo with the mesh
+          mesh.ShadowInfoList.Add(lightInfo); // Store voxelInfo with the mesh
         }
       }
     }
 
     return mesh;
   }
-
   
   public Mesh ChunkToMeshR(int xx, int yy, int zz)
   {
@@ -457,28 +444,54 @@ public class SparseVoxelMap8
     return mesh;
   }
 
+  public void LightTraversal(Vector3 position, Vector3 direction)
+  {
+    var pos = position;
+    for (int i = 0; i < 64; i++)
+    {
+      pos += direction;
+      if (HasDataAt((IVector3)pos))
+      {
+        this[(IVector3)pos] |= 0b1100_0000;
+        break;
+      }
+    }
+  }
+  
+  public void LightClear(Vector3 position, Vector3 direction)
+  {
+    var pos = position;
+    for (int i = 0; i < 64; i++)
+    {
+      pos += direction;
+      if (HasDataAt((IVector3)pos))
+      {
+        this[(IVector3)pos] &= 0b0000_0000_0011_1111;
+      }
+    }
+  }
+
+  public void LightStep()
+  {
+    _lightCurrentPosition += new IVector3(1, 0, 0);
+    if (_lightCurrentPosition.X > 32)
+    {
+      _lightCurrentPosition.X = 0;
+      _lightCurrentPosition.Z += 1;
+      if (_lightCurrentPosition.Z > 32)
+      {
+        _lightCurrentPosition.Z = 0;
+      }
+    }
+    LightClear((Vector3)_lightCurrentPosition, new Vector3(-1, -1, -1).Normalized);
+    LightTraversal((Vector3)_lightCurrentPosition, new Vector3(-1, -1, -1).Normalized);
+  }
+  
   public void AddSphere(IVector3 center, float radius, byte value)
   {
     var mx = Matrix4x4.Identity;
     mx = mx.Translate(center.X, center.Y, center.Z);
     AddSphere(mx, radius, value);
-    /*var areaSize = (int)radius;
-
-    for (var i = -areaSize; i < areaSize; i++)
-    {
-      for (var j = -areaSize; j < areaSize; j++)
-      {
-        for (var k = -areaSize; k < areaSize; k++)
-        {
-          var pos = center + new IVector3(i, j, k);
-
-          if (Vector3.Distance((Vector3)center, (Vector3)pos) < radius * 0.5f)
-          {
-            this[pos] = value;
-          }
-        }
-      }
-    }*/
   }
 
   public void AddSphere(Matrix4x4 matrix, float radius, byte value)

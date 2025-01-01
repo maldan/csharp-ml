@@ -90,6 +90,9 @@ public class OpenGL_Context
 
     // Map all buffers
     MapBuffer(mesh.VertexList);
+    MapBuffer(mesh.ColorList);
+    MapBuffer(mesh.VoxelInfoList);
+    MapBuffer(mesh.ShadowInfoList);
   }
 
   public void MapObject(RO_Sprite sprite)
@@ -240,7 +243,52 @@ public class OpenGL_Context
     // Save to buffer
     _textureList[texture.RAW.Id] = textureId;
   }
+  
+  public void MapDepthTexture(Texture_2D<float> texture)
+  {
+    if (texture?.RAW == null) return;
+    if (_textureList.ContainsKey(texture.RAW.Id)) return;
 
+    // Create gl texture
+    uint textureId = 0;
+    OpenGL32.glGenTextures(1, ref textureId);
+    if (textureId == 0) throw new Exception("Can't create texture");
+
+    // Bind
+    OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, textureId);
+
+    // Fill texture
+    OpenGL32.glTexImage2D(
+      OpenGL32.GL_TEXTURE_2D,
+      0,
+      (GLint)OpenGL32.GL_DEPTH_COMPONENT32F,
+      texture.RAW.Width,
+      texture.RAW.Height,
+      0,
+      OpenGL32.GL_DEPTH_COMPONENT, OpenGL32.GL_FLOAT,
+      0
+    );
+
+    OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_MIN_FILTER, (GLint)OpenGL32.GL_LINEAR);
+    OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_MAG_FILTER, (GLint)OpenGL32.GL_LINEAR);
+    OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_WRAP_S, (GLint)OpenGL32.GL_CLAMP_TO_EDGE);
+    OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_WRAP_T, (GLint)OpenGL32.GL_CLAMP_TO_EDGE);
+
+    // Unbind
+    OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, 0);
+
+    // On destroy
+    texture.RAW.OnDestroy += (sender, id) =>
+    {
+      _mutex.WaitOne();
+      _removeTextureQueue.Add(_textureList[id]);
+      _mutex.ReleaseMutex();
+    };
+
+    // Save to buffer
+    _textureList[texture.RAW.Id] = textureId;
+  }
+  
   public void MapTexture<T>(Texture_2D<T> texture)
   {
     if (texture?.RAW == null) return;

@@ -87,6 +87,9 @@ public class LR_Voxel : LR_Base
 
       // Buffer
       Shader.EnableAttribute(mesh.VertexList, "aPosition");
+      Shader.EnableAttribute(mesh.ColorList, "aColor");
+      Shader.EnableAttribute(mesh.VoxelInfoList, "aVoxel");
+      Shader.EnableAttribute(mesh.ShadowInfoList, "aShadow");
       
       //Shader.EnableAttribute(mesh.NormalList, "aNormal");
       //Shader.EnableAttribute(mesh.UV0List, "aUV");
