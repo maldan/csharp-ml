@@ -267,7 +267,7 @@ public struct Matrix4x4
       M30 = M30, M31 = M31, M32 = M32, M33 = M33
     };
   }
-  
+
   public Matrix4x4 Scale(float x, float y, float z)
   {
     return Scale(new Vector3(x, y, z));
@@ -277,6 +277,42 @@ public struct Matrix4x4
   public static Matrix4x4 Inverse(Matrix4x4 matrix)
   {
     return matrix.Inverted;
+  }
+
+  // Single indexer
+  public float this[int index]
+  {
+    get => index switch
+    {
+      0 => M00, 1 => M01, 2 => M02, 3 => M03,
+      4 => M10, 5 => M11, 6 => M12, 7 => M13,
+      8 => M20, 9 => M21, 10 => M22, 11 => M23,
+      12 => M30, 13 => M31, 14 => M32, 15 => M33,
+      _ => throw new IndexOutOfRangeException("Index must be between 0 and 15.")
+    };
+    set
+    {
+      switch (index)
+      {
+        case 0: M00 = value; break;
+        case 1: M01 = value; break;
+        case 2: M02 = value; break;
+        case 3: M03 = value; break;
+        case 4: M10 = value; break;
+        case 5: M11 = value; break;
+        case 6: M12 = value; break;
+        case 7: M13 = value; break;
+        case 8: M20 = value; break;
+        case 9: M21 = value; break;
+        case 10: M22 = value; break;
+        case 11: M23 = value; break;
+        case 12: M30 = value; break;
+        case 13: M31 = value; break;
+        case 14: M32 = value; break;
+        case 15: M33 = value; break;
+        default: throw new IndexOutOfRangeException("Index must be between 0 and 15.");
+      }
+    }
   }
 
   // Scale

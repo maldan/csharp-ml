@@ -17,6 +17,12 @@ namespace MegaLib.Render.Shader;
 public class ShaderFieldUniformAttribute : Attribute;
 
 [AttributeUsage(AttributeTargets.Field)]
+public class ShaderFieldUniformArrayAttribute(int size) : Attribute
+{
+  public int Value { get; } = size;
+}
+
+[AttributeUsage(AttributeTargets.Field)]
 public class ShaderFieldInAttribute : Attribute;
 
 [AttributeUsage(AttributeTargets.Field)]
@@ -89,6 +95,7 @@ public class ShaderProgram
             outShader.Add(line);
           }
         }
+
         outShader.Add("");
       }
 
@@ -96,19 +103,28 @@ public class ShaderProgram
       var locationOutCounter = 0;
       foreach (var sharpField in sharpClass.FieldList)
       {
+        // Uniform fields
         if (sharpField.HasAttribute("ShaderFieldUniform"))
           outShader.Add($"uniform {ReplaceTypes(sharpField.Type)} {sharpField.Name};");
+
+        // Uniform fields
+        if (sharpField.HasAttribute("ShaderFieldUniformArray"))
+        {
+          var arraySize = sharpField.GetAttribute("ShaderFieldUniformArray").PositionalArguments[0];
+          outShader.Add($"uniform {ReplaceTypes(sharpField.Type)} {sharpField.Name}[{arraySize}];");
+        }
+
         if (sharpField.HasAttribute("ShaderFieldAttribute"))
           outShader.Add(
             $"layout (location = {locationCounter++}) in {ReplaceTypes(sharpField.Type)} {sharpField.Name};");
-        
+
         // In
         if (sharpField.HasAttribute("ShaderFieldIn"))
         {
           var flat = "";
           var type = ReplaceTypes(sharpField.Type.Replace("[]", ""));
           if (type == "int" || type == "uint") flat = "flat";
-          
+
           if (sharpField.Type.Contains("[]"))
           {
             outShader.Add($"{flat} in {type} {sharpField.Name}[];");
@@ -118,7 +134,7 @@ public class ShaderProgram
             outShader.Add($"{flat} in {type} {sharpField.Name};");
           }
         }
-        
+
         // Out
         if (sharpField.HasAttribute("ShaderFieldOut"))
         {
@@ -127,6 +143,7 @@ public class ShaderProgram
           {
             layout = $"layout(location = {locationOutCounter++})";
           }
+
           var type = ReplaceTypes(sharpField.Type);
           var flat = "";
           if (type == "int" || type == "uint") flat = "flat";
@@ -178,15 +195,16 @@ public class ShaderProgram
       // Заменяем декларацию переменные типа Vector3 normal = на vec3 normal = 
       methodText = Regex.Replace(methodText, $@"([a-zA-Z0-9\.]+) ([a-zA-Z0-9]+) =",
         (match) => $"{ReplaceTypes(match.Groups[1].Value)} {match.Groups[2].Value} =");
-      
+
       // Заменяем декларацию переменные типа Vector3[] normal = new[] на vec3 normal[] = vec3[]
       methodText = Regex.Replace(methodText, @" = new\[\]\s*\{([\s\S]*?)\};",
-        (match) => @" = new[] (" +match.Groups[1].Value+");");
-      
+        (match) => @" = new[] (" + match.Groups[1].Value + ");");
+
       // Заменяем декларацию переменные типа Vector3[] normal = new[] на vec3 normal[] = vec3[]
       methodText = Regex.Replace(methodText, $@"([a-zA-Z0-9\.]+)\[\] ([a-zA-Z0-9]+) = new\[\]",
-        (match) => $"{ReplaceTypes(match.Groups[1].Value)} {match.Groups[2].Value}[] = {ReplaceTypes(match.Groups[1].Value)}[]");
-      
+        (match) =>
+          $"{ReplaceTypes(match.Groups[1].Value)} {match.Groups[2].Value}[] = {ReplaceTypes(match.Groups[1].Value)}[]");
+
       // Заменяем new Vector3( на vec3(
       methodText = Regex.Replace(methodText, $@"\bnew ([a-zA-Z0-9]+)\(",
         (match) => $"{ReplaceTypes(match.Groups[1].Value)}(");
@@ -235,7 +253,7 @@ public class ShaderProgram
   private static string ReplaceTypes(string sharpType)
   {
     sharpType = sharpType.Split(".").Last();
-    
+
     return sharpType switch
     {
       "Matrix3x3" => "mat3",

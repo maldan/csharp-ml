@@ -91,6 +91,15 @@ public struct Vector2
     };
   }
 
+  public static Vector2 operator -(Vector2 a, float b)
+  {
+    return new Vector2
+    {
+      X = a.X - b,
+      Y = a.Y - b
+    };
+  }
+
   public static Vector2 operator ++(Vector2 a)
   {
     return new Vector2

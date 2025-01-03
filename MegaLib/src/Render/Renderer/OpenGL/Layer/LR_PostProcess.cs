@@ -6,6 +6,7 @@ using MegaLib.OS.Api;
 using MegaLib.Render.Layer;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Scene;
+using MegaLib.Render.Shader;
 
 namespace MegaLib.Render.Renderer.OpenGL.Layer;
 
@@ -39,25 +40,26 @@ public class LR_PostProcess : LR_Base
     context.MapObject(_mesh);
 
     Framebuffer = context.CreateFrameBuffer();
-    
+
     // Generate 64 random sample points in a hemisphere
     var ssaoKernel = new List<float>();
     var random = new Random();
 
-    for (int i = 0; i < 64; i++) {
-      Vector3 sample = new Vector3(
+    for (var i = 0; i < 64; i++)
+    {
+      var sample = new Vector3(
         (float)random.NextDouble() * 2.0f - 1.0f,
         (float)random.NextDouble() * 2.0f - 1.0f,
         (float)random.NextDouble()
       );
       sample = Vector3.Normalize(sample) * (float)random.NextDouble();
-      float scale = (float)i / 64.0f;
+      var scale = (float)i / 64.0f;
       sample *= MathEx.Lerp(0.1f, 1.0f, scale * scale); // Distribute samples
       ssaoKernel.Add(sample.X);
       ssaoKernel.Add(sample.Y);
       ssaoKernel.Add(sample.Z);
     }
-    
+
     _ssaoKernel = ssaoKernel.ToArray();
   }
 
@@ -102,46 +104,46 @@ public class LR_PostProcess : LR_Base
             return viewSpace.xyz / viewSpace.w;
         }
 
+        float remap(float value, float sourceMin, float sourceMax, float targetMin, float targetMax) {
+            return targetMin + ((value - sourceMin) / (sourceMax - sourceMin)) * (targetMax - targetMin);
+        }
+
+float LinearizeDepth(float depth, float near, float far) {
+    return (2.0 * near * far) / (far + near - depth * (far - near));
+}
+
         void main()
         {
-            vec4 normal = vec4(texture(uNormalTexture, vo_UV).rgb, 0.0f);
-            float depth = 1.0f - texture(uDepthTexture, vo_UV).r;
+            vec3 normal = texture(uNormalTexture, vo_UV).rgb;
+            float depth = texture(uDepthTexture, vo_UV).r;
             
-            color = vec4(texture(uScreenTexture, vo_UV).rgb, 1.0);
+            //depth = 1.0f - remap(depth, 1.0, 0.9997, 1.0, 0.0);
+
+            
+            color = vec4(texture(uScreenTexture, vo_UV).rgb, 1.0) * 0.5f;
             
             //color = vec4(texture(uScreenTexture, vo_UV).rgb, 1.0) * 0.001 + vec4(vo_UV.xy, 0.0, 0.0) * 0.1 + normal * 0.03;
             //color.rgb += depth;
             
-            // Reconstruct view-space position
-            vec3 fragPos = ReconstructViewPosition(vo_UV, depth);
-            
-            float occlusion = 0.0;
-            for (int i = 0; i < 64; ++i) {
-                // Sample position in view space
-                vec3 sample = fragPos + uSSAOKernel[i] * 0.5; // Adjust scale if needed
+             float occlusion = 0.0;
+              for (int i = 0; i < 64; ++i) {
+                  vec3 sample = vec3(vo_UV, depth) + uSSAOKernel[i] * 0.1; // Small radius
+                  occlusion += dot(normal, normalize(uSSAOKernel[i]));
+              }
 
-                // Project sample to screen space
-                vec4 offset = uProjectionMatrix * vec4(sample, 1.0);
-                offset.xyz /= offset.w;
-                offset.xyz = offset.xyz * 0.5 + 0.5; // Convert to [0, 1] range
-
-                // Sample depth at the projected position
-                float sampleDepth = texture(uDepthTexture, offset.xy).r;
-
-                // Check if the sample is occluded
-                if (sampleDepth < sample.z) {
-                    occlusion += 1.0;
-                }
-            }
-
-            // Normalize the occlusion factor
-            occlusion = 1.0 - (occlusion / 64.0);
-            
-            color.rgb *= occlusion;
+              float ao = clamp(1.0 - (occlusion / 64.0), 0.0, 1.0);
+              color.rgb += ao * 0.001f; // Output AO directly
+              color.rgb += LinearizeDepth(depth, 32f, 0.1f);
         }";
 
-    Shader.ShaderCode["vertex"] = vertex;
+    /*Shader.ShaderCode["vertex"] = vertex;
     Shader.ShaderCode["fragment"] = fragment;
+    Shader.Compile();*/
+
+    var ss = ShaderProgram.Compile("PostProcessing");
+
+    Shader.ShaderCode["vertex"] = ss["vertex"];
+    Shader.ShaderCode["fragment"] = ss["fragment"];
     Shader.Compile();
   }
 
@@ -167,10 +169,10 @@ public class LR_PostProcess : LR_Base
     Shader.Disable(OpenGL32.GL_BLEND);
     Shader.Disable(OpenGL32.GL_DEPTH_TEST);
     Shader.Disable(OpenGL32.GL_CULL_FACE);
-    
+
     Shader.SetUniform("uSSAOKernel", 3, _ssaoKernel);
     Shader.SetUniform("uProjectionMatrix", Scene.Camera.ProjectionMatrix);
-    
+
     Shader.ActivateTexture(Framebuffer.Texture, "uScreenTexture", 0);
     Shader.ActivateTexture(Framebuffer.NormalTexture, "uNormalTexture", 1);
     Shader.ActivateTexture(Framebuffer.DepthTexture, "uDepthTexture", 2);

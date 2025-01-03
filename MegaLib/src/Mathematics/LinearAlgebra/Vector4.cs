@@ -129,6 +129,7 @@ public struct Vector4
     }
   }
 
+  public Vector2 XY => new(X, Y);
   public Vector3 XYZ => new(X, Y, Z);
 
   public Vector3 DropW()

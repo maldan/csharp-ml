@@ -9,7 +9,7 @@ namespace MegaLib.Render.Shader;
 
 public struct GlIn
 {
-  public Vector4 gl_Position;  // Clip-space position of the vertex.
+  public Vector4 gl_Position; // Clip-space position of the vertex.
   public float gl_PointSize; // Point size, if applicable (optional, used for point primitives).
   public float[] gl_ClipDistance; // Array of user-defined clipping distances.
 }
@@ -18,7 +18,8 @@ public class Shader_Base
 {
   protected List<GlIn> gl_in;
   protected Vector4 gl_Position;
-  
+  protected Vector4 gl_FragCoord;
+
   [ShaderBuiltinMethod]
   protected Vector3 normalize(Vector3 v)
   {
@@ -48,7 +49,7 @@ public class Shader_Base
   {
     return MathF.Pow(a, b);
   }
-  
+
   [ShaderBuiltinMethod]
   protected float abs(float a)
   {
@@ -102,7 +103,7 @@ public class Shader_Base
   {
     return Vector3.Reflect(a, b);
   }
-  
+
   [ShaderBuiltinMethod]
   protected float clamp(float v, float min, float max)
   {
@@ -144,16 +145,19 @@ public class Shader_Base
   {
     return Vector3.Pow(a, b);
   }
-  
+
   [ShaderBuiltinMethod]
   protected void EmitVertex()
   {
-    
   }
-  
+
   [ShaderBuiltinMethod]
   protected void EndPrimitive()
   {
-    
+  }
+
+  public static float remap(float value, float from1, float to1, float from2, float to2)
+  {
+    return from2 + (value - from1) * (to2 - from2) / (to1 - from1);
   }
 }

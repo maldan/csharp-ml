@@ -91,6 +91,38 @@ public class Camera_Perspective : Camera_Base
     }
   }
 
+
+  /*public override void CalculateProjection()
+  {
+    var tanHalfFovy = MathF.Tan(FOV.DegToRad() / 2.0f);
+    var near = Near;
+    var far = Far;
+
+    var matrix = new Matrix4x4();
+
+    matrix[0] = 1.0f / (AspectRatio * tanHalfFovy);
+    matrix[1] = 0.0f;
+    matrix[2] = 0.0f;
+    matrix[3] = 0.0f;
+
+    matrix[4] = 0.0f;
+    matrix[5] = 1.0f / tanHalfFovy;
+    matrix[6] = 0.0f;
+    matrix[7] = 0.0f;
+
+    matrix[8] = 0.0f;
+    matrix[9] = 0.0f;
+    matrix[10] = -(far + near) / (far - near);
+    matrix[11] = -1.0f;
+
+    matrix[12] = 0.0f;
+    matrix[13] = 0.0f;
+    matrix[14] = -(2.0f * far * near) / (far - near);
+    matrix[15] = 0.0f;
+
+    _projectionMatrix = matrix;
+  }*/
+
   public override void CalculateProjection()
   {
     var yScale = 1f / (float)Math.Tan(FOV.DegToRad() / 2);
