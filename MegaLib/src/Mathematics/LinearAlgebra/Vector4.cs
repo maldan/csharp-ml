@@ -206,6 +206,17 @@ public struct Vector4
     return a * s;
   }
 
+  public static Vector4 operator +(Vector4 a, Vector4 b)
+  {
+    return new Vector4
+    {
+      X = a.X * b.X,
+      Y = a.Y * b.Y,
+      Z = a.Z * b.Z,
+      W = a.W * b.W
+    };
+  }
+
   public static Vector4 operator *(Vector4 a, float s)
   {
     return new Vector4

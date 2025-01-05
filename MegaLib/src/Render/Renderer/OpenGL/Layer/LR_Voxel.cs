@@ -42,7 +42,8 @@ public class LR_Voxel : LR_Base
 
     Shader.SetUniform("uProjectionMatrix", Scene.Camera.ProjectionMatrix);
     Shader.SetUniform("uViewMatrix", Scene.Camera.ViewMatrix);
-    Shader.SetUniform("uCameraPosition", Scene.Camera.Position);
+    Shader.SetUniform("uVoxelSize", layer.VoxelMap.VoxelSize);
+    //Shader.SetUniform("uCameraPosition", Scene.Camera.Position);
     if (Scene.Skybox != null) Shader.ActivateTexture(Scene.Skybox, "uSkybox", 10);
 
     var changed = layer.VoxelMap.BuildChanged();
@@ -53,7 +54,7 @@ public class LR_Voxel : LR_Base
         if (_chunks.ContainsKey(pos))
         {
           _chunks[pos] = mesh;
-          
+
           /*_chunks[pos].NormalList.Clear();
           _chunks[pos].VertexList.Clear();
           _chunks[pos].UV0List.Clear();
@@ -90,10 +91,10 @@ public class LR_Voxel : LR_Base
       Shader.EnableAttribute(mesh.ColorList, "aColor");
       Shader.EnableAttribute(mesh.VoxelInfoList, "aVoxel");
       Shader.EnableAttribute(mesh.ShadowInfoList, "aShadow");
-      
+
       //Shader.EnableAttribute(mesh.NormalList, "aNormal");
       //Shader.EnableAttribute(mesh.UV0List, "aUV");
-      
+
       //Shader.EnableAttribute(mesh.TangentList, "aTangent");
       //Shader.EnableAttribute(mesh.BiTangentList, "aBiTangent");
 
@@ -138,7 +139,7 @@ public class LR_Voxel : LR_Base
       // OpenGL32.glDrawElements(OpenGL32.GL_TRIANGLES, mesh.IndexList.Count, OpenGL32.GL_UNSIGNED_INT, IntPtr.Zero);
 
       OpenGL32.glDrawArrays(OpenGL32.GL_POINTS, 0, mesh.VertexList.Count);
-      
+
       // Unbind vao
       OpenGL32.glBindVertexArray(0);
     }

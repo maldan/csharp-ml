@@ -23,6 +23,7 @@ public enum TextureFormat
   RGBA8,
   BGRA8,
   R32F,
+  RGB16F,
   R8
 }
 

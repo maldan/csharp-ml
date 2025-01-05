@@ -153,7 +153,7 @@ public class OpenGL_Context
       side.OnSync = pixels =>
       {
         // Get type
-        var (internalFormat, srcFormat, srcType) = GetTextureType(texture.Options);
+        var (internalFormat, srcFormat, srcType) = GetTextureType(texture.Options.Format);
 
         // Bind
         OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_CUBE_MAP, textureId);
@@ -199,7 +199,7 @@ public class OpenGL_Context
     _cubeTextureList[texture.Id] = textureId;
   }
 
-  public void MapRenderTexture(Texture_2D<RGBA8> texture)
+  /*public void MapRenderTexture(Texture_2D<RGBA8> texture)
   {
     if (texture?.RAW == null) return;
     if (_textureList.ContainsKey(texture.RAW.Id)) return;
@@ -242,9 +242,9 @@ public class OpenGL_Context
 
     // Save to buffer
     _textureList[texture.RAW.Id] = textureId;
-  }
+  }*/
 
-  public void MapRenderTexture(Texture_2D<RGB8> texture)
+  /*public void MapRenderTexture(Texture_2D<RGB8> texture)
   {
     if (texture?.RAW == null) return;
     if (_textureList.ContainsKey(texture.RAW.Id)) return;
@@ -266,6 +266,55 @@ public class OpenGL_Context
       texture.RAW.Height,
       0,
       OpenGL32.GL_RGB, OpenGL32.GL_UNSIGNED_BYTE,
+      0
+    );
+
+    OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_MIN_FILTER, (GLint)OpenGL32.GL_LINEAR);
+    OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_MAG_FILTER, (GLint)OpenGL32.GL_LINEAR);
+    OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_WRAP_S, (GLint)OpenGL32.GL_CLAMP_TO_EDGE);
+    OpenGL32.glTexParameteri(OpenGL32.GL_TEXTURE_2D, OpenGL32.GL_TEXTURE_WRAP_T, (GLint)OpenGL32.GL_CLAMP_TO_EDGE);
+
+    // Unbind
+    OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, 0);
+
+    // On destroy
+    texture.RAW.OnDestroy += (sender, id) =>
+    {
+      _mutex.WaitOne();
+      _removeTextureQueue.Add(_textureList[id]);
+      _mutex.ReleaseMutex();
+    };
+
+    // Save to buffer
+    _textureList[texture.RAW.Id] = textureId;
+  }*/
+
+  public void MapRenderTexture<T>(Texture_2D<T> texture)
+  {
+    if (texture?.RAW == null) return;
+    if (_textureList.ContainsKey(texture.RAW.Id)) return;
+
+    // Create gl texture
+    uint textureId = 0;
+    OpenGL32.glGenTextures(1, ref textureId);
+    if (textureId == 0) throw new Exception("Can't create texture");
+
+    // Get type
+    var (internalFormat, srcFormat, srcType) = GetTextureType(texture.Options.Format);
+
+    // Bind
+    OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, textureId);
+
+    // Fill texture
+    OpenGL32.glTexImage2D(
+      OpenGL32.GL_TEXTURE_2D,
+      0,
+      internalFormat,
+      texture.RAW.Width,
+      texture.RAW.Height,
+      0,
+      srcFormat,
+      srcType,
       0
     );
 
@@ -348,7 +397,7 @@ public class OpenGL_Context
     texture.RAW.OnSync = pixels =>
     {
       // Get type
-      var (internalFormat, srcFormat, srcType) = GetTextureType(texture.Options);
+      var (internalFormat, srcFormat, srcType) = GetTextureType(texture.Options.Format);
 
       // Bind
       OpenGL32.glBindTexture(OpenGL32.GL_TEXTURE_2D, textureId);
@@ -449,13 +498,13 @@ public class OpenGL_Context
     _bufferList[buffer.Id] = bufferId;
   }
 
-  public (int internalFormat, uint srcFormat, uint srcType) GetTextureType(TextureOptions options)
+  public (int internalFormat, uint srcFormat, uint srcType) GetTextureType(TextureFormat format)
   {
     int internalFormat;
     uint srcFormat;
     uint srcType;
 
-    switch (options.Format)
+    switch (format)
     {
       case TextureFormat.BGR8:
         internalFormat = (int)OpenGL32.GL_RGBA;
@@ -486,6 +535,11 @@ public class OpenGL_Context
         internalFormat = (int)OpenGL32.GL_R8;
         srcFormat = OpenGL32.GL_RED;
         srcType = OpenGL32.GL_UNSIGNED_BYTE;
+        break;
+      case TextureFormat.RGB16F:
+        internalFormat = (int)OpenGL32.GL_RGB16F;
+        srcFormat = OpenGL32.GL_RGB;
+        srcType = OpenGL32.GL_HALF_FLOAT;
         break;
       default:
         throw new Exception("Unsupported texture format");

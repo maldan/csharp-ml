@@ -234,6 +234,16 @@ public struct Vector3 : IBinarySerializable
     };
   }
 
+  public static Vector3 operator +(Vector3 a, float b)
+  {
+    return new Vector3
+    {
+      X = a.X + b,
+      Y = a.Y + b,
+      Z = a.Z + b
+    };
+  }
+
   public static Vector3 operator +(Vector3 a, Vector2 b)
   {
     return new Vector3
@@ -430,7 +440,7 @@ public struct Vector3 : IBinarySerializable
   {
     return new Vector3(MathF.Floor(X), MathF.Floor(Y), MathF.Floor(Z));
   }
-  
+
   public Vector3 Round()
   {
     return new Vector3(MathF.Round(X), MathF.Round(Y), MathF.Round(Z));

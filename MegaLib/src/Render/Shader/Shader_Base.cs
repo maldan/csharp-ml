@@ -27,6 +27,12 @@ public class Shader_Base
   }
 
   [ShaderBuiltinMethod]
+  protected Vector3 cross(Vector3 v, Vector3 v2)
+  {
+    return Vector3.Cross(v2, v.Normalized);
+  }
+
+  [ShaderBuiltinMethod]
   protected Matrix3x3 inverse(Matrix3x3 m)
   {
     return Matrix3x3.Inverse(m);
@@ -86,7 +92,26 @@ public class Shader_Base
   }
 
   [ShaderBuiltinMethod]
+  protected float ceil(float v1)
+  {
+    return MathF.Ceiling(v1);
+  }
+
+  [ShaderBuiltinMethod]
+  protected float exp(float v1)
+  {
+    return MathF.Exp(v1);
+  }
+
+  [ShaderBuiltinMethod]
   protected float mix(float v1, float v2, float t)
+  {
+    throw new Exception("FUCK");
+    return 0;
+  }
+
+  [ShaderBuiltinMethod]
+  protected float smoothstep(float v1, float v2, float t)
   {
     throw new Exception("FUCK");
     return 0;
@@ -135,6 +160,12 @@ public class Shader_Base
   }
 
   [ShaderBuiltinMethod]
+  protected float toFloat(int x)
+  {
+    return (float)x;
+  }
+
+  [ShaderBuiltinMethod]
   protected Vector4 texture(Texture_Cube a, Vector3 v)
   {
     return new Vector4();
@@ -159,5 +190,23 @@ public class Shader_Base
   public static float remap(float value, float from1, float to1, float from2, float to2)
   {
     return from2 + (value - from1) * (to2 - from2) / (to1 - from1);
+  }
+
+  public float DepthToLinear(float near, float far, float depth)
+  {
+    var z = depth;
+    var zBufferParams = new Vector4(
+      1.0f - far / near, // x
+      far / near, // y
+      (1.0f - far / near) / far, // z
+      far / near / far // w
+    );
+    var linearDepth = 1.0f / (zBufferParams.Z * z + zBufferParams.W) / (far - near);
+    return linearDepth;
+  }
+
+  public float DepthToLinear(Vector2 nf, float depth)
+  {
+    return DepthToLinear(nf.X, nf.Y, depth);
   }
 }

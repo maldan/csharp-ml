@@ -135,7 +135,7 @@ public class OpenGL_Renderer : IRenderer
     OpenGL32.glViewport(0, 0, width, height);
 
     // Поменялся
-    if (old != _viewport) (_scene.PostProcessLayer.LayerRenderer as LR_PostProcess).Framebuffer.Resize(width, height);
+    if (old != _viewport) (_scene.PostProcessLayer.LayerRenderer as LR_PostProcess).ResizeFramebuffer(width, height);
   }
 
   public Render_Scene Scene

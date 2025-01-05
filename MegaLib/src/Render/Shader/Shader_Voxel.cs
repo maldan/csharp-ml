@@ -31,10 +31,13 @@ public class VoxelGeometryShader : Shader_Base
   [ShaderFieldUniform] public Matrix4x4 uProjectionMatrix;
   [ShaderFieldUniform] public Matrix4x4 uViewMatrix;
   [ShaderFieldUniform] public Vector3 uCameraPosition;
+  [ShaderFieldUniform] public float uVoxelSize;
 
   [ShaderFieldOut] public Vector3 vo_WorldPosition;
   [ShaderFieldOut] public Vector4 vo_ScreenPosition;
+  [ShaderFieldOut] public Vector4 vo_ViewPosition;
   [ShaderFieldOut] public Vector3 vo_Normal;
+  [ShaderFieldOut] public Vector3 vo_ViewNormal;
   [ShaderFieldOut] public float vo_Light;
   [ShaderFieldOut] public int go_Shadow;
   [ShaderFieldOut] public uint go_Color;
@@ -92,77 +95,85 @@ public class VoxelGeometryShader : Shader_Base
     if (normal.Y == 1.0f || normal.X == -1.0f || normal.Z == -1.0f) // Front-facing
     {
       vo_WorldPosition = bottomLeft;
-      vo_Normal = normalize((uViewMatrix * new Vector4(normal, 0.0f)).XYZ);
+      vo_Normal = normalize(normal);
+      vo_ViewNormal = (uViewMatrix * new Vector4(vo_Normal, 0.0f)).XYZ;
       vo_Light = lightValue;
       go_Shadow = vo_Shadow[0];
       go_Color = vo_Color[0];
       gl_Position = uProjectionMatrix * uViewMatrix * new Vector4(bottomLeft, 1.0f);
-      vo_ScreenPosition = gl_Position;
+      vo_ViewPosition = uViewMatrix * new Vector4(bottomLeft, 1.0f);
       EmitVertex();
 
       vo_WorldPosition = bottomRight;
-      vo_Normal = normalize((uViewMatrix * new Vector4(normal, 0.0f)).XYZ);
+      vo_Normal = normalize(normal);
+      vo_ViewNormal = (uViewMatrix * new Vector4(vo_Normal, 0.0f)).XYZ;
       vo_Light = lightValue;
       go_Shadow = vo_Shadow[0];
       go_Color = vo_Color[0];
       gl_Position = uProjectionMatrix * uViewMatrix * new Vector4(bottomRight, 1.0f);
-      vo_ScreenPosition = gl_Position;
+      vo_ViewPosition = uViewMatrix * new Vector4(bottomRight, 1.0f);
       EmitVertex();
 
       vo_WorldPosition = topLeft;
-      vo_Normal = normalize((uViewMatrix * new Vector4(normal, 0.0f)).XYZ);
+      vo_Normal = normalize(normal);
+      vo_ViewNormal = (uViewMatrix * new Vector4(vo_Normal, 0.0f)).XYZ;
       vo_Light = lightValue;
       go_Shadow = vo_Shadow[0];
       go_Color = vo_Color[0];
       gl_Position = uProjectionMatrix * uViewMatrix * new Vector4(topLeft, 1.0f);
-      vo_ScreenPosition = gl_Position;
+      vo_ViewPosition = uViewMatrix * new Vector4(topLeft, 1.0f);
       EmitVertex();
 
       vo_WorldPosition = topRight;
-      vo_Normal = normalize((uViewMatrix * new Vector4(normal, 0.0f)).XYZ);
+      vo_Normal = normalize(normal);
+      vo_ViewNormal = (uViewMatrix * new Vector4(vo_Normal, 0.0f)).XYZ;
       vo_Light = lightValue;
       go_Shadow = vo_Shadow[0];
       go_Color = vo_Color[0];
       gl_Position = uProjectionMatrix * uViewMatrix * new Vector4(topRight, 1.0f);
-      vo_ScreenPosition = gl_Position;
+      vo_ViewPosition = uViewMatrix * new Vector4(topRight, 1.0f);
       EmitVertex();
     }
     else // Back-facing
     {
       vo_WorldPosition = bottomLeft;
-      vo_Normal = normalize((uViewMatrix * new Vector4(normal, 0.0f)).XYZ);
+      vo_Normal = normalize(normal);
+      vo_ViewNormal = (uViewMatrix * new Vector4(vo_Normal, 0.0f)).XYZ;
       vo_Light = lightValue;
       go_Shadow = vo_Shadow[0];
       go_Color = vo_Color[0];
       gl_Position = uProjectionMatrix * uViewMatrix * new Vector4(bottomLeft, 1.0f);
-      vo_ScreenPosition = gl_Position;
+      vo_ViewPosition = uViewMatrix * new Vector4(bottomLeft, 1.0f);
       EmitVertex();
 
       vo_WorldPosition = topLeft;
-      vo_Normal = normalize((uViewMatrix * new Vector4(normal, 0.0f)).XYZ);
+      vo_Normal = normalize(normal);
+      vo_ViewNormal = (uViewMatrix * new Vector4(vo_Normal, 0.0f)).XYZ;
       vo_Light = lightValue;
       go_Shadow = vo_Shadow[0];
       go_Color = vo_Color[0];
       gl_Position = uProjectionMatrix * uViewMatrix * new Vector4(topLeft, 1.0f);
-      vo_ScreenPosition = gl_Position;
+      vo_ViewPosition = uViewMatrix * new Vector4(topLeft, 1.0f);
       EmitVertex();
 
       vo_WorldPosition = bottomRight;
-      vo_Normal = normalize((uViewMatrix * new Vector4(normal, 0.0f)).XYZ);
+      vo_Normal = normalize(normal);
+      vo_ViewNormal = (uViewMatrix * new Vector4(vo_Normal, 0.0f)).XYZ;
       vo_Light = lightValue;
       go_Shadow = vo_Shadow[0];
       go_Color = vo_Color[0];
       gl_Position = uProjectionMatrix * uViewMatrix * new Vector4(bottomRight, 1.0f);
-      vo_ScreenPosition = gl_Position;
+      vo_ViewPosition = uViewMatrix * new Vector4(bottomRight, 1.0f);
       EmitVertex();
 
       vo_WorldPosition = topRight;
-      vo_Normal = normalize((uViewMatrix * new Vector4(normal, 0.0f)).XYZ);
+      vo_Normal = normalize(normal);
+      vo_ViewNormal = (uViewMatrix * new Vector4(vo_Normal, 0.0f)).XYZ;
       vo_Light = lightValue;
       go_Shadow = vo_Shadow[0];
       go_Color = vo_Color[0];
       gl_Position = uProjectionMatrix * uViewMatrix * new Vector4(topRight, 1.0f);
-      vo_ScreenPosition = gl_Position;
+      vo_ViewPosition = uViewMatrix * new Vector4(topRight, 1.0f);
       EmitVertex();
     }
 
@@ -178,12 +189,12 @@ public class VoxelGeometryShader : Shader_Base
     var bb = centerClip.W;
     var centerNDC = aa / bb; // Perform perspective divide
 
-    if (centerNDC.X < -0.9f || centerNDC.X > 0.9f)
+    if (centerNDC.X < -1.1f || centerNDC.X > 1.1f)
     {
       return;
     }
 
-    if (centerNDC.Y < -0.9f || centerNDC.Y > 0.9f)
+    if (centerNDC.Y < -1.1f || centerNDC.Y > 1.1f)
     {
       return;
     }
@@ -197,12 +208,12 @@ public class VoxelGeometryShader : Shader_Base
     var leftMask = 1 << 4; // 00010000 - Left face
     var rightMask = 1 << 5; // 00100000 - Right face
 
-    if ((vo_Voxel[0] & backMask) != 0) GenerateFace(center, 0.5f, new Vector3(0, 0, -1));
-    if ((vo_Voxel[0] & frontMask) != 0) GenerateFace(center, 0.5f, new Vector3(0, 0, 1));
-    if ((vo_Voxel[0] & topMask) != 0) GenerateFace(center, 0.5f, new Vector3(0, 1, 0));
-    if ((vo_Voxel[0] & bottomMask) != 0) GenerateFace(center, 0.5f, new Vector3(0, -1, 0));
-    if ((vo_Voxel[0] & leftMask) != 0) GenerateFace(center, 0.5f, new Vector3(-1, 0, 0));
-    if ((vo_Voxel[0] & rightMask) != 0) GenerateFace(center, 0.5f, new Vector3(1, 0, 0));
+    if ((vo_Voxel[0] & backMask) != 0) GenerateFace(center, uVoxelSize * 0.5f, new Vector3(0, 0, -1));
+    if ((vo_Voxel[0] & frontMask) != 0) GenerateFace(center, uVoxelSize * 0.5f, new Vector3(0, 0, 1));
+    if ((vo_Voxel[0] & topMask) != 0) GenerateFace(center, uVoxelSize * 0.5f, new Vector3(0, 1, 0));
+    if ((vo_Voxel[0] & bottomMask) != 0) GenerateFace(center, uVoxelSize * 0.5f, new Vector3(0, -1, 0));
+    if ((vo_Voxel[0] & leftMask) != 0) GenerateFace(center, uVoxelSize * 0.5f, new Vector3(-1, 0, 0));
+    if ((vo_Voxel[0] & rightMask) != 0) GenerateFace(center, uVoxelSize * 0.5f, new Vector3(1, 0, 0));
 
     /*GenerateFace(center, 0.5f, new Vector3(0, 1, 0));
     GenerateFace(center, 0.5f, new Vector3(0, -1, 0));
@@ -217,17 +228,20 @@ public class VoxelFragmentShader : Shader_Base
 {
   [ShaderFieldIn] public Vector3 vo_WorldPosition;
   [ShaderFieldIn] public Vector4 vo_ScreenPosition;
+  [ShaderFieldIn] public Vector4 vo_ViewPosition;
 
   [ShaderFieldIn] public Vector2 vo_UV;
 
   //[ShaderFieldIn] public Vector3 vo_CameraPosition;
   [ShaderFieldIn] public Vector3 vo_Normal;
+  [ShaderFieldIn] public Vector3 vo_ViewNormal;
   [ShaderFieldIn] public float vo_Light;
   [ShaderFieldIn] public int go_Shadow;
   [ShaderFieldIn] public uint go_Color;
 
   [ShaderFieldOut] public Vector4 fragColor;
   [ShaderFieldOut] public Vector4 fragNormal;
+  [ShaderFieldOut] public Vector4 fragPosition;
 
   [ShaderFieldUniform] public Texture_2D<RGBA32F> uAlbedoTexture;
   [ShaderFieldUniform] public Texture_2D<RGBA32F> uNormalTexture;
@@ -285,13 +299,18 @@ public class VoxelFragmentShader : Shader_Base
     // Gamma
     //finalColor = pow(finalColor, new Vector3(1.0f / 2.2f));
 
-    fragColor = finalColor;
-    fragColor.A = remap(vo_ScreenPosition.Z / vo_ScreenPosition.W, -1, 1, 0, 1f);
 
-    var nx = remap(normal.X, -1.0f, 1.0f, 0.0f, 1.0f);
-    var ny = remap(normal.Y, -1.0f, 1.0f, 0.0f, 1.0f);
-    var nz = remap(normal.Z, -1.0f, 1.0f, 0.0f, 1.0f);
+    // fragColor.A = remap(vo_ScreenPosition.Z / vo_ScreenPosition.W, -1, 1, 0, 1f);
+
+
+    fragColor = finalColor;
+
+    var nx = remap(vo_ViewNormal.X, -1.0f, 1.0f, 0.0f, 1.0f);
+    var ny = remap(vo_ViewNormal.Y, -1.0f, 1.0f, 0.0f, 1.0f);
+    var nz = remap(vo_ViewNormal.Z, -1.0f, 1.0f, 0.0f, 1.0f);
     fragNormal = new Vector4(nx, ny, nz, 1.0f);
+
+    fragPosition = new Vector4(vo_ViewPosition.X, vo_ViewPosition.Y, vo_ViewPosition.Z, 1.0f);
 
     /*var mat = getMaterial(uAlbedoTexture, uNormalTexture, uRoughnessTexture, uMetallicTexture, vo_UV, vo_TBN);
 

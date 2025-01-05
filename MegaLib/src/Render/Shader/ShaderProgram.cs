@@ -111,7 +111,7 @@ public class ShaderProgram
         if (sharpField.HasAttribute("ShaderFieldUniformArray"))
         {
           var arraySize = sharpField.GetAttribute("ShaderFieldUniformArray").PositionalArguments[0];
-          outShader.Add($"uniform {ReplaceTypes(sharpField.Type)} {sharpField.Name}[{arraySize}];");
+          outShader.Add($"uniform {ReplaceTypes(sharpField.Type).Replace("[]", "")} {sharpField.Name}[{arraySize}];");
         }
 
         if (sharpField.HasAttribute("ShaderFieldAttribute"))
@@ -181,7 +181,13 @@ public class ShaderProgram
       var methodHeader = "";
       methodHeader += $"{returnType} {methodName}";
       methodHeader += "(";
-      methodHeader += string.Join(", ", sharpMethod.ParameterList.Select(x => $"{ReplaceTypes(x.Type)} {x.Name}"));
+
+      // Fill function arguments
+      methodHeader += string.Join(
+        ", ",
+        sharpMethod.ParameterList.Select(x => $"{FixArrayType(ReplaceTypes(x.Type) + " " + x.Name)}")
+      );
+
       methodHeader += ") {";
       outShader.Add(methodHeader);
 
@@ -228,6 +234,7 @@ public class ShaderProgram
       // Привидение типов
       methodText = methodText.Replace("toInt(", "int(");
       methodText = methodText.Replace("toUInt(", "uint(");
+      methodText = methodText.Replace("toFloat(", "float(");
 
       // Для размера точек
       methodText = methodText.Replace("float gl_PointSize", "gl_PointSize");
@@ -250,11 +257,25 @@ public class ShaderProgram
     return string.Join("\n", outShader);
   }
 
+  // Replace vec3[] name -> vec3 name[]
+  private static string FixArrayType(string typeAndName)
+  {
+    if (typeAndName.Contains("[]"))
+    {
+      return typeAndName.Replace("[]", "") + "[]";
+    }
+
+    return typeAndName;
+  }
+
   private static string ReplaceTypes(string sharpType)
   {
     sharpType = sharpType.Split(".").Last();
 
-    return sharpType switch
+    var isArray = sharpType.Contains("[]");
+    if (isArray) sharpType = sharpType.Replace("[]", "");
+
+    var outType = sharpType switch
     {
       "Matrix3x3" => "mat3",
       "Matrix4x4" => "mat4",
@@ -265,7 +286,6 @@ public class ShaderProgram
 
       "Vector2" => "vec2",
       "Vector3" => "vec3",
-      "Vector3[]" => "vec3",
       "Vector4" => "vec4",
       "Texture_2D<float>" => "sampler2D",
       "Texture_2D<RGBA32F>" => "sampler2D",
@@ -273,6 +293,7 @@ public class ShaderProgram
       "Texture_Cube" => "samplerCube",
       _ => sharpType
     };
+    return isArray ? outType + "[]" : outType;
   }
 
   private static string GetShaderText(string resourceName)

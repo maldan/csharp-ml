@@ -3,18 +3,27 @@ using System.Collections.Generic;
 using MegaLib.Ext;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
+using MegaLib.Render.Color;
 using MegaLib.Render.Layer;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Scene;
 using MegaLib.Render.Shader;
+using MegaLib.Render.Texture;
 
 namespace MegaLib.Render.Renderer.OpenGL.Layer;
 
 public class LR_PostProcess : LR_Base
 {
   private RO_Mesh _mesh;
-  public OpenGL_Framebuffer Framebuffer;
+  private OpenGL_Framebuffer _framebufferSSAO;
+
+  private OpenGL_Framebuffer _framebufferFinal;
+
   private float[] _ssaoKernel;
+  private Texture_2D<float> _randomNoise;
+
+  private OpenGL_Shader _shaderSSAO;
+  private OpenGL_Shader _shaderFinal;
 
   public LR_PostProcess(OpenGL_Context context, Layer_Base layer, Render_Scene scene) : base(context, layer, scene)
   {
@@ -39,7 +48,18 @@ public class LR_PostProcess : LR_Base
 
     context.MapObject(_mesh);
 
-    Framebuffer = context.CreateFrameBuffer();
+    _framebufferSSAO = context.CreateFrameBuffer();
+    _framebufferSSAO.Init();
+    _framebufferSSAO.CaptureTexture("color", TextureFormat.RGB8, 0);
+    _framebufferSSAO.CaptureTexture("viewNormal", TextureFormat.RGB8, 1);
+    _framebufferSSAO.CaptureTexture("viewPosition", TextureFormat.RGB16F, 2);
+    _framebufferSSAO.CaptureDepth("depth");
+    _framebufferSSAO.FinishAttachment();
+
+    _framebufferFinal = context.CreateFrameBuffer();
+    _framebufferFinal.Init();
+    _framebufferFinal.CaptureTexture("occlusion", TextureFormat.RGB8, 0);
+    _framebufferFinal.FinishAttachment();
 
     // Generate 64 random sample points in a hemisphere
     var ssaoKernel = new List<float>();
@@ -60,129 +80,87 @@ public class LR_PostProcess : LR_Base
       ssaoKernel.Add(sample.Z);
     }
 
+    _randomNoise = new Texture_2D<float>(4, 4);
+    _randomNoise.Options.FiltrationMode = TextureFiltrationMode.Nearest;
+    _randomNoise.Options.WrapMode = TextureWrapMode.Repeat;
+    for (var i = 0; i < 4 * 4; i++) _randomNoise.RAW[i] = (float)random.NextDouble();
+    context.MapTexture(_randomNoise);
+
     _ssaoKernel = ssaoKernel.ToArray();
   }
 
   public override void Init()
   {
-    // language=glsl
-    var vertex = @"#version 330 core
-        precision highp float;
-        precision highp int;
-        precision highp usampler2D;
-        precision highp sampler2D;
+    var ss = ShaderProgram.Compile("PostProcessingSSAO");
+    _shaderSSAO = new OpenGL_Shader
+    {
+      Context = Context,
+      ShaderCode =
+      {
+        ["vertex"] = ss["vertex"],
+        ["fragment"] = ss["fragment"]
+      }
+    };
+    _shaderSSAO.Compile();
 
-        layout (location = 0) in vec3 aPosition;
-        layout (location = 1) in vec2 aUV;
-        
-        out vec2 vo_UV;
-        
-        void main() {
-            gl_Position = vec4(aPosition.x, aPosition.y, 0.0, 1.0); 
-            vo_UV = aUV;
-        }";
-
-    // language=glsl
-    var fragment = @"#version 330 core
-        precision highp float;
-        precision highp int;
-        precision highp sampler2D;
-
-        in vec2 vo_UV;
-        
-        out vec4 color;
-        
-        uniform vec3 uSSAOKernel[64];
-        uniform mat4 uProjectionMatrix;
-        uniform sampler2D uScreenTexture;
-        uniform sampler2D uNormalTexture;
-        uniform sampler2D uDepthTexture;
-        
-        vec3 ReconstructViewPosition(vec2 uv, float depth) {
-            vec4 clipSpace = vec4(uv * 2.0 - 1.0, depth, 1.0);
-            vec4 viewSpace = inverse(uProjectionMatrix) * clipSpace;
-            return viewSpace.xyz / viewSpace.w;
-        }
-
-        float remap(float value, float sourceMin, float sourceMax, float targetMin, float targetMax) {
-            return targetMin + ((value - sourceMin) / (sourceMax - sourceMin)) * (targetMax - targetMin);
-        }
-
-float LinearizeDepth(float depth, float near, float far) {
-    return (2.0 * near * far) / (far + near - depth * (far - near));
-}
-
-        void main()
-        {
-            vec3 normal = texture(uNormalTexture, vo_UV).rgb;
-            float depth = texture(uDepthTexture, vo_UV).r;
-            
-            //depth = 1.0f - remap(depth, 1.0, 0.9997, 1.0, 0.0);
-
-            
-            color = vec4(texture(uScreenTexture, vo_UV).rgb, 1.0) * 0.5f;
-            
-            //color = vec4(texture(uScreenTexture, vo_UV).rgb, 1.0) * 0.001 + vec4(vo_UV.xy, 0.0, 0.0) * 0.1 + normal * 0.03;
-            //color.rgb += depth;
-            
-             float occlusion = 0.0;
-              for (int i = 0; i < 64; ++i) {
-                  vec3 sample = vec3(vo_UV, depth) + uSSAOKernel[i] * 0.1; // Small radius
-                  occlusion += dot(normal, normalize(uSSAOKernel[i]));
-              }
-
-              float ao = clamp(1.0 - (occlusion / 64.0), 0.0, 1.0);
-              color.rgb += ao * 0.001f; // Output AO directly
-              color.rgb += LinearizeDepth(depth, 32f, 0.1f);
-        }";
-
-    /*Shader.ShaderCode["vertex"] = vertex;
-    Shader.ShaderCode["fragment"] = fragment;
-    Shader.Compile();*/
-
-    var ss = ShaderProgram.Compile("PostProcessing");
-
-    Shader.ShaderCode["vertex"] = ss["vertex"];
-    Shader.ShaderCode["fragment"] = ss["fragment"];
-    Shader.Compile();
+    ss = ShaderProgram.Compile("PostProcessing");
+    _shaderFinal = new OpenGL_Shader
+    {
+      Context = Context,
+      ShaderCode =
+      {
+        ["vertex"] = ss["vertex"],
+        ["fragment"] = ss["fragment"]
+      }
+    };
+    _shaderFinal.Compile();
   }
 
   public override void BeforeRender()
   {
-    Framebuffer.Bind();
-    Framebuffer.Clear();
+    _framebufferSSAO.Bind();
+    _framebufferSSAO.Clear();
   }
 
   public override void AfterRender()
   {
-    Framebuffer.Unbind();
+    _framebufferSSAO.Unbind();
   }
 
-  public override void Render()
+  public void ResizeFramebuffer(ushort width, ushort height)
+  {
+    _framebufferSSAO.Resize(width, height);
+    _framebufferFinal.Resize(width, height);
+  }
+
+  private void SSAO_Pass()
   {
     var layer = (Layer_PostProcess)Layer;
-    //var ppl = Scene.GetLayer<Layer_Capture>();
-    //var ppl2 = (LR_Capture)ppl.LayerRenderer;
-    // Console.WriteLine(ppl2.Framebuffer.Id);
+    var shader = _shaderSSAO;
 
-    Shader.Use();
-    Shader.Disable(OpenGL32.GL_BLEND);
-    Shader.Disable(OpenGL32.GL_DEPTH_TEST);
-    Shader.Disable(OpenGL32.GL_CULL_FACE);
+    shader.Use();
+    shader.Disable(OpenGL32.GL_BLEND);
+    shader.Disable(OpenGL32.GL_DEPTH_TEST);
+    shader.Disable(OpenGL32.GL_CULL_FACE);
 
-    Shader.SetUniform("uSSAOKernel", 3, _ssaoKernel);
-    Shader.SetUniform("uProjectionMatrix", Scene.Camera.ProjectionMatrix);
+    shader.IsStrictMode = false;
+    shader.SetUniform("uSSAOKernel", 3, _ssaoKernel);
+    shader.IsStrictMode = true;
 
-    Shader.ActivateTexture(Framebuffer.Texture, "uScreenTexture", 0);
-    Shader.ActivateTexture(Framebuffer.NormalTexture, "uNormalTexture", 1);
-    Shader.ActivateTexture(Framebuffer.DepthTexture, "uDepthTexture", 2);
+    shader.PassDefaultUniform(Scene.Camera);
+
+    shader.ActivateTexture(_framebufferSSAO.GetTexture<RGB8>("color"), "uScreenTexture", 0);
+    shader.ActivateTexture(_framebufferSSAO.GetTexture<RGB8>("viewNormal"), "uViewNormalTexture", 1);
+    shader.ActivateTexture(_framebufferSSAO.GetTexture<RGB16F>("viewPosition"), "uViewPositionTexture", 2);
+    shader.ActivateTexture(_framebufferSSAO.GetTexture<float>("depth"), "uDepthTexture", 3);
+    shader.ActivateTexture(_randomNoise, "uRandomNoiseTexture", 4);
 
     // Bind vao
     OpenGL32.glBindVertexArray(Context.GetVaoId(_mesh));
 
     // Buffer
-    Shader.EnableAttribute(_mesh.VertexList, "aPosition");
-    Shader.EnableAttribute(_mesh.UV0List, "aUV");
+    shader.EnableAttribute(_mesh.VertexList, "aPosition");
+    shader.EnableAttribute(_mesh.UV0List, "aUV");
 
     // Bind indices
     OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(_mesh.IndexList));
@@ -192,5 +170,45 @@ float LinearizeDepth(float depth, float near, float far) {
 
     // Unbind vao
     OpenGL32.glBindVertexArray(0);
+  }
+
+  private void Final_Pass()
+  {
+    var layer = (Layer_PostProcess)Layer;
+    var shader = _shaderFinal;
+
+    shader.Use();
+    shader.Disable(OpenGL32.GL_BLEND);
+    shader.Disable(OpenGL32.GL_DEPTH_TEST);
+    shader.Disable(OpenGL32.GL_CULL_FACE);
+
+    shader.PassDefaultUniform(Scene.Camera);
+
+    shader.ActivateTexture(_framebufferSSAO.GetTexture<RGB8>("color"), "uScreenTexture", 0);
+    shader.ActivateTexture(_framebufferFinal.GetTexture<RGB8>("occlusion"), "uOcclusionTexture", 1);
+
+    // Bind vao
+    OpenGL32.glBindVertexArray(Context.GetVaoId(_mesh));
+
+    // Buffer
+    shader.EnableAttribute(_mesh.VertexList, "aPosition");
+    shader.EnableAttribute(_mesh.UV0List, "aUV");
+
+    // Bind indices
+    OpenGL32.glBindBuffer(OpenGL32.GL_ELEMENT_ARRAY_BUFFER, Context.GetBufferId(_mesh.IndexList));
+
+    // Draw
+    OpenGL32.glDrawElements(OpenGL32.GL_TRIANGLES, _mesh.IndexList.Count, OpenGL32.GL_UNSIGNED_INT, IntPtr.Zero);
+
+    // Unbind vao
+    OpenGL32.glBindVertexArray(0);
+  }
+
+  public override void Render()
+  {
+    _framebufferFinal.Bind();
+    SSAO_Pass();
+    _framebufferFinal.Unbind();
+    Final_Pass();
   }
 }

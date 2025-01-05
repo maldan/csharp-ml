@@ -23,6 +23,8 @@ public class SkinVertex : Shader_Base
   [ShaderFieldOut] public Vector2 vo_UV;
   [ShaderFieldOut] public Matrix3x3 vo_TBN;
   [ShaderFieldOut] public Vector3 vo_CameraPosition;
+  [ShaderFieldOut] public Vector3 vo_ViewNormal;
+  [ShaderFieldOut] public Vector4 vo_ViewPosition;
 
   public IVector2 getBoneTexelById(uint id, int ch)
   {
@@ -110,6 +112,9 @@ public class SkinVertex : Shader_Base
     // Передаём текстурные координаты
     vo_UV = aUV;
 
+    vo_ViewPosition = uViewMatrix * skinMatrix * new Vector4(aPosition.X, aPosition.Y, aPosition.Z, 1.0f);
+    vo_ViewNormal = (uViewMatrix * skinMatrix * new Vector4(aNormal.X, aNormal.Y, aNormal.Z, 0.0f)).XYZ;
+
     return uProjectionMatrix * uViewMatrix * skinMatrix * new Vector4(aPosition.X, aPosition.Y, aPosition.Z, 1.0f);
   }
 }
@@ -121,7 +126,12 @@ public class SkinFragment : Shader_PBR
   [ShaderFieldIn] public Matrix3x3 vo_TBN;
   [ShaderFieldIn] public Vector3 vo_CameraPosition;
 
-  [ShaderFieldOut] public Vector4 color;
+  [ShaderFieldIn] public Vector4 vo_ViewPosition;
+  [ShaderFieldIn] public Vector3 vo_ViewNormal;
+
+  [ShaderFieldOut] public Vector4 fragColor;
+  [ShaderFieldOut] public Vector4 fragNormal;
+  [ShaderFieldOut] public Vector4 fragPosition;
 
   [ShaderFieldUniform] public Texture_2D<RGBA32F> uAlbedoTexture;
   [ShaderFieldUniform] public Texture_2D<RGBA32F> uNormalTexture;
@@ -150,6 +160,13 @@ public class SkinFragment : Shader_PBR
     // Gamma
     finalColor = pow(finalColor, new Vector3(1.0f / 2.2f));
 
-    color = new Vector4(finalColor, mat.Alpha) * uTint;
+    fragColor = new Vector4(finalColor, mat.Alpha) * uTint;
+
+    var nx = remap(vo_ViewNormal.X, -1.0f, 1.0f, 0.0f, 1.0f);
+    var ny = remap(vo_ViewNormal.Y, -1.0f, 1.0f, 0.0f, 1.0f);
+    var nz = remap(vo_ViewNormal.Z, -1.0f, 1.0f, 0.0f, 1.0f);
+    fragNormal = new Vector4(nx, ny, nz, 1.0f);
+
+    fragPosition = new Vector4(vo_ViewPosition.X, vo_ViewPosition.Y, vo_ViewPosition.Z, 1.0f);
   }
 }

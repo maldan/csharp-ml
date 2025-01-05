@@ -39,6 +39,44 @@ public struct RGB8
   }
 }
 
+public struct RGB16F
+{
+  public float R;
+  public float G;
+  public float B;
+
+  public RGB16F(float r, float g, float b)
+  {
+    R = r;
+    G = g;
+    B = b;
+  }
+
+  public static RGB16F FromHex(string color)
+  {
+    if (color.Length == 7)
+    {
+      // Извлекаем цвет
+      var r = int.Parse(color.Substring(1, 2), System.Globalization.NumberStyles.HexNumber);
+      var g = int.Parse(color.Substring(3, 2), System.Globalization.NumberStyles.HexNumber);
+      var b = int.Parse(color.Substring(5, 2), System.Globalization.NumberStyles.HexNumber);
+      return new RGB16F(r / 255f, g / 255f, b / 255f);
+    }
+
+    return new RGB16F();
+  }
+
+  public static explicit operator Vector3(RGB16F rgba)
+  {
+    return new Vector3(rgba.R, rgba.G, rgba.B);
+  }
+
+  public override string ToString()
+  {
+    return $"RGB16F({R}, {G}, {B})";
+  }
+}
+
 public struct RGB32F
 {
   public float R;
@@ -76,6 +114,7 @@ public struct RGB32F
     return $"RGB32F({R}, {G}, {B})";
   }
 }
+
 /*[StructLayout(LayoutKind.Sequential, Pack = 1)]
 public readonly struct RGB<T>
 {

@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using MegaLib.Mathematics.LinearAlgebra;
+using MegaLib.OS;
 using MegaLib.OS.Api;
 using MegaLib.Render.Buffer;
+using MegaLib.Render.Camera;
 using MegaLib.Render.Color;
 using MegaLib.Render.Texture;
 
@@ -16,6 +18,8 @@ public class OpenGL_Shader
 
   private Dictionary<string, int> _attributeLocationCache = new();
   private Dictionary<string, int> _uniformLocationCache = new();
+
+  public bool IsStrictMode { get; set; } = true;
 
   public void Compile()
   {
@@ -86,7 +90,6 @@ public class OpenGL_Shader
     OpenGL32.glEnable(v);
 
     if (v == OpenGL32.GL_BLEND) OpenGL32.glBlendFunc(OpenGL32.GL_SRC_ALPHA, OpenGL32.GL_ONE_MINUS_SRC_ALPHA);
-
     if (v == OpenGL32.GL_DEPTH_TEST) OpenGL32.glDepthFunc(OpenGL32.GL_LEQUAL);
   }
 
@@ -102,38 +105,72 @@ public class OpenGL_Shader
     if (_uniformLocationCache.ContainsKey(varName)) return _uniformLocationCache[varName];
 
     uniformLocation = OpenGL32.glGetUniformLocation(Id, varName);
-    if (uniformLocation == -1) throw new Exception($"Uniform {varName} not found");
+    if (uniformLocation == -1)
+    {
+      if (IsStrictMode) throw new Exception($"Uniform {varName} not found");
+      return -1;
+    }
+
     _uniformLocationCache[varName] = uniformLocation;
     return uniformLocation;
+  }
+
+  public void PassDefaultUniform(Camera_Base cameraBase)
+  {
+    var sm = IsStrictMode;
+    IsStrictMode = false;
+    SetUniform("_uCameraFarNear", new Vector2(cameraBase.Near, cameraBase.Far));
+    SetUniform("_uCameraProjectionMatrix", cameraBase.ProjectionMatrix);
+    SetUniform("_uCameraProjectionInversedMatrix", cameraBase.ProjectionMatrix.Inverted);
+    SetUniform("_uCameraViewMatrix", cameraBase.ViewMatrix);
+    SetUniform("_uCameraWorldPosition", cameraBase.Position);
+    SetUniform("_uTime", 0);
+
+    var w = Window.Current.ClientWidth;
+    var h = Window.Current.ClientHeight;
+    SetUniform("_uScreenSize", new Vector2(w, h));
+    IsStrictMode = sm;
   }
 
   public void SetUniform(string name, float v)
   {
     var id = GetUniformLocation(name);
+    if (id == -1) return;
     OpenGL32.glUniform1f(id, v);
+  }
+
+  public void SetUniform(string name, Vector2 v)
+  {
+    var id = GetUniformLocation(name);
+    if (id == -1) return;
+    OpenGL32.glUniform2f(id, v.X, v.Y);
   }
 
   public void SetUniform(string name, Vector3 v)
   {
     var id = GetUniformLocation(name);
+    if (id == -1) return;
     OpenGL32.glUniform3f(id, v.X, v.Y, v.Z);
   }
-  
+
   public void SetUniform(string name, int res, float[] v)
   {
     var id = GetUniformLocation(name);
+    if (id == -1) return;
     if (res == 3) OpenGL32.glUniform3fv(id, v.Length, v);
   }
 
   public void SetUniform(string name, Vector4 v)
   {
     var id = GetUniformLocation(name);
+    if (id == -1) return;
     OpenGL32.glUniform4f(id, v.X, v.Y, v.Z, v.W);
   }
 
   public void SetUniform(string name, Matrix4x4 v)
   {
     var id = GetUniformLocation(name);
+    if (id == -1) return;
     OpenGL32.glUniformMatrix4fv(id, 1, 0, v.Raw);
   }
 

@@ -27,6 +27,15 @@ public class AShaderProgramTest
     File.WriteAllText("F:/csharp_lib/MegaLib/backup/fragment.glsl", x["fragment"]);
   }
 
+  [Test]
+  public void Basic3()
+  {
+    var x = ShaderProgram.Compile("Skin");
+    File.WriteAllText("F:/csharp_lib/MegaLib/backup/vertex.glsl", x["vertex"]);
+    //File.WriteAllText("F:/csharp_lib/MegaLib/backup/geometry.glsl", x["geometry"]);
+    File.WriteAllText("F:/csharp_lib/MegaLib/backup/fragment.glsl", x["fragment"]);
+  }
+
   /*[Test]
   public void Basic2()
   {

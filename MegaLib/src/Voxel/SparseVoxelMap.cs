@@ -17,8 +17,8 @@ public class SparseVoxelMap8
   private VoxelArray8 _lastChunk;
   private IVector3 _lastChunkPosition;
 
-  private IVector3 _lightCurrentPosition = new IVector3(0, 20, 0);
-  
+  private IVector3 _lightCurrentPosition = new(0, 20, 0);
+
   private int _chunkSize;
   public int ChunkCount => _chunks.Count;
   public float VoxelSize = 1f;
@@ -151,7 +151,7 @@ public class SparseVoxelMap8
     {
       LightStep();
     }*/
-    
+
     var outList = new Dictionary<IVector3, RO_VoxelMesh>();
 
     Console.WriteLine($"CHANGED: {_changed.Count}");
@@ -203,7 +203,7 @@ public class SparseVoxelMap8
       new(-1, 0, 0), // Left
       new(1, 0, 0) // Right
     ];
-    
+
     var chunkOffset = new IVector3(xx, yy, zz) * _chunkSize;
 
     for (var x = 0; x < _chunkSize; x++)
@@ -215,16 +215,16 @@ public class SparseVoxelMap8
           var gx = x + chunkOffset.X;
           var gy = y + chunkOffset.Y;
           var gz = z + chunkOffset.Z;
-          
+
           var voxelValue = this[gx, gy, gz];
           if (voxelValue == 0) continue;
 
           // Keep everything except visibility info
-          
+
           var voxelInfo = 0;
           var lightInfo = 0;
           var voxelColor = Palette[(byte)voxelValue];
-          
+
           // Determine which faces are visible
           for (var i = 0; i < 6; i++)
           {
@@ -239,10 +239,10 @@ public class SparseVoxelMap8
           {
             lightInfo |= 0b0000_0000_0000_0001;
           }*/
-          
+
           if (voxelInfo == 0) continue;
-          
-          mesh.VertexList.Add(new Vector3(gx, gy, gz));
+
+          mesh.VertexList.Add(new Vector3(gx, gy, gz) * VoxelSize);
           mesh.ColorList.Add(voxelColor);
           mesh.VoxelInfoList.Add(voxelInfo); // Store voxelInfo with the mesh
           mesh.ShadowInfoList.Add(lightInfo); // Store voxelInfo with the mesh
@@ -252,7 +252,7 @@ public class SparseVoxelMap8
 
     return mesh;
   }
-  
+
   public Mesh ChunkToMeshR(int xx, int yy, int zz)
   {
     var mesh = new Mesh(4096);
@@ -447,7 +447,7 @@ public class SparseVoxelMap8
   public void LightTraversal(Vector3 position, Vector3 direction)
   {
     var pos = position;
-    for (int i = 0; i < 64; i++)
+    for (var i = 0; i < 64; i++)
     {
       pos += direction;
       if (HasDataAt((IVector3)pos))
@@ -457,11 +457,11 @@ public class SparseVoxelMap8
       }
     }
   }
-  
+
   public void LightClear(Vector3 position, Vector3 direction)
   {
     var pos = position;
-    for (int i = 0; i < 64; i++)
+    for (var i = 0; i < 64; i++)
     {
       pos += direction;
       if (HasDataAt((IVector3)pos))
@@ -483,10 +483,11 @@ public class SparseVoxelMap8
         _lightCurrentPosition.Z = 0;
       }
     }
+
     LightClear((Vector3)_lightCurrentPosition, new Vector3(-1, -1, -1).Normalized);
     LightTraversal((Vector3)_lightCurrentPosition, new Vector3(-1, -1, -1).Normalized);
   }
-  
+
   public void AddSphere(IVector3 center, float radius, byte value)
   {
     var mx = Matrix4x4.Identity;
