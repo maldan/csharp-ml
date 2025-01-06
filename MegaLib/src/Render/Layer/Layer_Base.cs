@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Render.Layer;
 
@@ -13,10 +14,6 @@ public interface ILayerRenderer
 public class Layer_Capture : Layer_Base
 {
   public List<string> LayerNames = [];
-}
-
-public class Layer_PostProcess : Layer_Base
-{
 }
 
 public class Layer_Base

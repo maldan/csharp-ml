@@ -20,6 +20,19 @@ public class Shader_Base
   protected Vector4 gl_Position;
   protected Vector4 gl_FragCoord;
 
+  // Base uniforms
+  [ShaderFieldUniform] public Vector2 _uScreenSize;
+  [ShaderFieldUniform] public Vector2 _uCameraFarNear;
+  [ShaderFieldUniform] public Matrix4x4 _uCameraProjectionMatrix;
+  [ShaderFieldUniform] public Matrix4x4 _uCameraProjectionInversedMatrix;
+
+  // PP
+  [ShaderFieldUniform] public Vector4 _uSSAOSettings;
+
+  [ShaderFieldUniform] public Texture_2D<RGBA32F> _uScreenTexture;
+  [ShaderFieldUniform] public Texture_2D<RGBA32F> _uILTexture;
+  [ShaderFieldUniform] public Texture_2D<RGBA32F> _uRMETexture;
+
   [ShaderBuiltinMethod]
   protected Vector3 normalize(Vector3 v)
   {
@@ -64,6 +77,12 @@ public class Shader_Base
 
   [ShaderBuiltinMethod]
   protected Vector4 texture(Texture_2D<RGBA32F> texture2D, Vector2 uv)
+  {
+    return new Vector4();
+  }
+
+  [ShaderBuiltinMethod]
+  protected Vector4 textureLod(Texture_2D<RGBA32F> texture2D, Vector2 uv, float lod)
   {
     return new Vector4();
   }
@@ -187,7 +206,7 @@ public class Shader_Base
   {
   }
 
-  public static float remap(float value, float from1, float to1, float from2, float to2)
+  public static float Remap(float value, float from1, float to1, float from2, float to2)
   {
     return from2 + (value - from1) * (to2 - from2) / (to1 - from1);
   }
@@ -208,5 +227,26 @@ public class Shader_Base
   public float DepthToLinear(Vector2 nf, float depth)
   {
     return DepthToLinear(nf.X, nf.Y, depth);
+  }
+
+  public Vector3 Blur13(Texture_2D<RGBA32F> image, Vector2 uv, Vector2 resolution, Vector2 direction)
+  {
+    var color = new Vector4();
+    var off1 = new Vector2(1.411764705882353f, 1.411764705882353f) * direction;
+    var off2 = new Vector2(3.2941176470588234f, 3.2941176470588234f) * direction;
+    var off3 = new Vector2(5.176470588235294f, 5.176470588235294f) * direction;
+    color += texture(image, uv) * 0.1964825501511404f;
+    color += texture(image, uv + off1 / resolution) * 0.2969069646728344f;
+    color += texture(image, uv - off1 / resolution) * 0.2969069646728344f;
+    color += texture(image, uv + off2 / resolution) * 0.09447039785044732f;
+    color += texture(image, uv - off2 / resolution) * 0.09447039785044732f;
+    color += texture(image, uv + off3 / resolution) * 0.010381362401148057f;
+    color += texture(image, uv - off3 / resolution) * 0.010381362401148057f;
+    return color.XYZ;
+  }
+
+  public float GetEmission(Vector2 uv)
+  {
+    return texture(_uRMETexture, uv).Z;
   }
 }

@@ -47,6 +47,8 @@ public class SharpCompiler
         MetadataReference.CreateFromFile(typeof(Vector2).Assembly.Location),
         MetadataReference.CreateFromFile(typeof(Vector3).Assembly.Location),
         MetadataReference.CreateFromFile(typeof(Vector4).Assembly.Location),
+        MetadataReference.CreateFromFile(typeof(Matrix4x4).Assembly.Location),
+        MetadataReference.CreateFromFile(typeof(Matrix3x3).Assembly.Location),
         MetadataReference.CreateFromFile(typeof(Texture_Cube).Assembly.Location),
         MetadataReference.CreateFromFile(typeof(Texture_2D<RGBA32F>).Assembly.Location),
         MetadataReference.CreateFromFile(typeof(MathF).Assembly.Location),

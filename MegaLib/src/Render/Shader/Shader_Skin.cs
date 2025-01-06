@@ -132,6 +132,7 @@ public class SkinFragment : Shader_PBR
   [ShaderFieldOut] public Vector4 fragColor;
   [ShaderFieldOut] public Vector4 fragNormal;
   [ShaderFieldOut] public Vector4 fragPosition;
+  [ShaderFieldOut] public Vector4 fragRME;
 
   [ShaderFieldUniform] public Texture_2D<RGBA32F> uAlbedoTexture;
   [ShaderFieldUniform] public Texture_2D<RGBA32F> uNormalTexture;
@@ -162,11 +163,13 @@ public class SkinFragment : Shader_PBR
 
     fragColor = new Vector4(finalColor, mat.Alpha) * uTint;
 
-    var nx = remap(vo_ViewNormal.X, -1.0f, 1.0f, 0.0f, 1.0f);
-    var ny = remap(vo_ViewNormal.Y, -1.0f, 1.0f, 0.0f, 1.0f);
-    var nz = remap(vo_ViewNormal.Z, -1.0f, 1.0f, 0.0f, 1.0f);
+    var nx = Remap(vo_ViewNormal.X, -1.0f, 1.0f, 0.0f, 1.0f);
+    var ny = Remap(vo_ViewNormal.Y, -1.0f, 1.0f, 0.0f, 1.0f);
+    var nz = Remap(vo_ViewNormal.Z, -1.0f, 1.0f, 0.0f, 1.0f);
     fragNormal = new Vector4(nx, ny, nz, 1.0f);
 
     fragPosition = new Vector4(vo_ViewPosition.X, vo_ViewPosition.Y, vo_ViewPosition.Z, 1.0f);
+
+    fragRME = new Vector4(0, 0, 0, 1f);
   }
 }

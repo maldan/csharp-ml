@@ -101,7 +101,7 @@ public class ShaderProgram
 
       var locationCounter = 0;
       var locationOutCounter = 0;
-      foreach (var sharpField in sharpClass.FieldList)
+      foreach (var sharpField in sharpClass.AllFieldList)
       {
         // Uniform fields
         if (sharpField.HasAttribute("ShaderFieldUniform"))

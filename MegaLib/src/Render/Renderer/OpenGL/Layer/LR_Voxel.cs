@@ -51,6 +51,13 @@ public class LR_Voxel : LR_Base
     {
       foreach (var (pos, mesh) in changed)
       {
+        // Remove empty elements
+        if (mesh.VertexList.Count == 0)
+        {
+          _chunks.Remove(pos);
+          continue;
+        }
+
         if (_chunks.ContainsKey(pos))
         {
           _chunks[pos] = mesh;

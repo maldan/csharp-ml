@@ -73,10 +73,6 @@ public class VoxelGeometryShader : Shader_Base
     bitangent *= halfSize;
 
     // Offset the center of the face along the normal direction
-    /*if (abs(normal.Z) == 1.0f)
-    {
-      normal = -normal;
-    }*/
     var faceCenter = center + normal * halfSize;
 
     // Calculate the four vertices of the face
@@ -189,15 +185,9 @@ public class VoxelGeometryShader : Shader_Base
     var bb = centerClip.W;
     var centerNDC = aa / bb; // Perform perspective divide
 
-    if (centerNDC.X < -1.1f || centerNDC.X > 1.1f)
-    {
-      return;
-    }
+    if (centerNDC.X < -1.1f || centerNDC.X > 1.1f) return;
+    if (centerNDC.Y < -1.1f || centerNDC.Y > 1.1f) return;
 
-    if (centerNDC.Y < -1.1f || centerNDC.Y > 1.1f)
-    {
-      return;
-    }
 
     // Masks for each side
     // Bitmask for voxelInfo
@@ -214,13 +204,6 @@ public class VoxelGeometryShader : Shader_Base
     if ((vo_Voxel[0] & bottomMask) != 0) GenerateFace(center, uVoxelSize * 0.5f, new Vector3(0, -1, 0));
     if ((vo_Voxel[0] & leftMask) != 0) GenerateFace(center, uVoxelSize * 0.5f, new Vector3(-1, 0, 0));
     if ((vo_Voxel[0] & rightMask) != 0) GenerateFace(center, uVoxelSize * 0.5f, new Vector3(1, 0, 0));
-
-    /*GenerateFace(center, 0.5f, new Vector3(0, 1, 0));
-    GenerateFace(center, 0.5f, new Vector3(0, -1, 0));
-    GenerateFace(center, 0.5f, new Vector3(-1, 0, 0));
-    GenerateFace(center, 0.5f, new Vector3(1, 0, 0));
-    GenerateFace(center, 0.5f, new Vector3(0, 0, -1));
-    GenerateFace(center, 0.5f, new Vector3(0, 0, 1));*/
   }
 }
 
@@ -239,16 +222,19 @@ public class VoxelFragmentShader : Shader_Base
   [ShaderFieldIn] public int go_Shadow;
   [ShaderFieldIn] public uint go_Color;
 
-  [ShaderFieldOut] public Vector4 fragColor;
-  [ShaderFieldOut] public Vector4 fragNormal;
-  [ShaderFieldOut] public Vector4 fragPosition;
-
   [ShaderFieldUniform] public Texture_2D<RGBA32F> uAlbedoTexture;
   [ShaderFieldUniform] public Texture_2D<RGBA32F> uNormalTexture;
   [ShaderFieldUniform] public Texture_2D<RGBA32F> uLightTexture;
   [ShaderFieldUniform] public Vector3 uCameraPosition;
 
   [ShaderFieldUniform] public Vector4 uFogData;
+
+  // Out
+  [ShaderFieldOut] public Vector4 fragColor;
+  [ShaderFieldOut] public Vector4 fragNormal;
+  [ShaderFieldOut] public Vector4 fragPosition;
+  [ShaderFieldOut] public Vector4 fragRME;
+
 
   public void Main()
   {
@@ -305,12 +291,22 @@ public class VoxelFragmentShader : Shader_Base
 
     fragColor = finalColor;
 
-    var nx = remap(vo_ViewNormal.X, -1.0f, 1.0f, 0.0f, 1.0f);
-    var ny = remap(vo_ViewNormal.Y, -1.0f, 1.0f, 0.0f, 1.0f);
-    var nz = remap(vo_ViewNormal.Z, -1.0f, 1.0f, 0.0f, 1.0f);
+    var nx = Remap(vo_ViewNormal.X, -1.0f, 1.0f, 0.0f, 1.0f);
+    var ny = Remap(vo_ViewNormal.Y, -1.0f, 1.0f, 0.0f, 1.0f);
+    var nz = Remap(vo_ViewNormal.Z, -1.0f, 1.0f, 0.0f, 1.0f);
     fragNormal = new Vector4(nx, ny, nz, 1.0f);
 
     fragPosition = new Vector4(vo_ViewPosition.X, vo_ViewPosition.Y, vo_ViewPosition.Z, 1.0f);
+
+    // Emit roughness metallic emission
+    var rme = new Vector4(0, 0, 0, 1);
+    if (r > 0.9f && g < 0.2f && b < 0.2f)
+    {
+      rme.Z = 0.5f;
+    }
+
+    fragRME = rme;
+
 
     /*var mat = getMaterial(uAlbedoTexture, uNormalTexture, uRoughnessTexture, uMetallicTexture, vo_UV, vo_TBN);
 

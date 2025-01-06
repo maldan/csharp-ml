@@ -25,7 +25,7 @@ public class PostProcessingFragmentShader : Shader_Base
 
   [ShaderFieldOut] public Vector4 fragColor;
 
-  [ShaderFieldUniform] public Texture_2D<RGBA32F> uScreenTexture;
+  //[ShaderFieldUniform] public Texture_2D<RGBA32F> uScreenTexture;
 
   [ShaderFieldUniform] public Texture_2D<RGBA32F> uViewNormalTexture;
   [ShaderFieldUniform] public Texture_2D<RGBA32F> uViewPositionTexture;
@@ -35,11 +35,7 @@ public class PostProcessingFragmentShader : Shader_Base
   [ShaderFieldUniform] public Texture_2D<RGBA32F> uRandomNoiseTexture;
   [ShaderFieldUniformArray(64)] public Vector3[] uSSAOKernel;
 
-  [ShaderFieldUniform] public Vector2 _uScreenSize;
-  [ShaderFieldUniform] public Vector2 _uCameraFarNear;
-  [ShaderFieldUniform] public Matrix4x4 _uCameraProjectionMatrix;
-  [ShaderFieldUniform] public Matrix4x4 _uCameraProjectionInversedMatrix;
-
+  //[ShaderFieldUniform] public Vector2 _uScreenSize;
 
   private Vector3 ReconstructViewPos(float depth, Vector2 uv, Matrix4x4 projInv)
   {
@@ -160,22 +156,39 @@ public class PostProcessingFragmentShader : Shader_Base
 
   public void Main()
   {
-    var ff = texture(uScreenTexture, vo_UV).XYZ;
-    //var ao = texture(uOcclusionTexture, vo_UV).XYZ;
+    var ff = texture(_uScreenTexture, vo_UV).XYZ;
+    var il = texture(_uILTexture, vo_UV).XYZ;
 
-    var ao2 = GaussianBlur3(uOcclusionTexture, vo_UV);
+    var ao = texture(uOcclusionTexture, vo_UV).XYZ;
 
-    fragColor = new Vector4(ff, 1.0f);
-    if (vo_UV.X > 0.5f) fragColor = new Vector4(ff * ao2, 1.0f);
+    // var ao2 = GaussianBlur3(uOcclusionTexture, vo_UV);
+    var aoX = Blur13(uOcclusionTexture, vo_UV, _uScreenSize, new Vector2(1, 0));
+    var aoY = Blur13(uOcclusionTexture, vo_UV, _uScreenSize, new Vector2(0, 1));
+    var ao2 = (aoX + aoY) / 2f;
+
+    var ilX = Blur13(_uILTexture, vo_UV, _uScreenSize, new Vector2(1, 0));
+    var ilY = Blur13(_uILTexture, vo_UV, _uScreenSize, new Vector2(0, 1));
+    var il2 = (ilX + ilY) / 2f;
+
+    /*var emission = Blur13(_uRMETexture, vo_UV, _uScreenSize, new Vector2(1, 0)).Z;
+    if (emission > 0)
+    {
+      ff = Blur13(_uScreenTexture, vo_UV, _uScreenSize, new Vector2(1, 0));
+    }*/
+
+    // if (ao2.X > 0.98f) ao2 = new Vector3(1.0f, 1.0f, 1.0f);
+
+    fragColor = new Vector4(ff * ao2, 1.0f);
+    // if (vo_UV.X > 0.5f) fragColor = new Vector4(ff * ao2, 1.0f);
   }
 
   public void _Main()
   {
     // Unpack normals
     var normal = normalize(texture(uViewNormalTexture, vo_UV).XYZ); // Sample normal
-    normal.X = remap(normal.X, 0.0f, 1.0f, -1f, 1f);
-    normal.Y = remap(normal.Y, 0.0f, 1.0f, -1f, 1f);
-    normal.Z = remap(normal.Z, 0.0f, 1.0f, -1f, 1f);
+    normal.X = Remap(normal.X, 0.0f, 1.0f, -1f, 1f);
+    normal.Y = Remap(normal.Y, 0.0f, 1.0f, -1f, 1f);
+    normal.Z = Remap(normal.Z, 0.0f, 1.0f, -1f, 1f);
 
     // Construct TBN matrix to align kernel with surface
     var uNoiseScale = _uScreenSize / 4f;
@@ -254,7 +267,7 @@ public class PostProcessingFragmentShader : Shader_Base
     }
     */
 
-    var ff = texture(uScreenTexture, vo_UV).XYZ;
+    var ff = texture(_uScreenTexture, vo_UV).XYZ;
     /*if (linearDepth > 0.3f)
     {
       ff = GaussianBlur(

@@ -21,7 +21,7 @@ public class AShaderProgramTest
   [Test]
   public void Basic2()
   {
-    var x = ShaderProgram.Compile("PostProcessing");
+    var x = ShaderProgram.Compile("PostProcessingSSAO");
     File.WriteAllText("F:/csharp_lib/MegaLib/backup/vertex.glsl", x["vertex"]);
     //File.WriteAllText("F:/csharp_lib/MegaLib/backup/geometry.glsl", x["geometry"]);
     File.WriteAllText("F:/csharp_lib/MegaLib/backup/fragment.glsl", x["fragment"]);

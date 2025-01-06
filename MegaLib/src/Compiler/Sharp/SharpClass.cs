@@ -58,6 +58,38 @@ public class SharpClass
     }
   }
 
+  public List<SharpField> AllFieldList
+  {
+    get
+    {
+      var allFields = new List<SharpField>();
+
+      // Process the current class
+      CollectFieldsFromClass(_classDeclaration, allFields);
+
+      // Traverse the inheritance chain
+      var classSymbol = _semanticModel.GetDeclaredSymbol(_classDeclaration) as INamedTypeSymbol;
+      while (classSymbol != null && classSymbol.BaseType != null)
+      {
+        // Get the syntax node of the base type if available
+        var baseTypeSymbol = classSymbol.BaseType;
+        var baseTypeSyntax =
+          baseTypeSymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as ClassDeclarationSyntax;
+
+        if (baseTypeSyntax != null)
+        {
+          // Collect fields from the base type
+          CollectFieldsFromClass(baseTypeSyntax, allFields);
+        }
+
+        // Move up the inheritance chain
+        classSymbol = baseTypeSymbol;
+      }
+
+      return allFields;
+    }
+  }
+
   public List<SharpMethod> MethodList
   {
     get
@@ -137,14 +169,25 @@ public class SharpClass
     _classDeclaration = classDeclaration;
     _semanticModel = semanticModel;
   }
-  
+
   public bool HasAttribute(string name)
   {
     return AttributeList.Any(x => x.Name == name);
   }
-  
+
   public SharpAttribute GetAttribute(string name)
   {
     return AttributeList.FirstOrDefault(x => x.Name == name);
+  }
+
+  private void CollectFieldsFromClass(ClassDeclarationSyntax classDeclaration, List<SharpField> fieldsList)
+  {
+    var fieldsInClass = classDeclaration.Members.OfType<FieldDeclarationSyntax>();
+
+    foreach (var field in fieldsInClass)
+    {
+      var sharpField = new SharpField(field);
+      fieldsList.Add(sharpField);
+    }
   }
 }

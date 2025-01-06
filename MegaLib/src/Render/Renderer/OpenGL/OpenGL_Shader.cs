@@ -12,6 +12,7 @@ namespace MegaLib.Render.Renderer.OpenGL;
 
 public class OpenGL_Shader
 {
+  public string Name;
   public Dictionary<string, string> ShaderCode = new();
   public uint Id { get; private set; }
   public OpenGL_Context Context;
@@ -47,16 +48,16 @@ public class OpenGL_Shader
       if (shaderId == 0)
       {
         OpenGL32.PrintGlError();
-        throw new Exception($"Can't create {type} shader");
+        throw new Exception($"Can't create {Name}.{type} shader");
       }
 
-      Console.WriteLine($"{type} shader created");
+      Console.WriteLine($"{Name}.{type} shader created");
 
       OpenGL32.glShaderSource(shaderId, code.Replace("\r", ""));
       OpenGL32.glCompileShader(shaderId);
 
       var log = OpenGL32.glGetShaderInfoLog(shaderId, 1024).Trim();
-      if (log.Length > 0) Console.WriteLine($"{type} shader log: {log}");
+      if (log.Length > 0) Console.WriteLine($"{Name}.{type} shader log: {log}");
 
       // Attach to program
       OpenGL32.glAttachShader(shaderProgram, shaderId);

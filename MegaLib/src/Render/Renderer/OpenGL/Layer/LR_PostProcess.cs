@@ -15,15 +15,17 @@ namespace MegaLib.Render.Renderer.OpenGL.Layer;
 public class LR_PostProcess : LR_Base
 {
   private RO_Mesh _mesh;
-  private OpenGL_Framebuffer _framebufferSSAO;
+  private OpenGL_Framebuffer _framebufferFirst;
 
   private OpenGL_Framebuffer _framebufferFinal;
 
   private float[] _ssaoKernel;
-  private Texture_2D<float> _randomNoise;
+  private Texture_2D<RGB32F> _randomNoise;
 
   private OpenGL_Shader _shaderSSAO;
   private OpenGL_Shader _shaderFinal;
+
+  private Random _random = new();
 
   public LR_PostProcess(OpenGL_Context context, Layer_Base layer, Render_Scene scene) : base(context, layer, scene)
   {
@@ -48,31 +50,34 @@ public class LR_PostProcess : LR_Base
 
     context.MapObject(_mesh);
 
-    _framebufferSSAO = context.CreateFrameBuffer();
-    _framebufferSSAO.Init();
-    _framebufferSSAO.CaptureTexture("color", TextureFormat.RGB8, 0);
-    _framebufferSSAO.CaptureTexture("viewNormal", TextureFormat.RGB8, 1);
-    _framebufferSSAO.CaptureTexture("viewPosition", TextureFormat.RGB16F, 2);
-    _framebufferSSAO.CaptureDepth("depth");
-    _framebufferSSAO.FinishAttachment();
+    _framebufferFirst = context.CreateFrameBuffer();
+    _framebufferFirst.Init();
+    _framebufferFirst.CaptureTexture("color", TextureFormat.RGB8, 0);
+    _framebufferFirst.CaptureTexture("viewNormal", TextureFormat.RGB8, 1);
+    _framebufferFirst.CaptureTexture("viewPosition", TextureFormat.RGB16F, 2);
+    // Roughness metallic emission
+    _framebufferFirst.CaptureTexture("rme", TextureFormat.RGB8, 3);
+    _framebufferFirst.CaptureDepth("depth");
+    _framebufferFirst.FinishAttachment();
 
     _framebufferFinal = context.CreateFrameBuffer();
     _framebufferFinal.Init();
     _framebufferFinal.CaptureTexture("occlusion", TextureFormat.RGB8, 0);
+    _framebufferFinal.CaptureTexture("indirectLight", TextureFormat.RGB8, 1);
     _framebufferFinal.FinishAttachment();
 
     // Generate 64 random sample points in a hemisphere
     var ssaoKernel = new List<float>();
-    var random = new Random();
+
 
     for (var i = 0; i < 64; i++)
     {
       var sample = new Vector3(
-        (float)random.NextDouble() * 2.0f - 1.0f,
-        (float)random.NextDouble() * 2.0f - 1.0f,
-        (float)random.NextDouble()
+        (float)_random.NextDouble() * 2.0f - 1.0f,
+        (float)_random.NextDouble() * 2.0f - 1.0f,
+        (float)_random.NextDouble()
       );
-      sample = Vector3.Normalize(sample) * (float)random.NextDouble();
+      sample = Vector3.Normalize(sample) * (float)_random.NextDouble();
       var scale = (float)i / 64.0f;
       sample *= MathEx.Lerp(0.1f, 1.0f, scale * scale); // Distribute samples
       ssaoKernel.Add(sample.X);
@@ -80,10 +85,15 @@ public class LR_PostProcess : LR_Base
       ssaoKernel.Add(sample.Z);
     }
 
-    _randomNoise = new Texture_2D<float>(4, 4);
-    _randomNoise.Options.FiltrationMode = TextureFiltrationMode.Nearest;
+    _randomNoise = new Texture_2D<RGB32F>(8, 8);
+    _randomNoise.Options.FiltrationMode = TextureFiltrationMode.Linear;
     _randomNoise.Options.WrapMode = TextureWrapMode.Repeat;
-    for (var i = 0; i < 4 * 4; i++) _randomNoise.RAW[i] = (float)random.NextDouble();
+    for (var i = 0; i < 8 * 8; i++)
+      _randomNoise.RAW[i] = new RGB32F(
+        (float)_random.NextDouble() * 2.0f - 1.0f,
+        (float)_random.NextDouble() * 2.0f - 1.0f,
+        (float)_random.NextDouble()
+      );
     context.MapTexture(_randomNoise);
 
     _ssaoKernel = ssaoKernel.ToArray();
@@ -91,9 +101,10 @@ public class LR_PostProcess : LR_Base
 
   public override void Init()
   {
-    var ss = ShaderProgram.Compile("PostProcessingSSAO");
+    var ss = ShaderProgram.Compile("PostProcessingFirst");
     _shaderSSAO = new OpenGL_Shader
     {
+      Name = "PostProcessingFirst",
       Context = Context,
       ShaderCode =
       {
@@ -106,6 +117,7 @@ public class LR_PostProcess : LR_Base
     ss = ShaderProgram.Compile("PostProcessing");
     _shaderFinal = new OpenGL_Shader
     {
+      Name = "PostProcessing",
       Context = Context,
       ShaderCode =
       {
@@ -118,18 +130,18 @@ public class LR_PostProcess : LR_Base
 
   public override void BeforeRender()
   {
-    _framebufferSSAO.Bind();
-    _framebufferSSAO.Clear();
+    _framebufferFirst.Bind();
+    _framebufferFirst.Clear();
   }
 
   public override void AfterRender()
   {
-    _framebufferSSAO.Unbind();
+    _framebufferFirst.Unbind();
   }
 
   public void ResizeFramebuffer(ushort width, ushort height)
   {
-    _framebufferSSAO.Resize(width, height);
+    _framebufferFirst.Resize(width, height);
     _framebufferFinal.Resize(width, height);
   }
 
@@ -144,16 +156,24 @@ public class LR_PostProcess : LR_Base
     shader.Disable(OpenGL32.GL_CULL_FACE);
 
     shader.IsStrictMode = false;
+    /*for (var i = 0; i < _ssaoKernel.Length; i += 3)
+    {
+      _ssaoKernel[i] = (float)(_random.NextDouble() * 2.0f - 1.0f);
+      _ssaoKernel[i + 1] = (float)(_random.NextDouble() * 2.0f - 1.0f);
+      _ssaoKernel[i + 2] = (float)_random.NextDouble();
+    }*/
     shader.SetUniform("uSSAOKernel", 3, _ssaoKernel);
+    shader.SetUniform("_uSSAOSettings", layer.SSAO_Settings);
     shader.IsStrictMode = true;
 
     shader.PassDefaultUniform(Scene.Camera);
 
-    shader.ActivateTexture(_framebufferSSAO.GetTexture<RGB8>("color"), "uScreenTexture", 0);
-    shader.ActivateTexture(_framebufferSSAO.GetTexture<RGB8>("viewNormal"), "uViewNormalTexture", 1);
-    shader.ActivateTexture(_framebufferSSAO.GetTexture<RGB16F>("viewPosition"), "uViewPositionTexture", 2);
-    shader.ActivateTexture(_framebufferSSAO.GetTexture<float>("depth"), "uDepthTexture", 3);
+    shader.ActivateTexture(_framebufferFirst.GetTexture<RGB8>("color"), "_uScreenTexture", 0);
+    shader.ActivateTexture(_framebufferFirst.GetTexture<RGB8>("viewNormal"), "uViewNormalTexture", 1);
+    shader.ActivateTexture(_framebufferFirst.GetTexture<RGB16F>("viewPosition"), "uViewPositionTexture", 2);
+    shader.ActivateTexture(_framebufferFirst.GetTexture<float>("depth"), "uDepthTexture", 3);
     shader.ActivateTexture(_randomNoise, "uRandomNoiseTexture", 4);
+    shader.ActivateTexture(_framebufferFirst.GetTexture<RGB8>("rme"), "_uRMETexture", 5);
 
     // Bind vao
     OpenGL32.glBindVertexArray(Context.GetVaoId(_mesh));
@@ -184,8 +204,10 @@ public class LR_PostProcess : LR_Base
 
     shader.PassDefaultUniform(Scene.Camera);
 
-    shader.ActivateTexture(_framebufferSSAO.GetTexture<RGB8>("color"), "uScreenTexture", 0);
+    shader.ActivateTexture(_framebufferFirst.GetTexture<RGB8>("color"), "_uScreenTexture", 0);
     shader.ActivateTexture(_framebufferFinal.GetTexture<RGB8>("occlusion"), "uOcclusionTexture", 1);
+    shader.ActivateTexture(_framebufferFinal.GetTexture<RGB8>("indirectLight"), "_uILTexture", 2);
+    shader.ActivateTexture(_framebufferFirst.GetTexture<RGB8>("rme"), "_uRMETexture", 3);
 
     // Bind vao
     OpenGL32.glBindVertexArray(Context.GetVaoId(_mesh));

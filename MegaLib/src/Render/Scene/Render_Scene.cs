@@ -160,11 +160,22 @@ public class Render_Scene
     if (UsePostprocess) PostProcessLayer.LayerRenderer.BeforeRender();
 
     CalculateLight();
-    foreach (var layer in Pipeline) layer.Render();
+    foreach (var layer in Pipeline)
+    {
+      if (layer is Layer_EasyUI) continue;
+      layer.Render();
+    }
+
     if (UsePostprocess)
     {
       PostProcessLayer.LayerRenderer.AfterRender();
       PostProcessLayer.Render();
+    }
+
+    // Render UI at last
+    foreach (var layer in Pipeline)
+    {
+      if (layer is Layer_EasyUI) layer.Render();
     }
 
     _mutex.ReleaseMutex();

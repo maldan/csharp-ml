@@ -12,7 +12,9 @@ namespace MegaLib.Voxel;
 
 public class SparseVoxelMap8
 {
-  private Dictionary<IVector3, VoxelArray8> _chunks = new();
+  private Dictionary<IVector3, VoxelArray8> _dataChunks = new();
+  private Dictionary<IVector3, VoxelArray8> _lightChunks = new();
+
   private HashSet<IVector3> _changed = new();
   private VoxelArray8 _lastChunk;
   private IVector3 _lastChunkPosition;
@@ -20,7 +22,7 @@ public class SparseVoxelMap8
   private IVector3 _lightCurrentPosition = new(0, 20, 0);
 
   private int _chunkSize;
-  public int ChunkCount => _chunks.Count;
+  public int ChunkCount => _dataChunks.Count;
   public float VoxelSize = 1f;
   public uint[] Palette = new uint[256];
 
@@ -50,7 +52,44 @@ public class SparseVoxelMap8
     return new IVector3(localX, localY, localZ);
   }
 
-  public ushort this[IVector3 p]
+  public void UpdateAll()
+  {
+    foreach (var (key, _) in _dataChunks)
+    {
+      _changed.Add(key);
+    }
+  }
+
+  /*public IVector3 IsCloseToBorder(IVector3 point)
+  {
+    return IsCloseToBorder(point.X, point.Y, point.Z);
+  }
+
+  public IVector3 IsCloseToBorder(int x, int y, int z)
+  {
+    // Initialize the border direction as Vector3.zero (inside the chunk)
+    var borderDirection = new IVector3();
+
+    // Check for each axis
+    if (x == 0)
+      borderDirection.X = -1; // On the left border
+    else if (x == _chunkSize - 1)
+      borderDirection.X = 1; // On the right border
+
+    if (y == 0)
+      borderDirection.Y = -1; // On the bottom border
+    else if (y == _chunkSize - 1)
+      borderDirection.Y = 1; // On the top border
+
+    if (z == 0)
+      borderDirection.Z = -1; // On the front border
+    else if (z == _chunkSize - 1)
+      borderDirection.Z = 1; // On the back border
+
+    return borderDirection;
+  }*/
+
+  /*public ushort this[IVector3 p]
   {
     get => this[p.X, p.Y, p.Z];
     set => this[p.X, p.Y, p.Z] = value;
@@ -96,9 +135,62 @@ public class SparseVoxelMap8
         _lastChunk = chunk;
       }
 
+      //var b = IsCloseToBorder(chunkPos);
       _changed.Add(chunkPos);
       _lastChunkPosition = chunkPos;
     }
+  }*/
+
+  public ushort GetDataAt(IVector3 p)
+  {
+    var x = p.X;
+    var y = p.Y;
+    var z = p.Z;
+
+    var chunkPos = GetChunkPosition(x, y, z);
+    if (chunkPos == _lastChunkPosition && _lastChunk != null)
+    {
+      var localPos = GetChunkLocalPosition(x, y, z);
+      return _lastChunk[localPos];
+    }
+    else
+    {
+      if (!_dataChunks.TryGetValue(chunkPos, out var chunk)) return 0;
+      var localPos = GetChunkLocalPosition(x, y, z);
+      _lastChunkPosition = chunkPos;
+      _lastChunk = chunk;
+      return chunk[localPos];
+    }
+  }
+
+  public void SetDataAt(IVector3 p, ushort value)
+  {
+    var x = p.X;
+    var y = p.Y;
+    var z = p.Z;
+
+    var chunkPos = GetChunkPosition(x, y, z);
+    var localPos = GetChunkLocalPosition(x, y, z);
+
+    if (chunkPos == _lastChunkPosition && _lastChunk != null)
+    {
+      _lastChunk[localPos] = value;
+    }
+    else
+    {
+      if (!_dataChunks.TryGetValue(chunkPos, out var chunk))
+      {
+        chunk = new VoxelArray8(_chunkSize, _chunkSize, _chunkSize);
+        _dataChunks[chunkPos] = chunk;
+      }
+
+      chunk[localPos] = value;
+      _lastChunk = chunk;
+    }
+
+    //var b = IsCloseToBorder(chunkPos);
+    _changed.Add(chunkPos);
+    _lastChunkPosition = chunkPos;
   }
 
   public bool HasDataAt(IVector3 p)
@@ -108,27 +200,9 @@ public class SparseVoxelMap8
 
   public bool HasDataAt(int x, int y, int z)
   {
-    /*var chunkPos = GetChunkPosition(x, y, z);
-    if (chunkPos == _lastChunkPosition && _lastChunk != null)
-    {
-      var localPos = GetChunkLocalPosition(x, y, z);
-      return _lastChunk.HasDataAt(localPos);
-    }
-    else
-    {
-      var localPos = GetChunkLocalPosition(x, y, z);
-      if (_chunks.TryGetValue(chunkPos, out var chunk))
-      {
-        _lastChunk = chunk;
-        _lastChunkPosition = chunkPos;
-        return chunk.HasDataAt(localPos);
-      }
-      return false;
-    }*/
-
     var chunkPos = GetChunkPosition(x, y, z);
     var localPos = GetChunkLocalPosition(x, y, z);
-    if (_chunks.TryGetValue(chunkPos, out var chunk))
+    if (_dataChunks.TryGetValue(chunkPos, out var chunk))
     {
       return chunk.HasDataAt(localPos);
     }
@@ -136,11 +210,11 @@ public class SparseVoxelMap8
     return false;
   }
 
-  public VoxelArray8 GetChunk(int x, int y, int z)
+  /*public VoxelArray8 GetChunk(int x, int y, int z)
   {
     var chunkPos = GetChunkPosition(x, y, z);
-    return _chunks.GetValueOrDefault(chunkPos);
-  }
+    return _dataChunks.GetValueOrDefault(chunkPos);
+  }*/
 
   public Dictionary<IVector3, RO_VoxelMesh> BuildChanged()
   {
@@ -165,7 +239,7 @@ public class SparseVoxelMap8
       tt2.Start();
       var mesh = ChunkToMeshR2(chunk);
       if (mesh == null) continue;
-      if (mesh.VertexList.Count == 0) continue;
+      //if (mesh.VertexList.Count == 0) continue;
       outList.Add(chunk, mesh);
       tt2.Stop();
       Console.WriteLine($"ChDone: {tt2.ElapsedTicks}");
@@ -179,10 +253,10 @@ public class SparseVoxelMap8
     return outList;
   }
 
-  public Mesh ChunkToMeshR(IVector3 position)
+  /*public Mesh ChunkToMeshR(IVector3 position)
   {
     return ChunkToMeshR(position.X, position.Y, position.Z);
-  }
+  }*/
 
   public RO_VoxelMesh ChunkToMeshR2(IVector3 position)
   {
@@ -216,7 +290,7 @@ public class SparseVoxelMap8
           var gy = y + chunkOffset.Y;
           var gz = z + chunkOffset.Z;
 
-          var voxelValue = this[gx, gy, gz];
+          var voxelValue = GetDataAt(new IVector3(gx, gy, gz));
           if (voxelValue == 0) continue;
 
           // Keep everything except visibility info
@@ -253,7 +327,7 @@ public class SparseVoxelMap8
     return mesh;
   }
 
-  public Mesh ChunkToMeshR(int xx, int yy, int zz)
+  /*public Mesh ChunkToMeshR(int xx, int yy, int zz)
   {
     var mesh = new Mesh(4096);
 
@@ -336,7 +410,7 @@ public class SparseVoxelMap8
     }
 
     return mesh;
-  }
+  }*/
 
   public static List<Vector2> NumberToQuadUV(int n, int gridSize)
   {
@@ -358,7 +432,7 @@ public class SparseVoxelMap8
     };
   }
 
-  public Mesh ChunkToMesh(int xx, int yy, int zz)
+  /*public Mesh ChunkToMesh(int xx, int yy, int zz)
   {
     var mesh = new Mesh();
 
@@ -442,9 +516,9 @@ public class SparseVoxelMap8
     }
 
     return mesh;
-  }
+  }*/
 
-  public void LightTraversal(Vector3 position, Vector3 direction)
+  /*public void LightTraversal(Vector3 position, Vector3 direction)
   {
     var pos = position;
     for (var i = 0; i < 64; i++)
@@ -486,7 +560,7 @@ public class SparseVoxelMap8
 
     LightClear((Vector3)_lightCurrentPosition, new Vector3(-1, -1, -1).Normalized);
     LightTraversal((Vector3)_lightCurrentPosition, new Vector3(-1, -1, -1).Normalized);
-  }
+  }*/
 
   public void AddSphere(IVector3 center, float radius, byte value)
   {
@@ -547,7 +621,7 @@ public class SparseVoxelMap8
           // Check if the local position is inside the sphere
           if (localPos.Length <= radius)
           {
-            this[new IVector3(x, y, z)] = value;
+            SetDataAt(new IVector3(x, y, z), value);
           }
         }
       }
@@ -608,7 +682,7 @@ public class SparseVoxelMap8
               Math.Abs(localPos.Y) <= halfSize.Y &&
               Math.Abs(localPos.Z) <= halfSize.Z)
           {
-            this[new IVector3(x, y, z)] = value;
+            SetDataAt(new IVector3(x, y, z), value);
           }
         }
       }
