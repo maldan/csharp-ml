@@ -31,32 +31,17 @@ public class PostProcessingFirstFragmentShader : Shader_Base
   //[ShaderFieldUniform] public Texture_2D<RGBA32F> uDepthTexture;
 
   [ShaderFieldOut] public Vector4 fragAO;
-  [ShaderFieldOut] public Vector4 fragInderectLight;
+  [ShaderFieldOut] public Vector4 fragIndirectLight;
 
   private float SSAO(
     Matrix3x3 TBN,
     Texture_2D<RGBA32F> viewPositionTexture,
-    Texture_2D<RGBA32F> viewNormalTexture,
-    Texture_2D<RGBA32F> randomNoiseTexture,
     Vector2 uv
   )
   {
     var currentViewPosition = texture(viewPositionTexture, uv).XYZ;
     if (currentViewPosition.Z <= 0) return 1f;
-
-    // Unpack normals
-    /*var normal = normalize(texture(viewNormalTexture, uv).XYZ); // Sample normal
-    normal.X = Remap(normal.X, 0.0f, 1.0f, -1f, 1f);
-    normal.Y = Remap(normal.Y, 0.0f, 1.0f, -1f, 1f);
-    normal.Z = Remap(normal.Z, 0.0f, 1.0f, -1f, 1f);
-
-    // Construct TBN matrix to align kernel with surface
-    var uNoiseScale = _uScreenSize / 8f;
-    var noise = texture(randomNoiseTexture, uv * uNoiseScale).XYZ;
-    var tangent = normalize(noise - normal * dot(noise, normal));
-    var bitangent = cross(normal, tangent);
-    var TBN = new Matrix3x3(tangent, bitangent, normal);*/
-
+    
     // Loop over kernel samples
     var occlusion = 0.0f;
     var dist = (currentViewPosition.Z + 1f) * 0.05f;
@@ -224,6 +209,43 @@ public class PostProcessingFirstFragmentShader : Shader_Base
     return ret;
   }
 
+  private float SSS(
+    Texture_2D<RGBA32F> viewPositionTexture,
+    Vector2 uv
+    )
+  {
+    var startPosition = texture(viewPositionTexture, uv).XYZ;
+    var startDepth = startPosition.Z;
+    var lightDir = normalize(new Vector3(1, 1, 1));
+    var myDir = -normalize(startPosition - lightDir);
+
+    if (startPosition.Z <= 0) return 1f;
+    
+    for (int i = 0; i < 30; i++)
+    {
+      startPosition += myDir;
+      
+      // Project sample position back to screen space
+      var ss = new Vector4(startPosition, 1.0f);
+      var offset = _uCameraProjectionMatrix * ss * 0.05f;
+      var oxy = offset.XY;
+      var ow = offset.W;
+      var sampleUV = oxy / ow * 0.5f + 0.5f;
+
+      if (sampleUV.X < 0 || sampleUV.X > 1) return 1f;
+      if (sampleUV.Y < 0 || sampleUV.Y > 1) return 1f;
+      
+      var newDepth = texture(viewPositionTexture, sampleUV).Z;
+      if (newDepth <= 0) return 1f;
+      if (newDepth < startDepth)
+      {
+        return 0f;
+      }
+    }
+    
+    return 1f;
+  }
+  
   public void Main()
   {
     // Normalize and invert occlusion
@@ -250,11 +272,14 @@ public class PostProcessingFirstFragmentShader : Shader_Base
     //fragAO = new Vector4(uber.W, uber.W, uber.W, 1.0f);
     //fragInderectLight = new Vector4(uber.XYZ, 1.0f);
 
-    var occlusion = SSAO(tbn, uViewPositionTexture, uViewNormalTexture, uRandomNoiseTexture, vo_UV);
-    fragAO = new Vector4(occlusion, occlusion, occlusion, 1.0f);
+    var occlusion = SSAO(tbn, uViewPositionTexture, vo_UV);
+    var sss = 1f; //SSS(uViewPositionTexture, vo_UV);
+    fragAO = new Vector4(occlusion * sss, occlusion * sss, occlusion * sss, 1.0f);
 
     // var il = LL(tbn, _uScreenTexture, uViewPositionTexture, vo_UV);
     // fragInderectLight = new Vector4(il, 1.0f);
-    fragInderectLight = new Vector4(0.0f, 0.0f, 0.0f, 1.0f);
+    
+    var pp = texture(uViewPositionTexture, vo_UV).XYZ;
+    fragIndirectLight = new Vector4(pp, 1.0f);
   }
 }

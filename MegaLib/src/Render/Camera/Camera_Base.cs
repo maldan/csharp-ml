@@ -1,5 +1,7 @@
 using System;
+using MegaLib.Geometry;
 using MegaLib.IO;
+using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 
 namespace MegaLib.Render.Camera;
@@ -28,6 +30,8 @@ public class Camera_Base
 
   public Vector3 Right =>
     Vector3.Transform(Vector3.Right, Rotation).Normalized;
+
+  public virtual Frustum Frustum => new();
 
   public Vector3 Position
   {
@@ -187,5 +191,12 @@ public class Camera_Base
 
     if (Keyboard.IsKeyDown(KeyboardKey.ArrowLeft)) Rotation = Rotation.RotateEuler(-delta, 0f, 0f, "rad");
     if (Keyboard.IsKeyDown(KeyboardKey.ArrowRight)) Rotation = Rotation.RotateEuler(delta, 0f, 0f, "rad");
+  }
+
+  public void LookAt(Vector3 target)
+  {
+    // Calculate the forward vector (negative Z in camera space)
+    Vector3 dir = Vector3.Normalize(target - Position);
+    Rotation = Quaternion.FromDirection(dir);
   }
 }

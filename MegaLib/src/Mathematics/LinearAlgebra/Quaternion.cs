@@ -343,6 +343,39 @@ public struct Quaternion : IBinarySerializable
 
     return rotation;
   }*/
+  
+  public static Quaternion FromDirection(Vector3 targetDir)
+  {
+    // Ensure both vectors are normalized
+    targetDir = Vector3.Normalize(targetDir);
+    var defaultForward = Vector3.Normalize(Vector3.Forward);
+
+    // Calculate the dot product and the angle
+    float dot = Vector3.Dot(defaultForward, targetDir);
+    float angle = MathF.Acos(dot.Clamp( -1.0f, 1.0f)); // Clamp to avoid numerical issues
+
+    // Calculate the rotation axis
+    Vector3 axis = Vector3.Cross(defaultForward, targetDir);
+    if (axis.LengthSquared < 1e-6f) // If axis is near zero, direction is the same or opposite
+    {
+      // If the target direction is opposite to the default, use an arbitrary perpendicular axis
+      if (dot < 0.0f)
+      {
+        axis = Vector3.Normalize(Vector3.Cross(defaultForward, Vector3.UnitX));
+        if (axis.LengthSquared < 1e-6f)
+          axis = Vector3.Normalize(Vector3.Cross(defaultForward, Vector3.UnitY));
+      }
+      else
+      {
+        // No rotation needed
+        return Quaternion.Identity;
+      }
+    }
+
+    // Create the quaternion from the axis and angle
+    return Quaternion.FromAxisAngle(Vector3.Normalize(axis), angle);
+  }
+
 
   #endregion
 

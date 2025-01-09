@@ -28,6 +28,13 @@ public class OpenGL_Context
   private readonly List<uint> _removeTextureQueue = new();
   private Mutex _mutex = new();
 
+  private IRenderer _renderer;
+
+  public OpenGL_Context(IRenderer renderer)
+  {
+    _renderer = renderer;
+  }
+
   public uint GetBufferId<T>(ListGPU<T> buffer)
   {
     return _bufferList[buffer.Id];
@@ -606,7 +613,7 @@ public class OpenGL_Context
 
   public OpenGL_Framebuffer CreateFrameBuffer()
   {
-    var fb = new OpenGL_Framebuffer(this);
+    var fb = new OpenGL_Framebuffer(_renderer, this);
     return fb;
   }
 

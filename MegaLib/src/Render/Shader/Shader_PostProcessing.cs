@@ -179,7 +179,7 @@ public class PostProcessingFragmentShader : Shader_Base
     // if (ao2.X > 0.98f) ao2 = new Vector3(1.0f, 1.0f, 1.0f);
 
     fragColor = new Vector4(ff * ao2, 1.0f);
-    // if (vo_UV.X > 0.5f) fragColor = new Vector4(ff * ao2, 1.0f);
+    //if (vo_UV.X > 0.5f) fragColor = new Vector4(il, 1.0f);
   }
 
   public void _Main()

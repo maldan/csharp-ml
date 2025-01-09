@@ -401,13 +401,13 @@ public class Layer_Line : Layer_Base
     DrawLine(lowerEndY, upperEndY, color); // Линия по оси Y (снизу)
   }
 
-  public void DrawBox(Matrix4x4 matrix, Vector3 size, RGBA32F color)
+  public unsafe void DrawBox(Matrix4x4 matrix, Vector3 size, RGBA32F color)
   {
     // Половина размеров коробки (это будут смещения для вершин)
     var halfSize = size * 0.5f;
 
     // Вершины коробки в локальной системе координат
-    var vertices = new Vector3[8]
+    var vertices = stackalloc Vector3[8]
     {
       new(-halfSize.X, -halfSize.Y, -halfSize.Z), // Нижняя передняя левая
       new(halfSize.X, -halfSize.Y, -halfSize.Z), // Нижняя передняя правая
@@ -421,7 +421,7 @@ public class Layer_Line : Layer_Base
     };
 
     // Преобразуем вершины в мировые координаты через матрицу трансформации
-    for (var i = 0; i < vertices.Length; i++)
+    for (var i = 0; i < 8; i++)
     {
       vertices[i] = Vector3.Transform(vertices[i], matrix);
     }

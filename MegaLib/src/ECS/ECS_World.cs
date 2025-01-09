@@ -6,21 +6,39 @@ namespace MegaLib.ECS;
 
 public class ECS_World
 {
-  public List<ECS_System> SystemList = [];
-  public Dictionary<int, List<object>> EntityList = [];
-
+  public readonly List<ECS_System> SystemList = [];
+  public readonly List<ECS_Archetype> ArchetypeList = [];
+  
+  private int _entityId;
+  
   public void AddSystem(ECS_System system)
   {
     SystemList.Add(system);
   }
 
+  public int CreateEntity()
+  {
+    _entityId++;
+    return _entityId;
+  }
+
+  public void AddArchetype(ECS_Archetype archetype)
+  {
+    ArchetypeList.Add(archetype);
+  }
+  
+  public T GetArchetype<T>() where T : ECS_Archetype
+  {
+    return ArchetypeList.Where(a => a.GetType() == typeof(T)).Cast<T>().FirstOrDefault();
+  }
+  
   /*public List<T> GetEntityList<T>(int tag)
   {
     if (!EntityList.ContainsKey(tag)) return new List<T>();
     return (List<T>)EntityList[tag];
   }*/
 
-  public T FirstEntity<T>(int tag)
+  /*public T FirstEntity<T>(int tag)
   {
     var entityList = EntityList.ContainsKey(tag) ? EntityList[tag] : [];
     if (entityList.Count == 0) return default;
@@ -46,7 +64,7 @@ public class ECS_World
   {
     if (!EntityList.ContainsKey(tag)) EntityList[tag] = [];
     EntityList[tag].Add(value);
-  }
+  }*/
 
   public virtual void Tick(float delta)
   {

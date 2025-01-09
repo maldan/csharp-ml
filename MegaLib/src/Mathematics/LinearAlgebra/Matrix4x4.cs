@@ -400,6 +400,57 @@ public struct Matrix4x4
     };
   }
 
+  public Quaternion ToQuaternion()
+  {
+    var matrix = this;
+    
+    // Extract the trace of the matrix
+    float trace = matrix.M00 + matrix.M11 + matrix.M22;
+
+    if (trace > 0.0f)
+    {
+      // Calculate the quaternion components
+      float s = MathF.Sqrt(trace + 1.0f) * 2.0f; // s = 4 * w
+      float w = 0.25f * s;
+      float x = (matrix.M21 - matrix.M12) / s;
+      float y = (matrix.M02 - matrix.M20) / s;
+      float z = (matrix.M10 - matrix.M01) / s;
+      return new Quaternion(x, y, z, w);
+    }
+    else
+    {
+      // Find the largest diagonal element and compute quaternion accordingly
+      if (matrix.M00 > matrix.M11 && matrix.M00 > matrix.M22)
+      {
+        float s = MathF.Sqrt(1.0f + matrix.M00 - matrix.M11 - matrix.M22) * 2.0f; // s = 4 * x
+        float w = (matrix.M21 - matrix.M12) / s;
+        float x = 0.25f * s;
+        float y = (matrix.M01 + matrix.M10) / s;
+        float z = (matrix.M02 + matrix.M20) / s;
+        return new Quaternion(x, y, z, w);
+      }
+      else if (matrix.M11 > matrix.M22)
+      {
+        float s = MathF.Sqrt(1.0f + matrix.M11 - matrix.M00 - matrix.M22) * 2.0f; // s = 4 * y
+        float w = (matrix.M02 - matrix.M20) / s;
+        float x = (matrix.M01 + matrix.M10) / s;
+        float y = 0.25f * s;
+        float z = (matrix.M12 + matrix.M21) / s;
+        return new Quaternion(x, y, z, w);
+      }
+      else
+      {
+        float s = MathF.Sqrt(1.0f + matrix.M22 - matrix.M00 - matrix.M11) * 2.0f; // s = 4 * z
+        float w = (matrix.M10 - matrix.M01) / s;
+        float x = (matrix.M02 + matrix.M20) / s;
+        float y = (matrix.M12 + matrix.M21) / s;
+        float z = 0.25f * s;
+        return new Quaternion(x, y, z, w);
+      }
+    }
+  }
+
+  
   public override string ToString()
   {
     return $@"Matrix4x4(

@@ -1,11 +1,11 @@
 using System;
+using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
-using MegaLib.OS;
 using MegaLib.Render.Camera;
 
-namespace MegaLib.Mathematics.Geometry;
+namespace MegaLib.Geometry;
 
-public struct Frustum
+public struct Frustum : IPointIntersectable
 {
   public Plane TopPlane;
   public Plane BottomPlane;
@@ -114,5 +114,31 @@ public struct Frustum
     var farPlane = new Plane(farTopRight, farTopLeft, farBottomLeft); // Far-плоскость
 
     return new Frustum(topPlane, bottomPlane, leftPlane, rightPlane, nearPlane, farPlane);
+  }
+
+
+  public void PointIntersection(Vector3 point, out bool isHit)
+  {
+    // Check if the point is inside all six planes of the frustum
+    isHit = IsInsidePlane(TopPlane, point) &&
+            IsInsidePlane(BottomPlane, point) &&
+            IsInsidePlane(LeftPlane, point) &&
+            IsInsidePlane(RightPlane, point) &&
+            IsInsidePlane(NearPlane, point) &&
+            IsInsidePlane(FarPlane, point);
+  }
+
+  public bool PointIntersection(Vector3 point)
+  {
+    PointIntersection(point, out var isHit);
+    return isHit;
+  }
+
+// Helper method to check if a point is inside a plane
+  private static bool IsInsidePlane(Plane plane, Vector3 point)
+  {
+    // The plane equation: dot(Normal, Point) + D = 0
+    // If the result is >= 0, the point is on the "inside" side of the plane
+    return Vector3.Dot(plane.Normal, point) + plane.D >= 0;
   }
 }

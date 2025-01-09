@@ -230,8 +230,8 @@ public class VrHeadset
 
   public Matrix4x4 WorldTransform =>
     Matrix4x4.Identity
-      .Rotate(RotationOffset.Inverted)
-      .Translate(PositionOffset * new Vector3(1, -1, -1));
+      .Rotate(RotationOffset)
+      .Translate(PositionOffset * new Vector3(1, -1, 1));
 
   public VrHeadset()
   {

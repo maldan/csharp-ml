@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 using MegaLib.OS.Api;
 using MegaLib.Render.Buffer;
@@ -84,9 +85,17 @@ public class LR_Voxel : LR_Base
       }
     }
 
+    var fr = Scene.Camera.Frustum;
+
     // Draw each mesh
+    var id = 0;
     foreach (var (pos, mesh) in _chunks)
     {
+      /*if (!fr.PointIntersection((Vector3)pos))
+      {
+        continue;
+      }*/
+
       // mesh.Material.AlbedoTexture = layer.Texture;
       Context.MapObject(mesh);
 
@@ -149,6 +158,10 @@ public class LR_Voxel : LR_Base
 
       // Unbind vao
       OpenGL32.glBindVertexArray(0);
+
+      id++;
     }
+
+    // Console.WriteLine($"Voxel Draw Calls: {id}");
   }
 }

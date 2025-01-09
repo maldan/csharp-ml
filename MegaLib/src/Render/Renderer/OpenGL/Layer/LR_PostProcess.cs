@@ -166,7 +166,7 @@ public class LR_PostProcess : LR_Base
     shader.SetUniform("_uSSAOSettings", layer.SSAO_Settings);
     shader.IsStrictMode = true;
 
-    shader.PassDefaultUniform(Scene.Camera);
+    shader.PassDefaultUniform(Scene);
 
     shader.ActivateTexture(_framebufferFirst.GetTexture<RGB8>("color"), "_uScreenTexture", 0);
     shader.ActivateTexture(_framebufferFirst.GetTexture<RGB8>("viewNormal"), "uViewNormalTexture", 1);
@@ -202,7 +202,7 @@ public class LR_PostProcess : LR_Base
     shader.Disable(OpenGL32.GL_DEPTH_TEST);
     shader.Disable(OpenGL32.GL_CULL_FACE);
 
-    shader.PassDefaultUniform(Scene.Camera);
+    shader.PassDefaultUniform(Scene);
 
     shader.ActivateTexture(_framebufferFirst.GetTexture<RGB8>("color"), "_uScreenTexture", 0);
     shader.ActivateTexture(_framebufferFinal.GetTexture<RGB8>("occlusion"), "uOcclusionTexture", 1);

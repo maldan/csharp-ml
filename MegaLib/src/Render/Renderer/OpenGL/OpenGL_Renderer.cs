@@ -10,16 +10,25 @@ using MegaLib.Render.Layer;
 using MegaLib.Render.Renderer.OpenGL.Layer;
 using MegaLib.Render.Scene;
 using MegaLib.VR;
+using GLsizei = int;
 
 namespace MegaLib.Render.Renderer.OpenGL;
 
 public class OpenGL_Renderer : IRenderer
 {
-  private readonly OpenGL_Context _context = new();
+  private readonly OpenGL_Context _context;
   private Render_Scene _scene;
   private VrRuntime _vrRuntime;
   private RendererConfig _rendererConfig;
   private Rectangle _viewport = new(0, 0, 800, 600);
+  private float _scale = 1;
+
+  public Rectangle Viewport => _viewport;
+
+  public OpenGL_Renderer()
+  {
+    _context = new OpenGL_Context(this);
+  }
 
   private void Clear()
   {
@@ -46,6 +55,12 @@ public class OpenGL_Renderer : IRenderer
 
     // Подчищаем удаленные ресурсы
     _context.Clean();
+  }
+
+  public void Scale(float scale)
+  {
+    _scale = scale;
+    SetViewport(0, 0, (ushort)_viewport.Width, (ushort)_viewport.Height);
   }
 
   public byte[] GetScreen()
@@ -88,38 +103,22 @@ public class OpenGL_Renderer : IRenderer
     _vrRuntime.OnRender = (predictedTime, pose, fov) =>
     {
       Clear();
-
-      // _scene.Camera.IsZInverted = true;
-      _scene.Camera.Position = new Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);
-
-      /*_scene.Camera.Position += new Vector3(VrInput.Headset.PositionOffset.X, VrInput.Headset.PositionOffset.Y,
-        -VrInput.Headset.PositionOffset.Z);*/
-
+      
+      _scene.Camera.Position = new Vector3(pose.Position.X, pose.Position.Y, -pose.Position.Z);
+      
       _scene.Camera.Rotation = new Quaternion(
-        pose.Orientation.X, pose.Orientation.Y, pose.Orientation.Z, pose.Orientation.W
+        -pose.Orientation.X, -pose.Orientation.Y, pose.Orientation.Z, pose.Orientation.W
       );
-
-      /*var mx = Matrix4x4.Identity;
-      mx = mx.Rotate(new Quaternion(
-        pose.Orientation.X, pose.Orientation.Y, pose.Orientation.Z, pose.Orientation.W
-      ).Inverted);
-      mx = mx.Translate(pose.Position.X, pose.Position.Y, -pose.Position.Z);*/
-
+      
       ((Camera_Perspective)_scene.Camera).XrFOV = new Vector4(
         fov.AngleLeft, fov.AngleUp, fov.AngleRight, fov.AngleDown
       );
-
-      //var wt = VrInput.Headset.WorldTransform;
-      //wt = wt.Scale(new Vector3(-1, 0, 0))
-      //_scene.Camera.ViewMatrix = _scene.Camera.ViewMatrix.Scale(new Vector3(-1, 1, 1));
+      
       _scene.Camera.ViewMatrix = VrInput.Headset.WorldTransform * _scene.Camera.ViewMatrix;
 
       // Invert by x (I don't know why)
-      _scene.Camera.ViewMatrix = _scene.Camera.ViewMatrix.Scale(new Vector3(-1, 1, 1));
-
-      //_scene.Camera.Position += VrInput.Headset.WorldTransform.Position;
-      //_scene.Camera.Rotation *= VrInput.Headset.WorldTransform.Rotation;
-
+      //_scene.Camera.ViewMatrix = _scene.Camera.ViewMatrix.Scale(new Vector3(-1, 1, 1));
+      
       SetViewport(0, 0, (ushort)_vrRuntime.ViewWidth, (ushort)_vrRuntime.ViewHeight);
 
       Render();
@@ -128,14 +127,27 @@ public class OpenGL_Renderer : IRenderer
     return _vrRuntime;
   }
 
+  public void ScaleViewport(float scale)
+  {
+    _scale = scale;
+    var x = _viewport.X;
+    var y = _viewport.Y;
+    var width = _viewport.Width;
+    var height = _viewport.Height;
+    _viewport = Rectangle.FromLeftTopWidthHeight(x, y, width * _scale, height * _scale);
+    OpenGL32.glViewport(0, 0, (GLsizei)_viewport.Width, (GLsizei)_viewport.Height);
+  }
+
   public void SetViewport(ushort x, ushort y, ushort width, ushort height)
   {
     var old = _viewport;
-    _viewport = Rectangle.FromLeftTopWidthHeight(x, y, width, height);
-    OpenGL32.glViewport(0, 0, width, height);
+    _viewport = Rectangle.FromLeftTopWidthHeight(x, y, width * _scale, height * _scale);
+    OpenGL32.glViewport(0, 0, (GLsizei)_viewport.Width, (GLsizei)_viewport.Height);
 
     // Поменялся
-    if (old != _viewport) (_scene.PostProcessLayer.LayerRenderer as LR_PostProcess).ResizeFramebuffer(width, height);
+    if (old != _viewport)
+      ((LR_PostProcess)_scene.PostProcessLayer.LayerRenderer).ResizeFramebuffer((ushort)_viewport.Width,
+        (ushort)_viewport.Height);
   }
 
   public Render_Scene Scene
@@ -144,6 +156,7 @@ public class OpenGL_Renderer : IRenderer
     set
     {
       _scene = value;
+      _scene.SetRenderer(this);
       _scene.OnInit();
       _context.MapTexture(_scene.Skybox);
 

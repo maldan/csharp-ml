@@ -6,6 +6,7 @@ using MegaLib.OS.Api;
 using MegaLib.Render.Buffer;
 using MegaLib.Render.Camera;
 using MegaLib.Render.Color;
+using MegaLib.Render.Scene;
 using MegaLib.Render.Texture;
 
 namespace MegaLib.Render.Renderer.OpenGL;
@@ -116,19 +117,22 @@ public class OpenGL_Shader
     return uniformLocation;
   }
 
-  public void PassDefaultUniform(Camera_Base cameraBase)
+  public void PassDefaultUniform(Render_Scene scene)
   {
     var sm = IsStrictMode;
+    var camera = scene.Camera;
     IsStrictMode = false;
-    SetUniform("_uCameraFarNear", new Vector2(cameraBase.Near, cameraBase.Far));
-    SetUniform("_uCameraProjectionMatrix", cameraBase.ProjectionMatrix);
-    SetUniform("_uCameraProjectionInversedMatrix", cameraBase.ProjectionMatrix.Inverted);
-    SetUniform("_uCameraViewMatrix", cameraBase.ViewMatrix);
-    SetUniform("_uCameraWorldPosition", cameraBase.Position);
+    SetUniform("_uCameraFarNear", new Vector2(camera.Near, camera.Far));
+    SetUniform("_uCameraProjectionMatrix", camera.ProjectionMatrix);
+    SetUniform("_uCameraProjectionInversedMatrix", camera.ProjectionMatrix.Inverted);
+    SetUniform("_uCameraViewMatrix", camera.ViewMatrix);
+    SetUniform("_uCameraWorldPosition", camera.Position);
     SetUniform("_uTime", 0);
 
-    var w = Window.Current.ClientWidth;
-    var h = Window.Current.ClientHeight;
+    //var w = Window.Current.ClientWidth;
+    //var h = Window.Current.ClientHeight;
+    var w = scene.Renderer.Viewport.Width;
+    var h = scene.Renderer.Viewport.Height;
     SetUniform("_uScreenSize", new Vector2(w, h));
     IsStrictMode = sm;
   }

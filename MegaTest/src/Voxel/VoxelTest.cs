@@ -42,7 +42,7 @@ public class VoxelTest
       {
         for (var z = -areaSize; z < areaSize; z++)
         {
-          vx[x, y, z] = 1;
+          //vx[x, y, z] = 1;
         }
       }
     }

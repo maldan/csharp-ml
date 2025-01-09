@@ -562,14 +562,14 @@ public class SparseVoxelMap8
     LightTraversal((Vector3)_lightCurrentPosition, new Vector3(-1, -1, -1).Normalized);
   }*/
 
-  public void AddSphere(IVector3 center, float radius, byte value)
+  /*public void AddSphere(IVector3 center, float radius, byte value)
   {
     var mx = Matrix4x4.Identity;
     mx = mx.Translate(center.X, center.Y, center.Z);
     AddSphere(mx, radius, value);
-  }
+  }*/
 
-  public void AddSphere(Matrix4x4 matrix, float radius, byte value)
+  public void AddSphere(Matrix4x4 matrix, float radius, Func<IVector3, ushort, ushort> fn)
   {
     // Define the sphere's local bounding box size
     var localRadius = radius;
@@ -621,7 +621,9 @@ public class SparseVoxelMap8
           // Check if the local position is inside the sphere
           if (localPos.Length <= radius)
           {
-            SetDataAt(new IVector3(x, y, z), value);
+            var p = new IVector3(x, y, z);
+            var v = GetDataAt(p);
+            SetDataAt(p, fn(p, v));
           }
         }
       }

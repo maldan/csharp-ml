@@ -4,6 +4,7 @@ using MegaLib.Render.Camera;
 using MegaLib.Render.Color;
 using MegaLib.Render.Layer;
 using MegaLib.Render.Light;
+using MegaLib.Render.Renderer;
 using MegaLib.Render.RenderObject;
 using MegaLib.Render.Texture;
 
@@ -28,6 +29,8 @@ public class Render_Scene
 
   public Texture_2D<float> LightTexture;
 
+  public IRenderer Renderer { get; private set; }
+
   public Render_Scene()
   {
     LightTexture = new Texture_2D<float>(64, 64);
@@ -35,6 +38,11 @@ public class Render_Scene
     LightTexture.Options.WrapMode = TextureWrapMode.Clamp;
     LightTexture.Options.Format = TextureFormat.R32F;
     LightTexture.Options.UseMipMaps = false;
+  }
+
+  public void SetRenderer(IRenderer renderer)
+  {
+    Renderer = renderer;
   }
 
   public void AddLayer(string name, Layer_Base layer)
@@ -165,7 +173,7 @@ public class Render_Scene
       if (layer is Layer_EasyUI) continue;
       layer.Render();
     }
-
+    
     if (UsePostprocess)
     {
       PostProcessLayer.LayerRenderer.AfterRender();

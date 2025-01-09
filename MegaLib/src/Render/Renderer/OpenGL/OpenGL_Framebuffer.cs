@@ -4,6 +4,7 @@ using MegaLib.OS.Api;
 using MegaLib.Render.Color;
 using MegaLib.Render.Texture;
 using GLenum = uint;
+using GLsizei = int;
 
 namespace MegaLib.Render.Renderer.OpenGL;
 
@@ -23,13 +24,15 @@ public class OpenGL_Framebuffer
   public uint Id => _id;
   private uint _id;
   private OpenGL_Context _context;
+  private IRenderer _renderer;
   private uint _rbo;
   private uint _previousId;
-
+  
   private Dictionary<string, OpenGL_TextureCapture> _textures = new();
 
-  public OpenGL_Framebuffer(OpenGL_Context context)
+  public OpenGL_Framebuffer(IRenderer renderer, OpenGL_Context context)
   {
+    _renderer = renderer;
     _context = context;
   }
 
@@ -42,7 +45,7 @@ public class OpenGL_Framebuffer
       Name = name,
       Texture = new Texture_2D<float>(1280, 720),
       Format = TextureFormat.R32F,
-      GlInternalFormat = (int)OpenGL32.GL_DEPTH_COMPONENT24,
+      GlInternalFormat = (int)OpenGL32.GL_DEPTH_COMPONENT32F,
       GlFormat = OpenGL32.GL_DEPTH_COMPONENT,
       GlType = OpenGL32.GL_FLOAT
     };
@@ -219,8 +222,8 @@ public class OpenGL_Framebuffer
         OpenGL32.GL_TEXTURE_2D,
         0,
         data.GlInternalFormat,
-        width,
-        height,
+        (GLsizei)width,
+        (GLsizei)height,
         0,
         data.GlFormat,
         data.GlType,
