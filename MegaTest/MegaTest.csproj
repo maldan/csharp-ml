@@ -9,6 +9,7 @@
 
         <CollectCoverage>true</CollectCoverage>
         <CoverletOutputFormat>opencover</CoverletOutputFormat>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>

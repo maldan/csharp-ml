@@ -1,5 +1,6 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AInt32_002Ecs_002Fl_003AC_0021_003FUsers_003Fblack_003FAppData_003FRoaming_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003Faef21ab35a6576cdcb99a56e6a8c84076d069f09ad1be52cfedaf49ee667855_003FInt32_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AMarshal_002Ecs_002Fl_003AC_0021_003FUsers_003Fblack_003FAppData_003FRoaming_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003F243a037ca7a04510a506adfdd94befbac90930_003F63_003F77cd21a3_003FMarshal_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AStopwatch_002Ecs_002Fl_003AC_0021_003FUsers_003Fblack_003FAppData_003FRoaming_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F6f1177229869fc3b39b93634f346be9918deca7bf8d9698944992ea75e6796c_003FStopwatch_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ASyntax_002Exml_002ESyntax_002EGenerated_002Ecs_002Fl_003AC_0021_003FUsers_003Fblack_003FAppData_003FRoaming_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003Ff2951c133fd767485f1fa181353f54fb9890b44_003FSyntax_002Exml_002ESyntax_002EGenerated_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/Environment/Hierarchy/Build/BuildTool/CustomBuildToolPath/@EntryValue">C:\Program Files\dotnet\sdk\8.0.404\MSBuild.dll</s:String>
@@ -19,7 +20,7 @@
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
 	
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=46f51674_002D5090_002D421f_002D84c8_002Dd817f8733ff1/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="TestBasic #10" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=46f51674_002D5090_002D421f_002D84c8_002Dd817f8733ff1/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="TestBasic #10" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Render.UITest.TestBasic&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Mathematics.LinearAlgebra.IVector3Tests&lt;/TestId&gt;&#xD;
@@ -34,11 +35,13 @@
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Render.Camera.Camera_PerspectiveTest.TestBasic&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Shader.AShaderProgramTest.Basic3&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Render.Camera.Camera_PerspectiveTest.TestX&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.ECS.ECSTest.Basic&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.ECS.ECSTest&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
 	
 	
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=9bd84eae_002Dfc26_002D4f6f_002D81c9_002Dcef8ab8bb307/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="TestBasic" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=9bd84eae_002Dfc26_002D4f6f_002D81c9_002Dcef8ab8bb307/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="TestBasic" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Render.UITest.TestBasic&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.PhysicsTest.TestBasic&lt;/TestId&gt;&#xD;
@@ -75,6 +78,7 @@
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Render.Camera.Camera_PerspectiveTest.TestX&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Render.Camera.Camera_PerspectiveTest.TestBasicXX&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.Render.Camera.Camera_PerspectiveTest.TestBasicXX3&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.ECS.ECSTest.Basic&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
 	
