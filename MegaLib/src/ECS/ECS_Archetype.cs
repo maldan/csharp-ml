@@ -1,30 +1,27 @@
-﻿namespace MegaLib.ECS;
+﻿using System;
+using System.Collections.Generic;
+
+namespace MegaLib.ECS;
 
 public class ECS_Archetype
 {
-  public int[] IdList;
-  public int Count { get; protected set; }
+  public ulong Id;
+  public Dictionary<Type, ECS_ComponentChunk> Components = new();
 
-  public ECS_Archetype(int capacity)
+  public void CreateChunk(Type t)
   {
-    IdList = new int[capacity];
-  }
-  
-  protected void Add(int entityId)
-  {
-    IdList[Count] = entityId;
-    Count++;
+    Components.Add(t, new ECS_ComponentChunk(t, 10));
   }
 
-  public void Remove(int entityId)
+  public int AddComponents()
   {
-    for (int i = 0; i < Count; i++)
-    {
-      if (IdList[i] == entityId)
-      {
-        IdList[i] = 0;
-        return;
-      }
-    }
+    var count = Components.Count;
+    foreach (var (type, component) in Components) component.Add();
+    return count;
+  }
+
+  public ECS_ComponentChunk Get(Type t)
+  {
+    return Components[t];
   }
 }

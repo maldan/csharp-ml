@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using MegaLib.ECS;
 using MegaLib.Mathematics.LinearAlgebra;
 using NUnit.Framework;
 
@@ -23,91 +24,8 @@ public struct Gay
   public Vector4 Position;
 }
 
-public delegate void RefAction<T>(ref T item, int index);
-
-public class ComponentChunk
-{
-  private int _elementSize;
-  private int _count;
-  private int _capacity;
-  private IntPtr _bufferPtr;
-
-  public ComponentChunk(Type t, int capacity)
-  {
-    _elementSize = Marshal.SizeOf(t);
-    _capacity = capacity;
-
-    // Allocate unmanaged memory
-    _bufferPtr = Marshal.AllocHGlobal(capacity * _elementSize);
-  }
-
-  public unsafe T* Get<T>(int index) where T : struct
-  {
-    return (T*)(_bufferPtr + index * _elementSize);
-  }
-
-  public unsafe void ForEach<T>(RefAction<T> fn) where T : struct
-  {
-    for (var i = 0; i < _capacity; i++)
-    {
-      var p = Get<T>(i);
-      fn(ref *p, i);
-    }
-  }
-
-  /*public unsafe void It<T>(Action<T> fn) where T : struct
-  {
-    for (var i = 0; i < _capacity; i++)
-    {
-      var p = Get<T>(i);
-      fn(p);
-    }
-  }*/
-  // public float this[int index] { }
-}
-
-public class Arche
-{
-  public ulong Id;
-  public Dictionary<Type, ComponentChunk> Components = new();
-
-  public void CreateChunk(Type t)
-  {
-    Components.Add(t, new ComponentChunk(t, 1_000_000));
-  }
-
-  public ComponentChunk Get(Type t)
-  {
-    return Components[t];
-  }
-}
-
 public static class ComponentTypeRegistry
 {
-  private static Dictionary<Type, int> _typeToBit = new();
-  private static int _nextBit = 0;
-
-  public static int GetBit(Type type)
-  {
-    if (!_typeToBit.TryGetValue(type, out var bit))
-    {
-      bit = _nextBit++;
-      _typeToBit[type] = bit;
-    }
-
-    return bit;
-  }
-
-  public static ulong GetMask(params Type[] componentTypes)
-  {
-    ulong mask = 0;
-    foreach (var type in componentTypes)
-    {
-      mask |= 1UL << GetBit(type);
-    }
-
-    return mask;
-  }
 }
 
 public class ECSTest
@@ -176,42 +94,37 @@ public class ECSTest
   [Test]
   public void Sus()
   {
+    var world = new ECS_World();
+
     var t = new Stopwatch();
-    var at = CreateArchetype(typeof(Transform), typeof(Gay), typeof(Vector3));
+    var at = world.CreateArchetype(typeof(Transform), typeof(Gay), typeof(Vector3));
+    var ee = world.CreateEntity(at);
+
+    ee.GetComponent<Transform>().Position = new Vector3(1, 2, 3);
+    Console.WriteLine(ee.GetComponent<Transform>().Position);
+    // at.Get(typeof(Transform)).Get<Transform>(0).Position = Vector3.One;
+
     Console.WriteLine(at.Id);
     var transformChunk = at.Get(typeof(Transform));
 
     t.Start();
     var totalX = 0f;
     var cnt = 0;
-    transformChunk.ForEach((ref Transform vv, int index) => { X(ref vv, index); });
+
+    transformChunk.Get<Transform>(0).Position.X = 228;
+    transformChunk.Get<Transform>(1).Position.X = 228;
+
+    /*transformChunk.ForEach((ref Transform vv, int index) => { X(ref vv, index); });
     transformChunk.ForEach((ref Transform vv, int index) =>
     {
       totalX += vv.Position.X;
-      //vv.Position.X = index;
-      // vv.Position.Y = index;
-      //vv.Position.Z = index;
       cnt++;
-    });
+    });*/
     t.Stop();
     Console.WriteLine(t.ElapsedTicks);
     Console.WriteLine($"MS {t.ElapsedMilliseconds}");
     Console.WriteLine(totalX);
     Console.WriteLine(cnt);
-    // transformChunk.ForEach((ref Transform vv, int index) => { Console.WriteLine(vv.Position); });
-  }
-
-  public Arche CreateArchetype(params Type[] componentTypes)
-  {
-    var archetype = new Arche();
-
-    for (var i = 0; i < componentTypes.Length; i++)
-    {
-      archetype.Id |= ComponentTypeRegistry.GetMask(componentTypes[i]);
-      archetype.CreateChunk(componentTypes[i]);
-      // Console.WriteLine($"{componentTypes[i]} - {ComponentTypeRegistry.GetMask(componentTypes[i])}");
-    }
-
-    return archetype;
+    transformChunk.ForEach((ref Transform vv, int index) => { Console.WriteLine(vv.Position); });
   }
 }

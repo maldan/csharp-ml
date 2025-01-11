@@ -7,64 +7,59 @@ namespace MegaLib.ECS;
 public class ECS_World
 {
   public readonly List<ECS_System> SystemList = [];
-  public readonly List<ECS_Archetype> ArchetypeList = [];
-  
+
+  // For archetype mask
+  private Dictionary<Type, int> _typeToBit = new();
+  private int _nextBit;
+
   private int _entityId;
-  
+
   public void AddSystem(ECS_System system)
   {
     SystemList.Add(system);
   }
 
-  public int CreateEntity()
+  public ECS_Entity CreateEntity(ECS_Archetype archetype)
   {
     _entityId++;
-    return _entityId;
-  }
-
-  public void AddArchetype(ECS_Archetype archetype)
-  {
-    ArchetypeList.Add(archetype);
-  }
-  
-  public T GetArchetype<T>() where T : ECS_Archetype
-  {
-    return ArchetypeList.Where(a => a.GetType() == typeof(T)).Cast<T>().FirstOrDefault();
-  }
-  
-  /*public List<T> GetEntityList<T>(int tag)
-  {
-    if (!EntityList.ContainsKey(tag)) return new List<T>();
-    return (List<T>)EntityList[tag];
-  }*/
-
-  /*public T FirstEntity<T>(int tag)
-  {
-    var entityList = EntityList.ContainsKey(tag) ? EntityList[tag] : [];
-    if (entityList.Count == 0) return default;
-    return (T)entityList[0];
-  }
-
-  public void EachEntity<T>(int tag, Func<T, T> fn)
-  {
-    var entityList = EntityList.ContainsKey(tag) ? EntityList[tag] : [];
-    for (var i = 0; i < entityList.Count; i++)
+    var componentIndex = archetype.AddComponents();
+    return new ECS_Entity
     {
-      entityList[i] = fn((T)entityList[i]);
+      Id = _entityId,
+      ComponentIndex = componentIndex,
+      Archetype = archetype
+    };
+  }
+
+  public int ComponentGetBit(Type type)
+  {
+    if (!_typeToBit.TryGetValue(type, out var bit))
+    {
+      bit = _nextBit++;
+      _typeToBit[type] = bit;
     }
+
+    return bit;
   }
 
-  public void ClearEntitiesBy<T>(int tag, Func<T, bool> fn)
+  public ulong ComponentGetMask(params Type[] componentTypes)
   {
-    var entityList = EntityList.ContainsKey(tag) ? EntityList[tag] : [];
-    EntityList[tag] = entityList.Where(x => !fn((T)x)).ToList();
+    ulong mask = 0;
+    foreach (var type in componentTypes) mask |= 1UL << ComponentGetBit(type);
+    return mask;
   }
 
-  public void AddEntity(int tag, object value)
+  public ECS_Archetype CreateArchetype(params Type[] componentTypes)
   {
-    if (!EntityList.ContainsKey(tag)) EntityList[tag] = [];
-    EntityList[tag].Add(value);
-  }*/
+    var archetype = new ECS_Archetype();
+    for (var i = 0; i < componentTypes.Length; i++)
+    {
+      archetype.Id |= ComponentGetMask(componentTypes[i]);
+      archetype.CreateChunk(componentTypes[i]);
+    }
+
+    return archetype;
+  }
 
   public virtual void Tick(float delta)
   {
