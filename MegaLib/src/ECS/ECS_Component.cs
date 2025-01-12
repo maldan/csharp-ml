@@ -1,11 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using MegaLib.Asm;
 
 namespace MegaLib.ECS;
 
-public delegate void RefAction<T>(ref T item, int index);
+public delegate void RefAction<T1>(ref T1 item, int index);
+
+public delegate void RefAction<T1, T2>(ref T1 item1, ref T2 item2, int index);
+
+public delegate void RefAction<T1, T2, T3>(ref T1 item1, ref T2 item2, ref T3 item3, int index);
 
 public class ECS_ComponentChunk
 {
@@ -16,19 +19,23 @@ public class ECS_ComponentChunk
 
   public int Count { get; private set; }
 
+  private AsmRuntime.MemCopyDelegate _memcpy;
+
   public ECS_ComponentChunk(Type t, int capacity)
   {
     _elementSize = Marshal.SizeOf(t);
     _capacity = capacity;
     _bufferSize = _capacity * _elementSize;
     _bufferPtr = Marshal.AllocHGlobal(_capacity * _elementSize);
+
+    _memcpy = AsmRuntime.MemCopy();
   }
 
   private void Resize()
   {
     var newBuffer = Marshal.AllocHGlobal(_capacity * _elementSize);
-    var memcpy = AsmRuntime.MemCopy();
-    memcpy(_bufferPtr, newBuffer, _bufferSize);
+    //var memcpy = AsmRuntime.MemCopy();
+    _memcpy(_bufferPtr, newBuffer, _bufferSize);
     _bufferSize = _capacity * _elementSize;
   }
 
@@ -43,7 +50,23 @@ public class ECS_ComponentChunk
     Count++;
   }
 
-  private unsafe T* GetPointer<T>(int index) where T : unmanaged
+  public void Remove(int index)
+  {
+    if (Count == 1)
+    {
+      Count -= 1;
+      return;
+    }
+
+    var src = _bufferPtr + index * _elementSize;
+    var last = _bufferPtr + (Count - 1) * _elementSize;
+
+    // var memcpy = AsmRuntime.MemCopy();
+    _memcpy(src, last, _elementSize);
+    Count -= 1;
+  }
+
+  public unsafe T* GetPointer<T>(int index) where T : unmanaged
   {
     return (T*)(_bufferPtr + index * _elementSize);
   }
@@ -56,7 +79,7 @@ public class ECS_ComponentChunk
 
   public unsafe void ForEach<T>(RefAction<T> fn) where T : unmanaged
   {
-    for (var i = 0; i < _capacity; i++)
+    for (var i = 0; i < Count; i++)
     {
       var p = GetPointer<T>(i);
       fn(ref *p, i);

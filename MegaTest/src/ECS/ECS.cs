@@ -24,10 +24,6 @@ public struct Gay
   public Vector4 Position;
 }
 
-public static class ComponentTypeRegistry
-{
-}
-
 public class ECSTest
 {
   [Test]
@@ -35,7 +31,7 @@ public class ECSTest
   {
     var t = new Stopwatch();
     t.Start();
-    var size = 1000000;
+    var size = 1_000_000;
     var elementSize = Marshal.SizeOf<Transform>();
 
     // Allocate unmanaged memory
@@ -102,9 +98,10 @@ public class ECSTest
 
     ee.GetComponent<Transform>().Position = new Vector3(1, 2, 3);
     Console.WriteLine(ee.GetComponent<Transform>().Position);
+
     // at.Get(typeof(Transform)).Get<Transform>(0).Position = Vector3.One;
 
-    Console.WriteLine(at.Id);
+    Console.WriteLine(at.Mask);
     var transformChunk = at.Get(typeof(Transform));
 
     t.Start();
@@ -120,11 +117,48 @@ public class ECSTest
       totalX += vv.Position.X;
       cnt++;
     });*/
+
     t.Stop();
     Console.WriteLine(t.ElapsedTicks);
     Console.WriteLine($"MS {t.ElapsedMilliseconds}");
     Console.WriteLine(totalX);
     Console.WriteLine(cnt);
     transformChunk.ForEach((ref Transform vv, int index) => { Console.WriteLine(vv.Position); });
+  }
+
+  [Test]
+  public void Sus2()
+  {
+    var world = new ECS_World();
+
+    var at1 = world.CreateArchetype(typeof(Transform), typeof(Gay), typeof(Vector3));
+    var at2 = world.CreateArchetype(typeof(Transform));
+    var ee1 = world.CreateEntity(at1);
+    var ee2 = world.CreateEntity(at2);
+
+    // ee.GetComponent<Transform>().Position = new Vector3(1, 2, 3);
+
+    var mask1 = world.ComponentGetMask(typeof(Transform), typeof(Gay), typeof(Vector3));
+    var mask2 = world.ComponentGetMask(typeof(Transform));
+
+    world.ForEach(mask1, (ref Transform vv, ref Gay g, int index) =>
+    {
+      vv.Position.X = 1;
+      vv.Position.Y = 2;
+      vv.Position.Z = 3;
+      g.Position = new Vector4(5, 5, 6, 7);
+    });
+    world.ForEach(mask1,
+      (ref Transform vv, ref Gay g, int index) => { Console.WriteLine($"{index} - {vv.Position} {g.Position}"); });
+    Console.WriteLine("----");
+    world.ForEach(mask2,
+      (ref Transform vv, int index) => { Console.WriteLine($"{index} - {vv.Position}"); });
+
+    world.DestroyEntity(ee1);
+    world.DestroyEntity(ee2);
+
+    Console.WriteLine("----");
+    world.ForEach(mask2,
+      (ref Transform vv, int index) => { Console.WriteLine($"{index} - {vv.Position}"); });
   }
 }

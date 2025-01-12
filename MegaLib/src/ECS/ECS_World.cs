@@ -11,8 +11,11 @@ public class ECS_World
   // For archetype mask
   private Dictionary<Type, int> _typeToBit = new();
   private int _nextBit;
-
   private int _entityId;
+  private Dictionary<ulong, ECS_Archetype> _archetypes = new();
+
+  // Entities
+  private List<ECS_Entity> _entityList = [];
 
   public void AddSystem(ECS_System system)
   {
@@ -23,15 +26,23 @@ public class ECS_World
   {
     _entityId++;
     var componentIndex = archetype.AddComponents();
-    return new ECS_Entity
+    var e = new ECS_Entity
     {
       Id = _entityId,
       ComponentIndex = componentIndex,
       Archetype = archetype
     };
+    _entityList.Add(e);
+    return e;
   }
 
-  public int ComponentGetBit(Type type)
+  public void DestroyEntity(ECS_Entity entity)
+  {
+    _entityList.Remove(entity);
+    entity.Destroy();
+  }
+
+  private int ComponentGetBit(Type type)
   {
     if (!_typeToBit.TryGetValue(type, out var bit))
     {
@@ -51,12 +62,16 @@ public class ECS_World
 
   public ECS_Archetype CreateArchetype(params Type[] componentTypes)
   {
-    var archetype = new ECS_Archetype();
-    for (var i = 0; i < componentTypes.Length; i++)
+    ulong mask = 0;
+    foreach (var t in componentTypes) mask |= ComponentGetMask(t);
+    if (_archetypes.ContainsKey(mask)) return _archetypes[mask];
+
+    var archetype = new ECS_Archetype
     {
-      archetype.Id |= ComponentGetMask(componentTypes[i]);
-      archetype.CreateChunk(componentTypes[i]);
-    }
+      Mask = mask
+    };
+    foreach (var t in componentTypes) archetype.CreateChunk(t);
+    _archetypes.Add(mask, archetype);
 
     return archetype;
   }
@@ -64,5 +79,26 @@ public class ECS_World
   public virtual void Tick(float delta)
   {
     SystemList.ForEach(system => { system.Tick(delta); });
+  }
+
+  public List<ECS_Archetype> SelectArchetypes(ulong mask)
+  {
+    var list = new List<ECS_Archetype>();
+    foreach (var (bitmask, at) in _archetypes)
+      if ((mask & bitmask) == mask)
+        list.Add(at);
+    return list;
+  }
+
+  public void ForEach<T1>(ulong mask, RefAction<T1> fn) where T1 : unmanaged
+  {
+    var list = SelectArchetypes(mask);
+    foreach (var at in list) at.ForEach(fn);
+  }
+
+  public void ForEach<T1, T2>(ulong mask, RefAction<T1, T2> fn) where T1 : unmanaged where T2 : unmanaged
+  {
+    var list = SelectArchetypes(mask);
+    foreach (var at in list) at.ForEach(fn);
   }
 }

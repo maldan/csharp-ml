@@ -11,4 +11,9 @@ public class ECS_Entity
     var chunk = Archetype.Get(typeof(T));
     return ref chunk.Get<T>(ComponentIndex);
   }
+
+  public void Destroy()
+  {
+    Archetype.RemoveComponentData(ComponentIndex);
+  }
 }
