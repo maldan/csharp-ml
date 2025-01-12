@@ -14,8 +14,7 @@ public class ECS_World
   private int _entityId;
   private Dictionary<ulong, ECS_Archetype> _archetypes = new();
 
-  // Entities
-  //private List<ECS_Entity> _entityList = [];
+  private List<ECS_Entity> _removeQueue = new();
 
   public void AddSystem(ECS_System system)
   {
@@ -28,19 +27,14 @@ public class ECS_World
     var e = new ECS_Entity
     {
       Id = _entityId,
-      Archetype = archetype
+      Archetype = archetype,
+      World = this
     };
-    // _entityList.Add(e);
     archetype.AddEntity(e);
     return e;
   }
 
-  /*public void DestroyEntity(ECS_Entity entity)
-  {
-    entity.Destroy();
-  }*/
-
-  private int ComponentGetBit(Type type)
+  private int GetComponentBit(Type type)
   {
     if (!_typeToBit.TryGetValue(type, out var bit))
     {
@@ -51,27 +45,39 @@ public class ECS_World
     return bit;
   }
 
-  public ulong ComponentGetMask(params Type[] componentTypes)
+  public ulong GetComponentMask(params Type[] componentTypes)
   {
     ulong mask = 0;
-    foreach (var type in componentTypes) mask |= 1UL << ComponentGetBit(type);
+    foreach (var type in componentTypes) mask |= 1UL << GetComponentBit(type);
     return mask;
   }
 
   public ECS_Archetype CreateArchetype(params Type[] componentTypes)
   {
     ulong mask = 0;
-    foreach (var t in componentTypes) mask |= ComponentGetMask(t);
+    foreach (var t in componentTypes) mask |= GetComponentMask(t);
     if (_archetypes.ContainsKey(mask)) return _archetypes[mask];
 
     var archetype = new ECS_Archetype
     {
       Mask = mask
     };
-    foreach (var t in componentTypes) archetype.CreateChunk(t);
+    foreach (var t in componentTypes) archetype.AddType(t);
     _archetypes.Add(mask, archetype);
 
     return archetype;
+  }
+
+  public void AddEntityToRemoveQueue(ECS_Entity entity)
+  {
+    entity.IsDead = true;
+    _removeQueue.Add(entity);
+  }
+
+  public void Flush()
+  {
+    foreach (var entity in _removeQueue) entity.Destroy();
+    _removeQueue.Clear();
   }
 
   public virtual void Tick(float delta)
@@ -88,15 +94,37 @@ public class ECS_World
     return list;
   }
 
-  public void ForEach<T1>(ECS_Archetype t, ECS_RefAction<T1> fn) where T1 : unmanaged
+  // Create a new archetype with additional type
+  public ECS_Archetype ExtendArchetype(ECS_Archetype archetype, Type type)
   {
-    var list = SelectArchetypes(t.Mask);
+    // Collect types
+    var types = new HashSet<Type>();
+    foreach (var (t, _) in archetype.Components) types.Add(t);
+    types.Add(type);
+
+    return CreateArchetype(types.ToArray());
+  }
+
+  // Create a new archetype without specified type
+  public ECS_Archetype ReduceArchetype(ECS_Archetype archetype, Type type)
+  {
+    // Collect types
+    var types = new HashSet<Type>();
+    foreach (var (t, _) in archetype.Components) types.Add(t);
+    types.Remove(type);
+
+    return CreateArchetype(types.ToArray());
+  }
+
+  public void ForEach<T1>(ECS_RefAction<T1> fn) where T1 : unmanaged
+  {
+    var list = SelectArchetypes(GetComponentMask(typeof(T1)));
     foreach (var at in list) at.ForEach(fn);
   }
 
-  public void ForEach<T1, T2>(ECS_Archetype t, ECS_RefAction<T1, T2> fn) where T1 : unmanaged where T2 : unmanaged
+  public void ForEach<T1, T2>(ECS_RefAction<T1, T2> fn) where T1 : unmanaged where T2 : unmanaged
   {
-    var list = SelectArchetypes(t.Mask);
+    var list = SelectArchetypes(GetComponentMask(typeof(T1), typeof(T2)));
     foreach (var at in list) at.ForEach(fn);
   }
 }

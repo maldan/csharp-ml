@@ -33,20 +33,29 @@ public class ECS_ComponentChunk
 
   private void Resize()
   {
+    _capacity *= 2;
+
+    var oldBufferPtr = _bufferPtr;
     var newBuffer = Marshal.AllocHGlobal(_capacity * _elementSize);
-    //var memcpy = AsmRuntime.MemCopy();
-    _memcpy(_bufferPtr, newBuffer, _bufferSize);
+    _memcpy(newBuffer, oldBufferPtr, _bufferSize);
+
+    // Set new buffer size
     _bufferSize = _capacity * _elementSize;
+
+    // Remove old
+    Marshal.FreeHGlobal(oldBufferPtr);
   }
 
   public void Add()
   {
-    if (Count == _capacity)
-    {
-      _capacity *= 2;
-      Resize();
-    }
+    if (Count == _capacity) Resize();
+    Count++;
+  }
 
+  public void Add(byte[] data)
+  {
+    if (Count == _capacity) Resize();
+    SetRaw(Count, data);
     Count++;
   }
 
@@ -61,9 +70,27 @@ public class ECS_ComponentChunk
     var src = _bufferPtr + index * _elementSize;
     var last = _bufferPtr + (Count - 1) * _elementSize;
 
-    // var memcpy = AsmRuntime.MemCopy();
     _memcpy(src, last, _elementSize);
     Count -= 1;
+  }
+
+  public byte[] GetRaw(int index)
+  {
+    var bb = new byte[_elementSize];
+    Marshal.Copy(_bufferPtr + index * _elementSize, bb, 0, _elementSize);
+    return bb;
+  }
+
+  public void SetRaw(int index, byte[] value)
+  {
+    var ptr = Marshal.UnsafeAddrOfPinnedArrayElement(value, 0);
+    _memcpy(_bufferPtr + index * _elementSize, ptr, _elementSize);
+  }
+
+  public unsafe void SetRaw<T>(int index, T cmp) where T : unmanaged
+  {
+    var ptr = (nint)(&cmp);
+    _memcpy(_bufferPtr + index * _elementSize, ptr, _elementSize);
   }
 
   public unsafe T* GetPointer<T>(int index) where T : unmanaged
@@ -73,8 +100,7 @@ public class ECS_ComponentChunk
 
   public unsafe ref T Get<T>(int index) where T : unmanaged
   {
-    var tt = GetPointer<T>(index);
-    return ref *tt;
+    return ref *(T*)(_bufferPtr + index * _elementSize);
   }
 
   /*public unsafe void ForEach<T>(ECS_RefAction<T> fn) where T : unmanaged

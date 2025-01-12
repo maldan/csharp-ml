@@ -9,22 +9,28 @@ public class ECS_Archetype
   private List<ECS_Entity> _entities = [];
   public Dictionary<Type, ECS_ComponentChunk> Components = new();
 
-  public void CreateChunk(Type t)
+  public void AddType(Type t)
   {
+    // If already have
+    if (Components.ContainsKey(t)) return;
     Components.Add(t, new ECS_ComponentChunk(t, 1024));
+  }
+
+  public ECS_ComponentChunk GetComponentChunk(Type t)
+  {
+    return Components[t];
   }
 
   public void AddEntity(ECS_Entity entity)
   {
     var count = _entities.Count;
     _entities.Add(entity);
-    foreach (var (type, component) in Components) component.Add();
-    entity.ComponentIndex = count;
-  }
 
-  public ECS_ComponentChunk GetComponentChunk(Type t)
-  {
-    return Components[t];
+    // If fresh created entity
+    foreach (var (type, component) in Components) component.Add();
+
+    entity.Archetype = this;
+    entity.ComponentIndex = count;
   }
 
   public void RemoveEntity(ECS_Entity entity)
@@ -42,6 +48,7 @@ public class ECS_Archetype
     var c = GetComponentChunk(typeof(T1));
     for (var i = 0; i < c.Count; i++)
     {
+      if (_entities[i].IsDead) continue;
       var v = c.GetPointer<T1>(i);
       fn(ref *v, _entities[i]);
     }
@@ -53,6 +60,8 @@ public class ECS_Archetype
     var c2 = GetComponentChunk(typeof(T2));
     for (var i = 0; i < c1.Count; i++)
     {
+      if (_entities[i].IsDead) continue;
+
       var v1 = c1.GetPointer<T1>(i);
       var v2 = c2.GetPointer<T2>(i);
       fn(ref *v1, ref *v2, _entities[i]);

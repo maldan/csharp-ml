@@ -136,22 +136,19 @@ public class ECSTest
     var ee1 = world.CreateEntity(at1);
     var ee2 = world.CreateEntity(at2);
 
-    // ee.GetComponent<Transform>().Position = new Vector3(1, 2, 3);
+    ee1.GetComponent<Transform>().Position = new Vector3(1, 2, 3);
 
-    //var mask1 = world.ComponentGetMask(typeof(Transform), typeof(Gay), typeof(Vector3));
-    //var mask2 = world.ComponentGetMask(typeof(Transform));
-
-    world.ForEach(at1, (ref Transform vv, ref Gay g, ECS_Entity e) =>
+    world.ForEach((ref Transform vv, ref Gay g, ECS_Entity e) =>
     {
       vv.Position.X = 1;
       vv.Position.Y = 2;
       vv.Position.Z = 3;
       g.Position = new Vector4(5, 5, 6, 7);
     });
-    world.ForEach(at1,
+    world.ForEach(
       (ref Transform vv, ref Gay g, ECS_Entity e) => { Console.WriteLine($"{e} - {vv.Position} {g.Position}"); });
     Console.WriteLine("----");
-    world.ForEach(at2,
+    world.ForEach(
       (ref Transform vv, ECS_Entity e) => { Console.WriteLine($"{e} - {vv.Position}"); });
 
     //world.DestroyEntity(ee1);
@@ -159,9 +156,46 @@ public class ECSTest
     ee1.Destroy();
     ee2.Destroy();
 
-
     Console.WriteLine("----");
-    world.ForEach(at2,
+    world.ForEach(
       (ref Transform vv, ECS_Entity e) => { Console.WriteLine($"{e} - {vv.Position}"); });
+  }
+
+  [Test]
+  public void Sus3()
+  {
+    var world = new ECS_World();
+
+    var at1 = world.CreateArchetype(typeof(Transform), typeof(Gay), typeof(Vector3));
+    var ee1 = world.CreateEntity(at1);
+
+    ee1.GetComponent<Transform>().Position = new Vector3(1, 2, 3);
+
+    var bytes = at1.GetComponentChunk(typeof(Transform)).GetRaw(0);
+    ee1.GetComponent<Transform>().Position = new Vector3(5, 5, 5);
+    Console.WriteLine(ee1.GetComponent<Transform>().Position);
+    at1.GetComponentChunk(typeof(Transform)).SetRaw(0, bytes);
+    Console.WriteLine(ee1.GetComponent<Transform>().Position);
+
+    at1.GetComponentChunk(typeof(Transform)).SetRaw(0, new Transform() { Position = new Vector3(4, 8, 16) });
+    Console.WriteLine(ee1.GetComponent<Transform>().Position);
+  }
+
+  [Test]
+  public void Sus4()
+  {
+    var world = new ECS_World();
+
+    var at1 = world.CreateArchetype(typeof(Transform));
+    var at2 = world.CreateArchetype(typeof(Transform), typeof(Gay));
+    var ee1 = world.CreateEntity(at1);
+
+    ee1.GetComponent<Transform>().Position = new Vector3(1, 2, 3);
+    Console.WriteLine(ee1.Archetype.Mask);
+    ee1.AddComponent<Gay>();
+    Console.WriteLine(ee1.Archetype.Mask);
+
+    Console.WriteLine($"A - {at1.GetComponentChunk(typeof(Transform)).Count}");
+    Console.WriteLine($"B - {at2.GetComponentChunk(typeof(Transform)).Count}");
   }
 }
