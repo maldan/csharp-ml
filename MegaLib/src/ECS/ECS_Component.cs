@@ -61,6 +61,7 @@ public class ECS_ComponentChunk
 
   public void Remove(int index)
   {
+    Console.WriteLine($"CN {Count}");
     if (Count == 1)
     {
       Count -= 1;

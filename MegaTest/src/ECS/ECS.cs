@@ -197,5 +197,7 @@ public class ECSTest
 
     Console.WriteLine($"A - {at1.GetComponentChunk(typeof(Transform)).Count}");
     Console.WriteLine($"B - {at2.GetComponentChunk(typeof(Transform)).Count}");
+
+    Console.WriteLine(ee1.GetComponent<Transform>().Position);
   }
 }

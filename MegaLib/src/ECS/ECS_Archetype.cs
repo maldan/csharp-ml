@@ -21,13 +21,29 @@ public class ECS_Archetype
     return Components[t];
   }
 
+  public bool HasComponent(Type t)
+  {
+    return Components.ContainsKey(t);
+  }
+
   public void AddEntity(ECS_Entity entity)
   {
     var count = _entities.Count;
     _entities.Add(entity);
 
     // If fresh created entity
-    foreach (var (type, component) in Components) component.Add();
+    if (entity.ComponentIndex == -1)
+    {
+      foreach (var (type, component) in Components) component.Add();
+    }
+    else
+    {
+      foreach (var (type, component) in Components)
+      {
+        if (entity.HasComponent(type)) component.Add(entity.GetRawComponentData(type));
+        else component.Add();
+      }
+    }
 
     entity.Archetype = this;
     entity.ComponentIndex = count;
@@ -40,7 +56,11 @@ public class ECS_Archetype
     _entities.RemoveAt(index);
 
     // Remove components
-    foreach (var (type, c) in Components) c.Remove(index);
+    foreach (var (type, c) in Components)
+    {
+      Console.WriteLine(type);
+      c.Remove(index);
+    }
   }
 
   public unsafe void ForEach<T1>(ECS_RefAction<T1> fn) where T1 : unmanaged

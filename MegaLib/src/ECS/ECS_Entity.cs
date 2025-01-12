@@ -16,6 +16,11 @@ public class ECS_Entity
     return ref chunk.Get<T>(ComponentIndex);
   }
 
+  public bool HasComponent(Type t)
+  {
+    return Archetype.HasComponent(t);
+  }
+
   public byte[] GetRawComponentData(Type t)
   {
     var chunk = Archetype.GetComponentChunk(t);
@@ -24,20 +29,26 @@ public class ECS_Entity
 
   public void AddComponent<T>() where T : unmanaged
   {
+    var oldAt = Archetype;
+
     Console.WriteLine($"AT - {Archetype.Mask}");
     // Move to new archetype
     var newAt = World.ExtendArchetype(Archetype, typeof(T));
     Console.WriteLine($"AT - {newAt.Mask}");
     newAt.AddEntity(this);
-    Archetype.RemoveEntity(this);
+
+    oldAt.RemoveEntity(this);
   }
 
   public void RemoveComponent<T>() where T : unmanaged
   {
+    var oldAt = Archetype;
+
     // Move to new archetype
     var newAt = World.ReduceArchetype(Archetype, typeof(T));
     newAt.AddEntity(this);
-    Archetype.RemoveEntity(this);
+
+    oldAt.RemoveEntity(this);
   }
 
   public void Destroy()

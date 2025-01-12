@@ -18,6 +18,7 @@ public class ECS_World
 
   public void AddSystem(ECS_System system)
   {
+    system.World = this;
     SystemList.Add(system);
   }
 
