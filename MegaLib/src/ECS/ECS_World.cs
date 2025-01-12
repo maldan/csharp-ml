@@ -15,7 +15,7 @@ public class ECS_World
   private Dictionary<ulong, ECS_Archetype> _archetypes = new();
 
   // Entities
-  private List<ECS_Entity> _entityList = [];
+  //private List<ECS_Entity> _entityList = [];
 
   public void AddSystem(ECS_System system)
   {
@@ -25,22 +25,20 @@ public class ECS_World
   public ECS_Entity CreateEntity(ECS_Archetype archetype)
   {
     _entityId++;
-    var componentIndex = archetype.AddComponents();
     var e = new ECS_Entity
     {
       Id = _entityId,
-      ComponentIndex = componentIndex,
       Archetype = archetype
     };
-    _entityList.Add(e);
+    // _entityList.Add(e);
+    archetype.AddEntity(e);
     return e;
   }
 
-  public void DestroyEntity(ECS_Entity entity)
+  /*public void DestroyEntity(ECS_Entity entity)
   {
-    _entityList.Remove(entity);
     entity.Destroy();
-  }
+  }*/
 
   private int ComponentGetBit(Type type)
   {
@@ -90,15 +88,15 @@ public class ECS_World
     return list;
   }
 
-  public void ForEach<T1>(ulong mask, RefAction<T1> fn) where T1 : unmanaged
+  public void ForEach<T1>(ECS_Archetype t, ECS_RefAction<T1> fn) where T1 : unmanaged
   {
-    var list = SelectArchetypes(mask);
+    var list = SelectArchetypes(t.Mask);
     foreach (var at in list) at.ForEach(fn);
   }
 
-  public void ForEach<T1, T2>(ulong mask, RefAction<T1, T2> fn) where T1 : unmanaged where T2 : unmanaged
+  public void ForEach<T1, T2>(ECS_Archetype t, ECS_RefAction<T1, T2> fn) where T1 : unmanaged where T2 : unmanaged
   {
-    var list = SelectArchetypes(mask);
+    var list = SelectArchetypes(t.Mask);
     foreach (var at in list) at.ForEach(fn);
   }
 }

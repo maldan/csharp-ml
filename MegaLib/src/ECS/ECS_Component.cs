@@ -4,11 +4,11 @@ using MegaLib.Asm;
 
 namespace MegaLib.ECS;
 
-public delegate void RefAction<T1>(ref T1 item, int index);
+public delegate void ECS_RefAction<T1>(ref T1 item, ECS_Entity entity);
 
-public delegate void RefAction<T1, T2>(ref T1 item1, ref T2 item2, int index);
+public delegate void ECS_RefAction<T1, T2>(ref T1 item1, ref T2 item2, ECS_Entity entity);
 
-public delegate void RefAction<T1, T2, T3>(ref T1 item1, ref T2 item2, ref T3 item3, int index);
+public delegate void ECS_RefAction<T1, T2, T3>(ref T1 item1, ref T2 item2, ref T3 item3, ECS_Entity entity);
 
 public class ECS_ComponentChunk
 {
@@ -77,12 +77,12 @@ public class ECS_ComponentChunk
     return ref *tt;
   }
 
-  public unsafe void ForEach<T>(RefAction<T> fn) where T : unmanaged
+  /*public unsafe void ForEach<T>(ECS_RefAction<T> fn) where T : unmanaged
   {
     for (var i = 0; i < Count; i++)
     {
       var p = GetPointer<T>(i);
       fn(ref *p, i);
     }
-  }
+  }*/
 }

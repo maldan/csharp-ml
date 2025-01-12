@@ -8,12 +8,12 @@ public class ECS_Entity
 
   public ref T GetComponent<T>() where T : unmanaged
   {
-    var chunk = Archetype.Get(typeof(T));
+    var chunk = Archetype.GetComponentChunk(typeof(T));
     return ref chunk.Get<T>(ComponentIndex);
   }
 
   public void Destroy()
   {
-    Archetype.RemoveComponentData(ComponentIndex);
+    Archetype.RemoveEntity(this);
   }
 }
