@@ -44,6 +44,7 @@ public class ECS_ComponentChunk
 
     // Remove old
     Marshal.FreeHGlobal(oldBufferPtr);
+    _bufferPtr = newBuffer;
   }
 
   public void Add()
@@ -59,9 +60,16 @@ public class ECS_ComponentChunk
     Count++;
   }
 
+  public void Add<T>(T value) where T : unmanaged
+  {
+    if (Count == _capacity) Resize();
+    SetRaw(Count, value);
+    Count++;
+  }
+
   public void Remove(int index)
   {
-    Console.WriteLine($"CN {Count}");
+    // Console.WriteLine($"CN {Count}");
     if (Count == 1)
     {
       Count -= 1;

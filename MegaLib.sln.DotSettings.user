@@ -1,4 +1,5 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ADefaultInterpolatedStringHandler_002Ecs_002Fl_003AC_0021_003FUsers_003Fblack_003FAppData_003FRoaming_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003Fc1c946eaa6d8ddaaea1b63e936ca8ed2791d9316c5b025a41d445891e8a59ecd_003FDefaultInterpolatedStringHandler_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AInt32_002Ecs_002Fl_003AC_0021_003FUsers_003Fblack_003FAppData_003FRoaming_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003Faef21ab35a6576cdcb99a56e6a8c84076d069f09ad1be52cfedaf49ee667855_003FInt32_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AMarshal_002Ecs_002Fl_003AC_0021_003FUsers_003Fblack_003FAppData_003FRoaming_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003F243a037ca7a04510a506adfdd94befbac90930_003F63_003F77cd21a3_003FMarshal_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AStopwatch_002Ecs_002Fl_003AC_0021_003FUsers_003Fblack_003FAppData_003FRoaming_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F6f1177229869fc3b39b93634f346be9918deca7bf8d9698944992ea75e6796c_003FStopwatch_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
@@ -83,6 +84,8 @@
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.ECS.ECSTest.Sus2&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.ECS.ECSTest.IterateUnmanaged&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.ECS.ECSTest.IterateNative&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.ECS.ECSTest.Sus3&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C5EB3E57-D81F-4303-B7BB-C0DEF0DDFA83::net8.0::MegaTest.ECS.ECSTest.Sus4&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
 	

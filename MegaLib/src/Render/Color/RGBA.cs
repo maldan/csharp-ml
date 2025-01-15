@@ -105,7 +105,7 @@ public struct RGBA8
   }
 }
 
-public struct RGBA32F
+public struct RGBA32F : IEquatable<RGBA32F>
 {
   public float R;
   public float G;
@@ -178,5 +178,20 @@ public struct RGBA32F
   public override string ToString()
   {
     return $"RGBA32F({R}, {G}, {B}, {A})";
+  }
+
+  public bool Equals(RGBA32F other)
+  {
+    return R.Equals(other.R) && G.Equals(other.G) && B.Equals(other.B) && A.Equals(other.A);
+  }
+
+  public override bool Equals(object obj)
+  {
+    return obj is RGBA32F other && Equals(other);
+  }
+
+  public override int GetHashCode()
+  {
+    return HashCode.Combine(R, G, B, A);
   }
 }

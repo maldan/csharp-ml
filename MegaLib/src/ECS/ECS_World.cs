@@ -84,6 +84,7 @@ public class ECS_World
   public virtual void Tick(float delta)
   {
     SystemList.ForEach(system => { system.Tick(delta); });
+    Flush();
   }
 
   public List<ECS_Archetype> SelectArchetypes(ulong mask)

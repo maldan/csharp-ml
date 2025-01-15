@@ -96,8 +96,8 @@ public class ECSTest
     var at = world.CreateArchetype(typeof(Transform), typeof(Gay), typeof(Vector3));
     var ee = world.CreateEntity(at);
 
-    ee.GetComponent<Transform>().Position = new Vector3(1, 2, 3);
-    Console.WriteLine(ee.GetComponent<Transform>().Position);
+    ee.GetComponentData<Transform>().Position = new Vector3(1, 2, 3);
+    Console.WriteLine(ee.GetComponentData<Transform>().Position);
 
     // at.Get(typeof(Transform)).Get<Transform>(0).Position = Vector3.One;
 
@@ -136,7 +136,7 @@ public class ECSTest
     var ee1 = world.CreateEntity(at1);
     var ee2 = world.CreateEntity(at2);
 
-    ee1.GetComponent<Transform>().Position = new Vector3(1, 2, 3);
+    ee1.GetComponentData<Transform>().Position = new Vector3(1, 2, 3);
 
     world.ForEach((ref Transform vv, ref Gay g, ECS_Entity e) =>
     {
@@ -169,16 +169,16 @@ public class ECSTest
     var at1 = world.CreateArchetype(typeof(Transform), typeof(Gay), typeof(Vector3));
     var ee1 = world.CreateEntity(at1);
 
-    ee1.GetComponent<Transform>().Position = new Vector3(1, 2, 3);
+    ee1.GetComponentData<Transform>().Position = new Vector3(1, 2, 3);
 
     var bytes = at1.GetComponentChunk(typeof(Transform)).GetRaw(0);
-    ee1.GetComponent<Transform>().Position = new Vector3(5, 5, 5);
-    Console.WriteLine(ee1.GetComponent<Transform>().Position);
+    ee1.GetComponentData<Transform>().Position = new Vector3(5, 5, 5);
+    Console.WriteLine(ee1.GetComponentData<Transform>().Position);
     at1.GetComponentChunk(typeof(Transform)).SetRaw(0, bytes);
-    Console.WriteLine(ee1.GetComponent<Transform>().Position);
+    Console.WriteLine(ee1.GetComponentData<Transform>().Position);
 
     at1.GetComponentChunk(typeof(Transform)).SetRaw(0, new Transform() { Position = new Vector3(4, 8, 16) });
-    Console.WriteLine(ee1.GetComponent<Transform>().Position);
+    Console.WriteLine(ee1.GetComponentData<Transform>().Position);
   }
 
   [Test]
@@ -190,14 +190,14 @@ public class ECSTest
     var at2 = world.CreateArchetype(typeof(Transform), typeof(Gay));
     var ee1 = world.CreateEntity(at1);
 
-    ee1.GetComponent<Transform>().Position = new Vector3(1, 2, 3);
+    ee1.GetComponentData<Transform>().Position = new Vector3(1, 2, 3);
     Console.WriteLine(ee1.Archetype.Mask);
-    ee1.AddComponent<Gay>();
+    ee1.AddComponent(typeof(Gay));
     Console.WriteLine(ee1.Archetype.Mask);
 
     Console.WriteLine($"A - {at1.GetComponentChunk(typeof(Transform)).Count}");
     Console.WriteLine($"B - {at2.GetComponentChunk(typeof(Transform)).Count}");
 
-    Console.WriteLine(ee1.GetComponent<Transform>().Position);
+    Console.WriteLine(ee1.GetComponentData<Transform>().Position);
   }
 }

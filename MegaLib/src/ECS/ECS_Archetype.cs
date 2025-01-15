@@ -13,7 +13,7 @@ public class ECS_Archetype
   {
     // If already have
     if (Components.ContainsKey(t)) return;
-    Components.Add(t, new ECS_ComponentChunk(t, 1024));
+    Components.Add(t, new ECS_ComponentChunk(t, 32));
   }
 
   public ECS_ComponentChunk GetComponentChunk(Type t)

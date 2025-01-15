@@ -50,8 +50,7 @@ public class Layer_Base
   {
     foreach (var obj in _objectList.Where(obj => obj.IsVisible)) fn((T)obj);
   }*/
-
-
+  
   public virtual void Init()
   {
     LayerRenderer?.Init();
