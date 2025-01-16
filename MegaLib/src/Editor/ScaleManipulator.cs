@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MegaLib.Geometry;
 using MegaLib.IO;
 using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
@@ -143,7 +144,7 @@ public class ScaleManipulator
     }
 
     // Находим пересечение текущего луча с выбранной плоскостью
-    if (plane.RayIntersects(_currentRay, out var intersectionPoint, out var isHit) && isHit)
+    if (plane.RayIntersection(_currentRay, out var intersectionPoint))
     {
       // Вычисляем, насколько изменился масштаб относительно начальной точки
       var scaleDelta = (intersectionPoint - _startPosition).Length / (collisionPoint - _startPosition).Length;

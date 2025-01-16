@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MegaLib.Geometry;
 using MegaLib.IO;
 using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
@@ -110,7 +111,7 @@ public class TranslateManipulator
         ? new Plane(Vector3.UnitY, _xCollisionPoint)
         : new Plane(Vector3.UnitZ, _xCollisionPoint);
 
-      if (plane.RayIntersects(_currentRay, out var intersectionPoint, out var isHit) && isHit)
+      if (plane.RayIntersection(_currentRay, out var intersectionPoint))
       {
         Transform.Position = new Vector3(intersectionPoint.X, _startPosition.Y, _startPosition.Z) +
                              new Vector3(_grabOffset.X, 0, 0);
@@ -125,7 +126,7 @@ public class TranslateManipulator
         ? new Plane(Vector3.UnitZ, _yCollisionPoint)
         : new Plane(Vector3.UnitX, _yCollisionPoint);
 
-      if (plane.RayIntersects(_currentRay, out var intersectionPoint, out var isHit) && isHit)
+      if (plane.RayIntersection(_currentRay, out var intersectionPoint))
       {
         Transform.Position = new Vector3(_startPosition.X, intersectionPoint.Y, _startPosition.Z) +
                              new Vector3(0, _grabOffset.Y, 0);
@@ -145,7 +146,7 @@ public class TranslateManipulator
           : new Plane(Vector3.UnitY, _zCollisionPoint);
 
       // Вычисляем пересечение текущего луча с выбранной плоскостью
-      if (plane.RayIntersects(_currentRay, out var intersectionPoint, out var isHit) && isHit)
+      if (plane.RayIntersection(_currentRay, out var intersectionPoint))
       {
         // Обновляем позицию манипулятора по оси Z, используя точку пересечения
         Transform.Position = new Vector3(_startPosition.X, _startPosition.Y, intersectionPoint.Z) +

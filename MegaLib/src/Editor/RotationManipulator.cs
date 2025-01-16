@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MegaLib.Geometry;
 using MegaLib.IO;
 using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
@@ -103,7 +104,7 @@ public class RotationManipulator
     var rotationPlane = new Plane(axis, Transform.Position);
 
     // Находим пересечение луча с плоскостью вращения
-    if (rotationPlane.RayIntersects(ray, out var intersectionPoint, out var isHit) && isHit)
+    if (rotationPlane.RayIntersection(ray, out var intersectionPoint))
     {
       // Вычисляем расстояние от точки пересечения до центра
       var distanceToCenter = (intersectionPoint - Transform.Position).Length;
@@ -276,7 +277,7 @@ public class RotationManipulator
     var rotationPlane = new Plane(axis, Transform.Position);
 
     // Находим пересечение текущего луча с плоскостью вращения
-    if (rotationPlane.RayIntersects(_currentRay, out var intersectionPoint, out var isHit) && isHit)
+    if (rotationPlane.RayIntersection(_currentRay, out var intersectionPoint))
     {
       // Вычисляем вектор от центра кольца до точки пересечения
       var direction = (intersectionPoint - Transform.Position).Normalized;

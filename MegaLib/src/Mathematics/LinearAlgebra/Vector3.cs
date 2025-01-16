@@ -8,7 +8,7 @@ using MegaLib.FS;
 namespace MegaLib.Mathematics.LinearAlgebra;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct Vector3 : IBinarySerializable
+public struct Vector3 : IBinarySerializable, IEquatable<Vector3>
 {
   public float X;
   public float Y;
@@ -444,6 +444,16 @@ public struct Vector3 : IBinarySerializable
   public Vector3 Round()
   {
     return new Vector3(MathF.Round(X), MathF.Round(Y), MathF.Round(Z));
+  }
+
+  public Vector3 Random()
+  {
+    var rnd = new Random();
+    return new Vector3(
+      rnd.RangeFloat(-1, 1),
+      rnd.RangeFloat(-1, 1),
+      rnd.RangeFloat(-1, 1)
+    );
   }
 
   public float this[int index]

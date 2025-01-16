@@ -1,7 +1,8 @@
 using System;
+using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 
-namespace MegaLib.Mathematics.Geometry;
+namespace MegaLib.Geometry;
 
 public struct AABB
 {

@@ -6,6 +6,7 @@ namespace MegaLib.ECS;
 public class ECS_Archetype
 {
   public ulong Mask;
+  public ECS_World World;
   private List<ECS_Entity> _entities = [];
   public Dictionary<Type, ECS_ComponentChunk> Components = new();
 
@@ -24,6 +25,11 @@ public class ECS_Archetype
   public bool HasComponent(Type t)
   {
     return Components.ContainsKey(t);
+  }
+
+  public ECS_Entity CreateEntity()
+  {
+    return World.CreateEntity(this);
   }
 
   public void AddEntity(ECS_Entity entity)
@@ -58,7 +64,7 @@ public class ECS_Archetype
     // Remove components
     foreach (var (type, c) in Components)
     {
-      Console.WriteLine(type);
+      //Console.WriteLine(type);
       c.Remove(index);
     }
   }
@@ -85,6 +91,23 @@ public class ECS_Archetype
       var v1 = c1.GetPointer<T1>(i);
       var v2 = c2.GetPointer<T2>(i);
       fn(ref *v1, ref *v2, _entities[i]);
+    }
+  }
+
+  public unsafe void ForEach<T1, T2, T3>(ECS_RefAction<T1, T2, T3> fn)
+    where T1 : unmanaged where T2 : unmanaged where T3 : unmanaged
+  {
+    var c1 = GetComponentChunk(typeof(T1));
+    var c2 = GetComponentChunk(typeof(T2));
+    var c3 = GetComponentChunk(typeof(T3));
+    for (var i = 0; i < c1.Count; i++)
+    {
+      if (_entities[i].IsDead) continue;
+
+      var v1 = c1.GetPointer<T1>(i);
+      var v2 = c2.GetPointer<T2>(i);
+      var v3 = c3.GetPointer<T3>(i);
+      fn(ref *v1, ref *v2, ref *v3, _entities[i]);
     }
   }
 }

@@ -14,12 +14,18 @@ public class ECS_World
   private int _entityId;
   private Dictionary<ulong, ECS_Archetype> _archetypes = new();
 
-  private List<ECS_Entity> _removeQueue = new();
+  private HashSet<ECS_Entity> _removeQueue = new();
 
   public void AddSystem(ECS_System system)
   {
     system.World = this;
     SystemList.Add(system);
+  }
+
+  public ECS_Entity CreateEntity(params Type[] componentTypes)
+  {
+    var type = CreateArchetype(componentTypes);
+    return CreateEntity(type);
   }
 
   public ECS_Entity CreateEntity(ECS_Archetype archetype)
@@ -61,7 +67,8 @@ public class ECS_World
 
     var archetype = new ECS_Archetype
     {
-      Mask = mask
+      Mask = mask,
+      World = this
     };
     foreach (var t in componentTypes) archetype.AddType(t);
     _archetypes.Add(mask, archetype);
@@ -127,6 +134,13 @@ public class ECS_World
   public void ForEach<T1, T2>(ECS_RefAction<T1, T2> fn) where T1 : unmanaged where T2 : unmanaged
   {
     var list = SelectArchetypes(GetComponentMask(typeof(T1), typeof(T2)));
+    foreach (var at in list) at.ForEach(fn);
+  }
+
+  public void ForEach<T1, T2, T3>(ECS_RefAction<T1, T2, T3> fn)
+    where T1 : unmanaged where T2 : unmanaged where T3 : unmanaged
+  {
+    var list = SelectArchetypes(GetComponentMask(typeof(T1), typeof(T2), typeof(T3)));
     foreach (var at in list) at.ForEach(fn);
   }
 }

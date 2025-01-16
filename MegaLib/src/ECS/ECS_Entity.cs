@@ -32,10 +32,10 @@ public class ECS_Entity
   {
     var oldAt = Archetype;
 
-    Console.WriteLine($"AT - {Archetype.Mask}");
+    //Console.WriteLine($"AT - {Archetype.Mask}");
     // Move to new archetype
     var newAt = World.ExtendArchetype(Archetype, t);
-    Console.WriteLine($"AT - {newAt.Mask}");
+    //Console.WriteLine($"AT - {newAt.Mask}");
     newAt.AddEntity(this);
 
     oldAt.RemoveEntity(this);
@@ -61,6 +61,11 @@ public class ECS_Entity
     newAt.AddEntity(this);
 
     oldAt.RemoveEntity(this);
+  }
+
+  public void SoftDestroy()
+  {
+    World.AddEntityToRemoveQueue(this);
   }
 
   public void Destroy()

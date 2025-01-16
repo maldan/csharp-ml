@@ -1,9 +1,10 @@
 using System;
+using MegaLib.Mathematics.Geometry;
 using MegaLib.Mathematics.LinearAlgebra;
 
-namespace MegaLib.Mathematics.Geometry;
+namespace MegaLib.Geometry;
 
-public struct Plane
+public struct Plane : IRayIntersectable
 {
   public Vector3 Normal; // Нормаль плоскости
   public float D; // Смещение от начала координат
@@ -29,7 +30,7 @@ public struct Plane
   }
 
   // Функция для пересечения луча с плоскостью
-  public bool RayIntersects(Ray ray, out Vector3 point, out bool isHit)
+  /*public bool RayIntersects(Ray ray, out Vector3 point, out bool isHit)
   {
     point = Vector3.Zero;
     isHit = false;
@@ -54,7 +55,7 @@ public struct Plane
 
     // Если пересечения нет, возвращаем false
     return false;
-  }
+  }*/
 
   public static Vector3 GetIntersectionPoint(Plane p1, Plane p2, Plane p3)
   {
@@ -73,5 +74,38 @@ public struct Plane
     }
 
     return Vector3.Zero; // Если плоскости не пересекаются, возвращаем (0, 0, 0)
+  }
+
+  public void RayIntersection(Ray ray, out Vector3 point, out bool isHit)
+  {
+    point = Vector3.Zero;
+    isHit = false;
+
+    // Вычисляем знаменатель для проверки параллельности
+    var denominator = Vector3.Dot(Normal, ray.Direction);
+
+    // Если знаменатель мал, луч параллелен плоскости
+    if (Math.Abs(denominator) > 0.0001f)
+    {
+      // Вычисляем параметр t для определения точки пересечения
+      var t = (D - Vector3.Dot(Normal, ray.Start)) / denominator;
+
+      // Если t >= 0, значит пересечение происходит "впереди" луча
+      if (t >= 0)
+      {
+        point = ray.Start + t * ray.Direction; // Точка пересечения
+        isHit = true;
+        return;
+      }
+    }
+
+    // Если пересечения нет, возвращаем false
+    isHit = false;
+  }
+
+  public bool RayIntersection(Ray ray, out Vector3 point)
+  {
+    RayIntersection(ray, out point, out var isHit);
+    return isHit;
   }
 }

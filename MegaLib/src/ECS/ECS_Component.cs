@@ -27,8 +27,18 @@ public class ECS_ComponentChunk
     _capacity = capacity;
     _bufferSize = _capacity * _elementSize;
     _bufferPtr = Marshal.AllocHGlobal(_capacity * _elementSize);
-
     _memcpy = AsmRuntime.MemCopy();
+
+    ZeroFillMemory((uint)_bufferSize);
+  }
+
+  private void ZeroFillMemory(uint size)
+  {
+    unsafe
+    {
+      var bytePtr = (byte*)_bufferPtr.ToPointer();
+      System.Runtime.CompilerServices.Unsafe.InitBlock(bytePtr, 0, size);
+    }
   }
 
   private void Resize()
@@ -37,6 +47,7 @@ public class ECS_ComponentChunk
 
     var oldBufferPtr = _bufferPtr;
     var newBuffer = Marshal.AllocHGlobal(_capacity * _elementSize);
+    ZeroFillMemory((uint)(_capacity * _elementSize));
     _memcpy(newBuffer, oldBufferPtr, _bufferSize);
 
     // Set new buffer size
